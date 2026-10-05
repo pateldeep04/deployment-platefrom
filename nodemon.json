@@ -1,0 +1,6 @@
+{
+  "watch": ["server"],
+  "ext": "ts,js,json",
+  "ignore": ["src", "storage", "public", "dist", "node_modules"],
+  "exec": "ts-node --project server/tsconfig.json server/index.ts"
+}

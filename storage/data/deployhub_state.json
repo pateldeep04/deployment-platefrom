@@ -1,0 +1,780 @@
+{
+  "users": [
+    {
+      "_id": "usr_admin_001",
+      "name": "DeployHub Admin",
+      "email": "admin@deployhub.com",
+      "passwordHash": "$2b$10$GMb.YMdjUG0Qx8SIPtKKp.5eiyL7p9oOTN4BNQ136lGCeE9Mb9c.W",
+      "role": "ADMIN",
+      "plan": "PRO",
+      "emailVerified": true,
+      "storageUsed": 12594693,
+      "bandwidthUsed": 429496729,
+      "createdAt": "2026-10-05T12:08:41.335Z",
+      "updatedAt": "2026-10-05T12:08:41.335Z"
+    },
+    {
+      "_id": "usr_demo_002",
+      "name": "Alex Rivera",
+      "email": "developer@deployhub.com",
+      "passwordHash": "$2b$10$g5QDLeb6.gS7PoEff0D8WOpdnfV2zVWZmPv/5KBEVgIilWrWtVR1i",
+      "role": "USER",
+      "plan": "PRO",
+      "emailVerified": true,
+      "storageUsed": 33203027,
+      "bandwidthUsed": 1073741824,
+      "createdAt": "2026-10-05T12:08:41.409Z",
+      "updatedAt": "2026-10-05T12:14:54.695Z"
+    }
+  ],
+  "projects": [
+    {
+      "_id": "prj_portfolio_001",
+      "userId": "usr_demo_002",
+      "name": "Alex Portfolio",
+      "slug": "alex-portfolio",
+      "type": "STATIC",
+      "status": "ACTIVE",
+      "currentDeploymentId": "dep_port_001",
+      "storageUsed": 127,
+      "customDomain": "portfolio.alexrivera.dev",
+      "customDomainVerified": true,
+      "sslEnabled": true,
+      "createdAt": "2026-10-02T12:08:41.409Z",
+      "updatedAt": "2026-10-05T12:08:41.409Z"
+    },
+    {
+      "_id": "prj_shop_002",
+      "userId": "usr_demo_002",
+      "name": "Retro Games API",
+      "slug": "retro-games-api",
+      "type": "PHP",
+      "status": "ACTIVE",
+      "currentDeploymentId": "dep_php_002",
+      "storageUsed": 6200000,
+      "createdAt": "2026-09-30T12:08:41.409Z",
+      "updatedAt": "2026-10-05T12:08:41.409Z"
+    },
+    {
+      "_id": "prj_1791202824540_fw63",
+      "userId": "usr_demo_002",
+      "name": "Zip Test Website",
+      "slug": "zip-test-website",
+      "type": "STATIC",
+      "status": "ACTIVE",
+      "storageUsed": 395,
+      "createdAt": "2026-10-05T12:20:24.540Z",
+      "updatedAt": "2026-10-05T12:20:24.540Z",
+      "currentDeploymentId": "dep_1791202824604_d3hy"
+    },
+    {
+      "_id": "prj_1791203130803_pjnz",
+      "userId": "usr_admin_001",
+      "name": "rro",
+      "slug": "rro",
+      "type": "STATIC",
+      "status": "ACTIVE",
+      "storageUsed": 11781,
+      "createdAt": "2026-10-05T12:25:30.803Z",
+      "updatedAt": "2026-10-05T12:25:30.803Z",
+      "currentDeploymentId": "dep_1791203130818_5p44"
+    },
+    {
+      "_id": "prj_1791203379088_hb75",
+      "userId": "usr_demo_002",
+      "name": "Nested Zip Test Site",
+      "slug": "site-zip-test-9141",
+      "type": "STATIC",
+      "status": "ACTIVE",
+      "storageUsed": 921,
+      "createdAt": "2026-10-05T12:29:39.088Z",
+      "updatedAt": "2026-10-05T12:29:39.088Z",
+      "currentDeploymentId": "dep_1791203379123_ixlv"
+    }
+  ],
+  "deployments": [
+    {
+      "_id": "dep_port_001",
+      "projectId": "prj_portfolio_001",
+      "userId": "usr_demo_002",
+      "version": 1,
+      "source": "ZIP_UPLOAD",
+      "status": "LIVE",
+      "deploymentUrl": "http://localhost:5000/sites/alex-portfolio/",
+      "logs": [
+        {
+          "timestamp": "2026-10-05T11:08:41.409Z",
+          "message": "Deployment initialized for alex-portfolio",
+          "stage": "QUEUE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T11:08:51.409Z",
+          "message": "Extracting archive securely... 14 files unpacked",
+          "stage": "EXTRACT",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T11:09:01.409Z",
+          "message": "Security Scan: 0 vulnerabilities found, MIME types valid",
+          "stage": "SCAN",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T11:09:11.409Z",
+          "message": "Artifact compiled and mounted to static edge route",
+          "stage": "DEPLOY",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T11:09:21.409Z",
+          "message": "Deployment is LIVE at http://alex-portfolio.deployhub.local",
+          "stage": "LIVE",
+          "level": "success"
+        }
+      ],
+      "startedAt": "2026-10-05T11:08:41.409Z",
+      "completedAt": "2026-10-05T11:09:21.409Z",
+      "createdAt": "2026-10-05T11:08:41.409Z"
+    },
+    {
+      "_id": "dep_php_002",
+      "projectId": "prj_shop_002",
+      "userId": "usr_demo_002",
+      "version": 1,
+      "source": "ZIP_UPLOAD",
+      "status": "LIVE",
+      "deploymentUrl": "http://localhost:5000/sites/retro-games-api/",
+      "logs": [
+        {
+          "timestamp": "2026-10-05T10:08:41.409Z",
+          "message": "PHP Deployment initiated for retro-games-api",
+          "stage": "QUEUE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T10:08:51.409Z",
+          "message": "Verifying PHP 8.2 runtime dependencies and index.php entrypoint",
+          "stage": "VALIDATE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T10:09:01.409Z",
+          "message": "Configuring isolated tenant sandbox & PHP execution boundary",
+          "stage": "ISOLATION",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T10:09:11.409Z",
+          "message": "PHP Application online and healthy",
+          "stage": "LIVE",
+          "level": "success"
+        }
+      ],
+      "startedAt": "2026-10-05T10:08:41.409Z",
+      "completedAt": "2026-10-05T10:09:11.409Z",
+      "createdAt": "2026-10-05T10:08:41.409Z"
+    },
+    {
+      "_id": "dep_1791202824604_d3hy",
+      "projectId": "prj_1791202824540_fw63",
+      "userId": "usr_demo_002",
+      "version": 1,
+      "source": "ZIP_UPLOAD",
+      "status": "LIVE",
+      "deploymentUrl": "http://localhost:5000/sites/zip-test-website/",
+      "logs": [
+        {
+          "timestamp": "2026-10-05T12:20:24.604Z",
+          "message": "Archive uploaded: test-site.zip (0.6 KB)",
+          "stage": "UPLOAD",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:20:24.604Z",
+          "message": "Job enqueued to deployment worker queue (Version 1)",
+          "stage": "QUEUE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:20:24.605Z",
+          "message": "Worker received job for Zip Test Website (zip-test-website)",
+          "stage": "PIPELINE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:20:24.605Z",
+          "message": "Initiating archive security scan and MIME validation...",
+          "stage": "SECURITY",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:20:24.608Z",
+          "message": "Security check passed: 3 files scanned, 0.4 KB uncompressed size. Zero malicious signatures found.",
+          "stage": "SECURITY",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:20:24.609Z",
+          "message": "Unpacking files into isolated sandbox directory...",
+          "stage": "UNPACK",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:20:24.612Z",
+          "message": "Safe extraction complete. Sandboxed boundary verified.",
+          "stage": "UNPACK",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:20:24.613Z",
+          "message": "Verified static entrypoint: index.html found",
+          "stage": "BUILD",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:20:24.617Z",
+          "message": "Registering DNS routing for zip-test-website.pateldeeep.in...",
+          "stage": "ROUTING",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:20:24.618Z",
+          "message": "🎉 Deployment LIVE: http://localhost:5000/sites/zip-test-website/",
+          "stage": "LIVE",
+          "level": "success"
+        }
+      ],
+      "createdAt": "2026-10-05T12:20:24.604Z",
+      "startedAt": "2026-10-05T12:20:24.605Z",
+      "completedAt": "2026-10-05T12:20:24.618Z"
+    },
+    {
+      "_id": "dep_1791203130818_5p44",
+      "projectId": "prj_1791203130803_pjnz",
+      "userId": "usr_admin_001",
+      "version": 1,
+      "source": "ZIP_UPLOAD",
+      "status": "LIVE",
+      "deploymentUrl": "http://localhost:5000/sites/rro/",
+      "logs": [
+        {
+          "timestamp": "2026-10-05T12:25:30.818Z",
+          "message": "Archive uploaded: New folder.zip (4.4 KB)",
+          "stage": "UPLOAD",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.818Z",
+          "message": "Job enqueued to deployment worker queue (Version 1)",
+          "stage": "QUEUE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.819Z",
+          "message": "Worker received job for rro (rro)",
+          "stage": "PIPELINE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.820Z",
+          "message": "Initiating archive security scan and MIME validation...",
+          "stage": "SECURITY",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.824Z",
+          "message": "Security check passed: 4 files scanned, 11.5 KB uncompressed size. Zero malicious signatures found.",
+          "stage": "SECURITY",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.825Z",
+          "message": "Unpacking files into isolated sandbox directory...",
+          "stage": "UNPACK",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.834Z",
+          "message": "Safe extraction complete. Sandboxed boundary verified.",
+          "stage": "UNPACK",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.835Z",
+          "message": "Resolved web root directory: New folder",
+          "stage": "BUILD",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.836Z",
+          "message": "Verified entrypoint: Valid index file confirmed.",
+          "stage": "BUILD",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.841Z",
+          "message": "Promoted files to edge serving directory successfully.",
+          "stage": "EDGE",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.843Z",
+          "message": "Registering DNS routing for rro.pateldeeep.in...",
+          "stage": "ROUTING",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:25:30.844Z",
+          "message": "🎉 Deployment LIVE: http://localhost:5000/sites/rro/",
+          "stage": "LIVE",
+          "level": "success"
+        }
+      ],
+      "createdAt": "2026-10-05T12:25:30.818Z",
+      "startedAt": "2026-10-05T12:25:30.819Z",
+      "completedAt": "2026-10-05T12:25:30.843Z"
+    },
+    {
+      "_id": "dep_1791203209479_0qo1",
+      "projectId": "prj_1791203130803_pjnz",
+      "userId": "usr_admin_001",
+      "version": 2,
+      "source": "ZIP_UPLOAD",
+      "status": "FAILED",
+      "deploymentUrl": "http://localhost:5000/sites/rro/",
+      "logs": [
+        {
+          "timestamp": "2026-10-05T12:26:49.479Z",
+          "message": "Archive uploaded: Blog.zip (66872.0 KB)",
+          "stage": "UPLOAD",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:26:49.479Z",
+          "message": "Job enqueued to deployment worker queue (Version 2)",
+          "stage": "QUEUE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:26:49.480Z",
+          "message": "Worker received job for rro (rro)",
+          "stage": "PIPELINE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:26:49.481Z",
+          "message": "Initiating archive security scan and MIME validation...",
+          "stage": "SECURITY",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:26:50.207Z",
+          "message": "❌ Deployment failed: Archive contains too many files (28964). Maximum permitted is 10000.",
+          "stage": "ERROR",
+          "level": "error"
+        }
+      ],
+      "createdAt": "2026-10-05T12:26:49.479Z",
+      "startedAt": "2026-10-05T12:26:49.480Z",
+      "completedAt": "2026-10-05T12:26:50.207Z"
+    },
+    {
+      "_id": "dep_1791203379123_ixlv",
+      "projectId": "prj_1791203379088_hb75",
+      "userId": "usr_demo_002",
+      "version": 1,
+      "source": "ZIP_UPLOAD",
+      "status": "LIVE",
+      "deploymentUrl": "http://localhost:5000/sites/site-zip-test-9141/",
+      "logs": [
+        {
+          "timestamp": "2026-10-05T12:29:39.123Z",
+          "message": "Archive uploaded: nested-test-site.zip (1.2 KB)",
+          "stage": "UPLOAD",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.123Z",
+          "message": "Job enqueued to deployment worker queue (Version 1)",
+          "stage": "QUEUE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.124Z",
+          "message": "Worker received job for Nested Zip Test Site (site-zip-test-9141)",
+          "stage": "PIPELINE",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.125Z",
+          "message": "Initiating archive security scan and MIME validation...",
+          "stage": "SECURITY",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.128Z",
+          "message": "Security check passed: 4 files scanned, 0.9 KB uncompressed size. Zero malicious signatures found.",
+          "stage": "SECURITY",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.129Z",
+          "message": "Unpacking files into isolated sandbox directory...",
+          "stage": "UNPACK",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.135Z",
+          "message": "Safe extraction complete. Sandboxed boundary verified.",
+          "stage": "UNPACK",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.136Z",
+          "message": "Resolved web root directory: my-awesome-site",
+          "stage": "BUILD",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.136Z",
+          "message": "Verified entrypoint: Valid index file confirmed.",
+          "stage": "BUILD",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.142Z",
+          "message": "Promoted files to edge serving directory successfully.",
+          "stage": "EDGE",
+          "level": "success"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.142Z",
+          "message": "Registering DNS routing for site-zip-test-9141.pateldeeep.in...",
+          "stage": "ROUTING",
+          "level": "info"
+        },
+        {
+          "timestamp": "2026-10-05T12:29:39.143Z",
+          "message": "🎉 Deployment LIVE: http://localhost:5000/sites/site-zip-test-9141/",
+          "stage": "LIVE",
+          "level": "success"
+        }
+      ],
+      "createdAt": "2026-10-05T12:29:39.123Z",
+      "startedAt": "2026-10-05T12:29:39.124Z",
+      "completedAt": "2026-10-05T12:29:39.143Z"
+    }
+  ],
+  "envVars": [],
+  "ads": [
+    {
+      "_id": "ad_cloud_001",
+      "title": "Supersonic Redis & KV Cache",
+      "description": "Sub-millisecond global caching for modern applications. Free 1GB tier.",
+      "imageUrl": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600&auto=format&fit=crop&q=80",
+      "targetUrl": "https://redis.io",
+      "placement": "DASHBOARD",
+      "status": "ACTIVE",
+      "impressions": 1420,
+      "clicks": 68,
+      "createdAt": "2026-10-05T12:08:41.411Z"
+    },
+    {
+      "_id": "ad_db_002",
+      "title": "Neon Serverless Postgres",
+      "description": "Ship faster with instant branching, automated autoscaling, and zero config.",
+      "imageUrl": "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=600&auto=format&fit=crop&q=80",
+      "targetUrl": "https://neon.tech",
+      "placement": "PROJECT_PAGE",
+      "status": "ACTIVE",
+      "impressions": 890,
+      "clicks": 42,
+      "createdAt": "2026-10-05T12:08:41.411Z"
+    }
+  ],
+  "auditLogs": [
+    {
+      "_id": "audit_1791205108434",
+      "action": "AWS_EC2_FREE_TIER_NODE_SPUN_UP",
+      "ip": "13.134.120.84",
+      "details": {
+        "instanceId": "i-0dhbhpiyloyuz7k3",
+        "instanceType": "t2.micro",
+        "region": "ap-south-1",
+        "triggerReason": "Storage reached 85% of capacity (Threshold: 80%)",
+        "storageCapacityGb": 30,
+        "freeTierEligible": true
+      },
+      "createdAt": "2026-10-05T12:58:28.434Z"
+    },
+    {
+      "_id": "log_1791202282562",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:11:22.562Z"
+    },
+    {
+      "_id": "log_1791202292212",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:11:32.212Z"
+    },
+    {
+      "_id": "log_1791202365646",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:12:45.646Z"
+    },
+    {
+      "_id": "log_1791202376486",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:12:56.486Z"
+    },
+    {
+      "_id": "log_1791202427605",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:13:47.605Z"
+    },
+    {
+      "_id": "log_1791202494695",
+      "userId": "usr_demo_002",
+      "action": "SUBSCRIPTION_UPGRADE",
+      "ip": "::1",
+      "details": {
+        "plan": "PRO",
+        "orderId": "order_1791202493480_qfwhgx",
+        "paymentId": "pay_1791202494692"
+      },
+      "createdAt": "2026-10-05T12:14:54.695Z"
+    },
+    {
+      "_id": "log_1791202721202",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:18:41.202Z"
+    },
+    {
+      "_id": "log_1791202807437",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:20:07.437Z"
+    },
+    {
+      "_id": "log_1791202810150",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:20:10.150Z"
+    },
+    {
+      "_id": "log_1791202813977",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:20:13.977Z"
+    },
+    {
+      "_id": "log_1791202824497",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:20:24.497Z"
+    },
+    {
+      "_id": "log_1791202824540",
+      "userId": "usr_demo_002",
+      "action": "PROJECT_CREATE",
+      "ip": "::1",
+      "details": {
+        "projectId": "prj_1791202824540_fw63",
+        "name": "Zip Test Website",
+        "slug": "zip-test-website",
+        "type": "STATIC"
+      },
+      "createdAt": "2026-10-05T12:20:24.541Z"
+    },
+    {
+      "_id": "log_1791203041223",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:24:01.223Z"
+    },
+    {
+      "_id": "log_1791203130803",
+      "userId": "usr_admin_001",
+      "action": "PROJECT_CREATE",
+      "ip": "::1",
+      "details": {
+        "projectId": "prj_1791203130803_pjnz",
+        "name": "rro",
+        "slug": "rro",
+        "type": "STATIC"
+      },
+      "createdAt": "2026-10-05T12:25:30.803Z"
+    },
+    {
+      "_id": "log_1791203361707",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:29:21.707Z"
+    },
+    {
+      "_id": "log_1791203378698",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:29:38.698Z"
+    },
+    {
+      "_id": "log_1791203379088",
+      "userId": "usr_demo_002",
+      "action": "PROJECT_CREATE",
+      "ip": "::1",
+      "details": {
+        "projectId": "prj_1791203379088_hb75",
+        "name": "Nested Zip Test Site",
+        "slug": "site-zip-test-9141",
+        "type": "STATIC"
+      },
+      "createdAt": "2026-10-05T12:29:39.088Z"
+    },
+    {
+      "_id": "log_1791203551767",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:32:31.767Z"
+    },
+    {
+      "_id": "log_1791203648389",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:34:08.389Z"
+    },
+    {
+      "_id": "aud_1791203648462",
+      "userId": "usr_admin_001",
+      "action": "PRUNED_STORAGE: 65.3 MB reclaimed",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:34:08.462Z"
+    },
+    {
+      "_id": "log_1791203666093",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:34:26.093Z"
+    },
+    {
+      "_id": "log_1791203713088",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:35:13.088Z"
+    },
+    {
+      "_id": "log_1791203722303",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:35:22.303Z"
+    },
+    {
+      "_id": "log_1791203822838",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:37:02.838Z"
+    },
+    {
+      "_id": "log_1791203822964",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:37:02.964Z"
+    },
+    {
+      "_id": "log_1791203834838",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:37:14.838Z"
+    },
+    {
+      "_id": "log_1791204717411",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:51:57.411Z"
+    },
+    {
+      "_id": "log_1791204725055",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:52:05.055Z"
+    },
+    {
+      "_id": "log_1791204737964",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:52:17.964Z"
+    },
+    {
+      "_id": "log_1791204745494",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:52:25.494Z"
+    },
+    {
+      "_id": "log_1791205033499",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:57:13.499Z"
+    },
+    {
+      "_id": "log_1791205061070",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:57:41.070Z"
+    },
+    {
+      "_id": "log_1791205084775",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:58:04.775Z"
+    },
+    {
+      "_id": "log_1791205108423",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:58:28.423Z"
+    },
+    {
+      "_id": "log_1791205113806",
+      "userId": "usr_admin_001",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-05T12:58:33.806Z"
+    }
+  ]
+}
