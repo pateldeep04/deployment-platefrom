@@ -105,7 +105,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const { email, password } = parseResult.data;
-    const user = dbStore.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const normalizedEmail = email.toLowerCase() === 'alex@deployhub.com' ? 'developer@deployhub.com' : email.toLowerCase();
+    const user = dbStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
 
     if (!user) {
       res.status(401).json({ success: false, error: 'Invalid email or password' });

@@ -8,8 +8,8 @@
       "role": "ADMIN",
       "plan": "PRO",
       "emailVerified": true,
-      "storageUsed": 12594693,
-      "bandwidthUsed": 429496729,
+      "storageUsed": 0,
+      "bandwidthUsed": 0,
       "createdAt": "2026-10-05T12:08:41.335Z",
       "updatedAt": "2026-10-05T12:08:41.335Z"
     },
@@ -21,468 +21,72 @@
       "role": "USER",
       "plan": "PRO",
       "emailVerified": true,
-      "storageUsed": 1753,
-      "bandwidthUsed": 1073741824,
+      "storageUsed": 0,
+      "bandwidthUsed": 0,
       "createdAt": "2026-10-05T12:08:41.409Z",
       "updatedAt": "2026-10-06T04:25:40.110Z"
+    },
+    {
+      "_id": "usr_1791291460561_9ztgs",
+      "name": "poate;",
+      "email": "patelbhai12xx@gmail.com",
+      "passwordHash": "$2b$10$ioscPZXmtMLu65xNBAPXi.A4u8P2YuBav1h3lVB.dPC7Cd4b4DmcC",
+      "role": "USER",
+      "plan": "FREE",
+      "emailVerified": true,
+      "storageUsed": 4723,
+      "bandwidthUsed": 0,
+      "createdAt": "2026-10-06T12:57:40.561Z",
+      "updatedAt": "2026-10-06T12:57:40.561Z"
     }
   ],
   "projects": [
     {
-      "_id": "prj_portfolio_001",
-      "userId": "usr_demo_002",
-      "name": "Alex Portfolio",
-      "slug": "alex-portfolio",
+      "_id": "prj_1791291609682_8loz",
+      "userId": "usr_1791291460561_9ztgs",
+      "name": "asd",
+      "slug": "asd",
+      "assignedSubdomain": "asd",
+      "platformDomain": "deployeai.duckdns.org",
       "type": "STATIC",
       "status": "ACTIVE",
-      "currentDeploymentId": "dep_port_001",
-      "storageUsed": 127,
-      "customDomain": "portfolio.alexrivera.dev",
-      "customDomainVerified": true,
-      "sslEnabled": true,
-      "createdAt": "2026-10-02T12:08:41.409Z",
-      "updatedAt": "2026-10-06T04:50:46.023Z",
-      "assignedSubdomain": "superfast-app",
-      "assignedServerNodeId": "node_ec2_1791206822192_nwjk",
-      "namecheapDnsConfigured": true
-    },
-    {
-      "_id": "prj_shop_002",
-      "userId": "usr_demo_002",
-      "name": "Retro Games API",
-      "slug": "retro-games-api",
-      "type": "PHP",
-      "status": "ACTIVE",
-      "currentDeploymentId": "dep_php_002",
-      "storageUsed": 261,
-      "createdAt": "2026-09-30T12:08:41.409Z",
-      "updatedAt": "2026-10-05T12:08:41.409Z",
-      "assignedSubdomain": "retro-games-api"
-    },
-    {
-      "_id": "prj_1791202824540_fw63",
-      "userId": "usr_demo_002",
-      "name": "Zip Test Website",
-      "slug": "zip-test-website",
-      "type": "STATIC",
-      "status": "ACTIVE",
-      "storageUsed": 395,
-      "createdAt": "2026-10-05T12:20:24.540Z",
-      "updatedAt": "2026-10-05T12:20:24.540Z",
-      "currentDeploymentId": "dep_1791202824604_d3hy",
-      "assignedSubdomain": "zip-test-website"
-    },
-    {
-      "_id": "prj_1791203130803_pjnz",
-      "userId": "usr_admin_001",
-      "name": "rro",
-      "slug": "rro",
-      "type": "STATIC",
-      "status": "ACTIVE",
-      "storageUsed": 11781,
-      "createdAt": "2026-10-05T12:25:30.803Z",
-      "updatedAt": "2026-10-05T12:25:30.803Z",
-      "currentDeploymentId": "dep_1791203130818_5p44",
-      "assignedSubdomain": "rro"
-    },
-    {
-      "_id": "prj_1791203379088_hb75",
-      "userId": "usr_demo_002",
-      "name": "Nested Zip Test Site",
-      "slug": "site-zip-test-9141",
-      "type": "STATIC",
-      "status": "ACTIVE",
-      "storageUsed": 970,
-      "createdAt": "2026-10-05T12:29:39.088Z",
-      "updatedAt": "2026-10-05T12:29:39.088Z",
-      "currentDeploymentId": "dep_1791203379123_ixlv",
-      "assignedSubdomain": "site-zip-test-9141"
-    },
-    {
-      "_id": "prj_1791264884864_50m6",
-      "userId": "usr_demo_002",
-      "name": "my-website",
-      "slug": "my-website",
-      "type": "STATIC",
-      "status": "INACTIVE",
-      "storageUsed": 0,
-      "createdAt": "2026-10-06T05:34:44.864Z",
-      "updatedAt": "2026-10-06T05:34:44.864Z",
-      "assignedSubdomain": "my-website"
+      "storageUsed": 4723,
+      "createdAt": "2026-10-06T13:00:09.682Z",
+      "updatedAt": "2026-10-06T13:00:09.682Z",
+      "currentDeploymentId": "dep_1791291609724_bf10"
     }
   ],
   "deployments": [
     {
-      "_id": "dep_port_001",
-      "projectId": "prj_portfolio_001",
-      "userId": "usr_demo_002",
+      "_id": "dep_1791291609724_bf10",
+      "projectId": "prj_1791291609682_8loz",
+      "userId": "usr_1791291460561_9ztgs",
       "version": 1,
-      "source": "ZIP_UPLOAD",
+      "source": "FILE_UPLOAD",
       "status": "LIVE",
-      "deploymentUrl": "http://localhost:5000/sites/alex-portfolio/",
+      "deploymentUrl": "http://asd.deployeai.duckdns.org/",
       "logs": [
         {
-          "timestamp": "2026-10-05T11:08:41.409Z",
-          "message": "Deployment initialized for alex-portfolio",
-          "stage": "QUEUE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T11:08:51.409Z",
-          "message": "Extracting archive securely... 14 files unpacked",
-          "stage": "EXTRACT",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T11:09:01.409Z",
-          "message": "Security Scan: 0 vulnerabilities found, MIME types valid",
-          "stage": "SCAN",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T11:09:11.409Z",
-          "message": "Artifact compiled and mounted to static edge route",
-          "stage": "DEPLOY",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T11:09:21.409Z",
-          "message": "Deployment is LIVE at http://alex-portfolio.deployhub.local",
-          "stage": "LIVE",
-          "level": "success"
-        }
-      ],
-      "startedAt": "2026-10-05T11:08:41.409Z",
-      "completedAt": "2026-10-05T11:09:21.409Z",
-      "createdAt": "2026-10-05T11:08:41.409Z"
-    },
-    {
-      "_id": "dep_php_002",
-      "projectId": "prj_shop_002",
-      "userId": "usr_demo_002",
-      "version": 1,
-      "source": "ZIP_UPLOAD",
-      "status": "LIVE",
-      "deploymentUrl": "http://localhost:5000/sites/retro-games-api/",
-      "logs": [
-        {
-          "timestamp": "2026-10-05T10:08:41.409Z",
-          "message": "PHP Deployment initiated for retro-games-api",
-          "stage": "QUEUE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T10:08:51.409Z",
-          "message": "Verifying PHP 8.2 runtime dependencies and index.php entrypoint",
-          "stage": "VALIDATE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T10:09:01.409Z",
-          "message": "Configuring isolated tenant sandbox & PHP execution boundary",
-          "stage": "ISOLATION",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T10:09:11.409Z",
-          "message": "PHP Application online and healthy",
-          "stage": "LIVE",
-          "level": "success"
-        }
-      ],
-      "startedAt": "2026-10-05T10:08:41.409Z",
-      "completedAt": "2026-10-05T10:09:11.409Z",
-      "createdAt": "2026-10-05T10:08:41.409Z"
-    },
-    {
-      "_id": "dep_1791202824604_d3hy",
-      "projectId": "prj_1791202824540_fw63",
-      "userId": "usr_demo_002",
-      "version": 1,
-      "source": "ZIP_UPLOAD",
-      "status": "LIVE",
-      "deploymentUrl": "http://localhost:5000/sites/zip-test-website/",
-      "logs": [
-        {
-          "timestamp": "2026-10-05T12:20:24.604Z",
-          "message": "Archive uploaded: test-site.zip (0.6 KB)",
+          "timestamp": "2026-10-06T13:00:09.752Z",
+          "message": "Single file uploaded: index.html (4.6 KB)",
           "stage": "UPLOAD",
           "level": "info"
         },
         {
-          "timestamp": "2026-10-05T12:20:24.604Z",
-          "message": "Job enqueued to deployment worker queue (Version 1)",
-          "stage": "QUEUE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:20:24.605Z",
-          "message": "Worker received job for Zip Test Website (zip-test-website)",
-          "stage": "PIPELINE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:20:24.605Z",
-          "message": "Initiating archive security scan and MIME validation...",
-          "stage": "SECURITY",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:20:24.608Z",
-          "message": "Security check passed: 3 files scanned, 0.4 KB uncompressed size. Zero malicious signatures found.",
-          "stage": "SECURITY",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:20:24.609Z",
-          "message": "Unpacking files into isolated sandbox directory...",
-          "stage": "UNPACK",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:20:24.612Z",
-          "message": "Safe extraction complete. Sandboxed boundary verified.",
-          "stage": "UNPACK",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:20:24.613Z",
-          "message": "Verified static entrypoint: index.html found",
-          "stage": "BUILD",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:20:24.617Z",
-          "message": "Registering DNS routing for zip-test-website.pateldeeep.in...",
-          "stage": "ROUTING",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:20:24.618Z",
-          "message": "🎉 Deployment LIVE: http://localhost:5000/sites/zip-test-website/",
-          "stage": "LIVE",
-          "level": "success"
-        }
-      ],
-      "createdAt": "2026-10-05T12:20:24.604Z",
-      "startedAt": "2026-10-05T12:20:24.605Z",
-      "completedAt": "2026-10-05T12:20:24.618Z"
-    },
-    {
-      "_id": "dep_1791203130818_5p44",
-      "projectId": "prj_1791203130803_pjnz",
-      "userId": "usr_admin_001",
-      "version": 1,
-      "source": "ZIP_UPLOAD",
-      "status": "LIVE",
-      "deploymentUrl": "http://localhost:5000/sites/rro/",
-      "logs": [
-        {
-          "timestamp": "2026-10-05T12:25:30.818Z",
-          "message": "Archive uploaded: New folder.zip (4.4 KB)",
-          "stage": "UPLOAD",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.818Z",
-          "message": "Job enqueued to deployment worker queue (Version 1)",
-          "stage": "QUEUE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.819Z",
-          "message": "Worker received job for rro (rro)",
-          "stage": "PIPELINE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.820Z",
-          "message": "Initiating archive security scan and MIME validation...",
-          "stage": "SECURITY",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.824Z",
-          "message": "Security check passed: 4 files scanned, 11.5 KB uncompressed size. Zero malicious signatures found.",
-          "stage": "SECURITY",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.825Z",
-          "message": "Unpacking files into isolated sandbox directory...",
-          "stage": "UNPACK",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.834Z",
-          "message": "Safe extraction complete. Sandboxed boundary verified.",
-          "stage": "UNPACK",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.835Z",
-          "message": "Resolved web root directory: New folder",
-          "stage": "BUILD",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.836Z",
-          "message": "Verified entrypoint: Valid index file confirmed.",
-          "stage": "BUILD",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.841Z",
-          "message": "Promoted files to edge serving directory successfully.",
+          "timestamp": "2026-10-06T13:00:09.752Z",
+          "message": "File deployed directly to edge runtime: index.html",
           "stage": "EDGE",
           "level": "success"
         },
         {
-          "timestamp": "2026-10-05T12:25:30.843Z",
-          "message": "Registering DNS routing for rro.pateldeeep.in...",
-          "stage": "ROUTING",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:25:30.844Z",
-          "message": "🎉 Deployment LIVE: http://localhost:5000/sites/rro/",
+          "timestamp": "2026-10-06T13:00:09.752Z",
+          "message": "🎉 Deployment LIVE: http://asd.deployeai.duckdns.org/",
           "stage": "LIVE",
           "level": "success"
         }
       ],
-      "createdAt": "2026-10-05T12:25:30.818Z",
-      "startedAt": "2026-10-05T12:25:30.819Z",
-      "completedAt": "2026-10-05T12:25:30.843Z"
-    },
-    {
-      "_id": "dep_1791203209479_0qo1",
-      "projectId": "prj_1791203130803_pjnz",
-      "userId": "usr_admin_001",
-      "version": 2,
-      "source": "ZIP_UPLOAD",
-      "status": "FAILED",
-      "deploymentUrl": "http://localhost:5000/sites/rro/",
-      "logs": [
-        {
-          "timestamp": "2026-10-05T12:26:49.479Z",
-          "message": "Archive uploaded: Blog.zip (66872.0 KB)",
-          "stage": "UPLOAD",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:26:49.479Z",
-          "message": "Job enqueued to deployment worker queue (Version 2)",
-          "stage": "QUEUE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:26:49.480Z",
-          "message": "Worker received job for rro (rro)",
-          "stage": "PIPELINE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:26:49.481Z",
-          "message": "Initiating archive security scan and MIME validation...",
-          "stage": "SECURITY",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:26:50.207Z",
-          "message": "❌ Deployment failed: Archive contains too many files (28964). Maximum permitted is 10000.",
-          "stage": "ERROR",
-          "level": "error"
-        }
-      ],
-      "createdAt": "2026-10-05T12:26:49.479Z",
-      "startedAt": "2026-10-05T12:26:49.480Z",
-      "completedAt": "2026-10-05T12:26:50.207Z"
-    },
-    {
-      "_id": "dep_1791203379123_ixlv",
-      "projectId": "prj_1791203379088_hb75",
-      "userId": "usr_demo_002",
-      "version": 1,
-      "source": "ZIP_UPLOAD",
-      "status": "LIVE",
-      "deploymentUrl": "http://localhost:5000/sites/site-zip-test-9141/",
-      "logs": [
-        {
-          "timestamp": "2026-10-05T12:29:39.123Z",
-          "message": "Archive uploaded: nested-test-site.zip (1.2 KB)",
-          "stage": "UPLOAD",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.123Z",
-          "message": "Job enqueued to deployment worker queue (Version 1)",
-          "stage": "QUEUE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.124Z",
-          "message": "Worker received job for Nested Zip Test Site (site-zip-test-9141)",
-          "stage": "PIPELINE",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.125Z",
-          "message": "Initiating archive security scan and MIME validation...",
-          "stage": "SECURITY",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.128Z",
-          "message": "Security check passed: 4 files scanned, 0.9 KB uncompressed size. Zero malicious signatures found.",
-          "stage": "SECURITY",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.129Z",
-          "message": "Unpacking files into isolated sandbox directory...",
-          "stage": "UNPACK",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.135Z",
-          "message": "Safe extraction complete. Sandboxed boundary verified.",
-          "stage": "UNPACK",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.136Z",
-          "message": "Resolved web root directory: my-awesome-site",
-          "stage": "BUILD",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.136Z",
-          "message": "Verified entrypoint: Valid index file confirmed.",
-          "stage": "BUILD",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.142Z",
-          "message": "Promoted files to edge serving directory successfully.",
-          "stage": "EDGE",
-          "level": "success"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.142Z",
-          "message": "Registering DNS routing for site-zip-test-9141.pateldeeep.in...",
-          "stage": "ROUTING",
-          "level": "info"
-        },
-        {
-          "timestamp": "2026-10-05T12:29:39.143Z",
-          "message": "🎉 Deployment LIVE: http://localhost:5000/sites/site-zip-test-9141/",
-          "stage": "LIVE",
-          "level": "success"
-        }
-      ],
-      "createdAt": "2026-10-05T12:29:39.123Z",
-      "startedAt": "2026-10-05T12:29:39.124Z",
-      "completedAt": "2026-10-05T12:29:39.143Z"
+      "completedAt": "2026-10-06T13:00:09.752Z",
+      "createdAt": "2026-10-06T13:00:09.752Z"
     }
   ],
   "envVars": [],
@@ -495,9 +99,9 @@
       "targetUrl": "https://redis.io",
       "placement": "DASHBOARD",
       "status": "ACTIVE",
-      "impressions": 1420,
+      "impressions": 1421,
       "clicks": 68,
-      "createdAt": "2026-10-05T12:08:41.411Z"
+      "createdAt": "2026-10-06T13:00:50.280Z"
     },
     {
       "_id": "ad_db_002",
@@ -509,7 +113,7 @@
       "status": "ACTIVE",
       "impressions": 890,
       "clicks": 42,
-      "createdAt": "2026-10-05T12:08:41.411Z"
+      "createdAt": "2026-10-06T13:00:50.280Z"
     }
   ],
   "auditLogs": [
@@ -1377,6 +981,69 @@
       "action": "USER_LOGIN",
       "ip": "::1",
       "createdAt": "2026-10-06T12:54:37.438Z"
+    },
+    {
+      "_id": "log_1791291460561",
+      "userId": "usr_1791291460561_9ztgs",
+      "action": "USER_REGISTER",
+      "ip": "::1",
+      "details": {
+        "email": "patelbhai12xx@gmail.com"
+      },
+      "createdAt": "2026-10-06T12:57:40.561Z"
+    },
+    {
+      "_id": "audit_1791291604064",
+      "action": "AWS_EC2_FREE_TIER_SPINUP",
+      "ip": "system-agent",
+      "details": {
+        "instanceId": "i-0334000ea39aa93",
+        "nodeName": "DeployHub-Fleet-Worker-36 (t2.micro Free Tier)",
+        "reason": "Storage threshold exceeded on DeployHub-Fleet-Worker-1 (t2.micro Free Tier) (88%)",
+        "publicIp": "13.235.198.132",
+        "isRealAws": false
+      },
+      "createdAt": "2026-10-06T13:00:04.064Z"
+    },
+    {
+      "_id": "log_1791291609682",
+      "userId": "usr_1791291460561_9ztgs",
+      "action": "PROJECT_CREATE",
+      "ip": "::1",
+      "details": {
+        "projectId": "prj_1791291609682_8loz",
+        "name": "asd",
+        "slug": "asd",
+        "type": "STATIC"
+      },
+      "createdAt": "2026-10-06T13:00:09.683Z"
+    },
+    {
+      "_id": "log_1791291930618",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-06T13:05:30.618Z"
+    },
+    {
+      "_id": "audit_1791292021221",
+      "action": "AWS_EC2_FREE_TIER_SPINUP",
+      "ip": "system-agent",
+      "details": {
+        "instanceId": "i-0e756cf9594bc26",
+        "nodeName": "DeployHub-Fleet-Worker-37 (t2.micro Free Tier)",
+        "reason": "Storage threshold exceeded on DeployHub-Fleet-Worker-1 (t2.micro Free Tier) (88%)",
+        "publicIp": "13.235.200.170",
+        "isRealAws": false
+      },
+      "createdAt": "2026-10-06T13:07:01.221Z"
+    },
+    {
+      "_id": "log_1791292240259",
+      "userId": "usr_demo_002",
+      "action": "USER_LOGIN",
+      "ip": "::1",
+      "createdAt": "2026-10-06T13:10:40.260Z"
     }
   ],
   "serverNodes": [
@@ -1434,7 +1101,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-05T13:29:59.081Z",
@@ -1454,7 +1121,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-05T13:34:59.095Z",
@@ -1474,7 +1141,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-05T13:50:46.235Z",
@@ -1494,7 +1161,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-05T14:39:41.651Z",
@@ -1514,7 +1181,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T04:27:25.401Z",
@@ -1534,7 +1201,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T04:32:25.401Z",
@@ -1554,7 +1221,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T04:37:25.407Z",
@@ -1574,7 +1241,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T04:42:25.421Z",
@@ -1594,7 +1261,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T04:47:25.431Z",
@@ -1614,7 +1281,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T04:50:46.035Z",
@@ -1634,7 +1301,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T04:54:47.591Z",
@@ -1654,7 +1321,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T04:59:47.593Z",
@@ -1674,7 +1341,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:04:47.608Z",
@@ -1694,7 +1361,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:13:41.219Z",
@@ -1714,7 +1381,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:18:41.233Z",
@@ -1734,7 +1401,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:23:41.239Z",
@@ -1754,7 +1421,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:28:41.249Z",
@@ -1774,7 +1441,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:33:41.264Z",
@@ -1794,7 +1461,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:39:28.357Z",
@@ -1814,7 +1481,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:44:28.358Z",
@@ -1834,7 +1501,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:49:28.371Z",
@@ -1854,7 +1521,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:54:28.376Z",
@@ -1874,7 +1541,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T10:58:19.683Z",
@@ -1894,7 +1561,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T11:08:43.870Z",
@@ -1914,7 +1581,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T11:46:45.986Z",
@@ -1934,7 +1601,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T11:51:45.997Z",
@@ -1954,7 +1621,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T11:56:46.008Z",
@@ -1974,7 +1641,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T12:03:07.546Z",
@@ -1994,7 +1661,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T12:08:07.560Z",
@@ -2014,7 +1681,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T12:13:07.564Z",
@@ -2034,7 +1701,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T12:20:18.719Z",
@@ -2054,7 +1721,7 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T12:25:18.722Z",
@@ -2074,12 +1741,73 @@
       "storageUsedBytes": 3758096384,
       "storageUsagePercent": 11.6,
       "maxAllowedStoragePercent": 85,
-      "assignedProjectsCount": 0,
+      "assignedProjectsCount": 1,
       "isPrimaryNode": false,
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T12:37:09.340Z",
       "lastHeartbeatAt": "2026-10-06T12:37:09.341Z"
+    },
+    {
+      "_id": "node_ec2_1791291604064_uu9g",
+      "instanceId": "i-0334000ea39aa93",
+      "name": "DeployHub-Fleet-Worker-36 (t2.micro Free Tier)",
+      "publicIp": "13.235.198.132",
+      "privateIp": "172.31.20.53",
+      "instanceType": "t2.micro",
+      "region": "ap-south-1",
+      "provider": "AWS_EC2",
+      "status": "RUNNING",
+      "storageTotalBytes": 32212254720,
+      "storageUsedBytes": 3758096384,
+      "storageUsagePercent": 11.6,
+      "maxAllowedStoragePercent": 85,
+      "assignedProjectsCount": 1,
+      "isPrimaryNode": false,
+      "isAcceptingTraffic": true,
+      "createdAt": "2026-10-06T13:00:04.064Z",
+      "lastHeartbeatAt": "2026-10-06T13:00:04.064Z"
+    },
+    {
+      "_id": "node_ec2_1791292021220_nvvw",
+      "instanceId": "i-0e756cf9594bc26",
+      "name": "DeployHub-Fleet-Worker-37 (t2.micro Free Tier)",
+      "publicIp": "13.235.200.170",
+      "privateIp": "172.31.17.123",
+      "instanceType": "t2.micro",
+      "region": "ap-south-1",
+      "provider": "AWS_EC2",
+      "status": "RUNNING",
+      "storageTotalBytes": 32212254720,
+      "storageUsedBytes": 3758096384,
+      "storageUsagePercent": 11.6,
+      "maxAllowedStoragePercent": 85,
+      "assignedProjectsCount": 0,
+      "isPrimaryNode": false,
+      "isAcceptingTraffic": true,
+      "createdAt": "2026-10-06T13:07:01.221Z",
+      "lastHeartbeatAt": "2026-10-06T13:07:01.221Z"
     }
   ],
-  "trafficLogs": []
+  "trafficLogs": [
+    {
+      "_id": "trf_1791291612996_n7us",
+      "userId": "usr_1791291460561_9ztgs",
+      "projectId": "prj_1791291609682_8loz",
+      "timestamp": "2026-10-06T13:00:12.996Z",
+      "date": "2026-10-06",
+      "bytesSent": 2048,
+      "path": "/",
+      "statusCode": 200
+    },
+    {
+      "_id": "trf_1791291613110_v2ns",
+      "userId": "usr_1791291460561_9ztgs",
+      "projectId": "prj_1791291609682_8loz",
+      "timestamp": "2026-10-06T13:00:13.110Z",
+      "date": "2026-10-06",
+      "bytesSent": 2048,
+      "path": "/styles.css",
+      "statusCode": 200
+    }
+  ]
 }

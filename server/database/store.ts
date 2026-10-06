@@ -152,11 +152,16 @@ class DataStore {
           }
         });
         this.deployments = data.deployments || [];
-        this.envVars = data.envVars || [];
+        // Clean out any default sample/seed websites
+        const defaultSlugs = ['alex-portfolio', 'retro-games-api', 'zip-test-website', 'site-zip-test-9141', 'my-website', 'rro'];
+        this.projects = this.projects.filter(p => !defaultSlugs.includes(p.slug) && !p._id.startsWith('prj_portfolio_') && !p._id.startsWith('prj_shop_'));
+        const remainingProjectIds = new Set(this.projects.map(p => p._id));
+        this.deployments = (this.deployments || []).filter(d => remainingProjectIds.has(d.projectId));
+        this.envVars = (this.envVars || []).filter(ev => remainingProjectIds.has(ev.projectId));
         this.ads = data.ads || [];
         this.auditLogs = data.auditLogs || [];
         this.serverNodes = data.serverNodes || [];
-        this.trafficLogs = data.trafficLogs || [];
+        this.trafficLogs = (data.trafficLogs || []).filter((l: any) => remainingProjectIds.has(l.projectId));
       }
     } catch (e) {
       console.warn('Could not read existing state file, initializing fresh store');
@@ -197,8 +202,8 @@ class DataStore {
         role: 'ADMIN',
         plan: 'PRO',
         emailVerified: true,
-        storageUsed: 12582912,
-        bandwidthUsed: 429496729,
+        storageUsed: 0,
+        bandwidthUsed: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -215,91 +220,14 @@ class DataStore {
         role: 'USER',
         plan: 'DEVELOPER',
         emailVerified: true,
-        storageUsed: 35651584,
-        bandwidthUsed: 1073741824,
+        storageUsed: 0,
+        bandwidthUsed: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
     }
 
-    // Seed Demo Projects & Deployments if empty
-    if (this.projects.length === 0) {
-      const devUser = this.users.find(u => u.email === 'developer@deployhub.com')!;
-      
-      const portfolioProject: IProject = {
-        _id: 'prj_portfolio_001',
-        userId: devUser._id,
-        name: 'Alex Portfolio',
-        slug: 'alex-portfolio',
-        type: 'STATIC',
-        status: 'ACTIVE',
-        currentDeploymentId: 'dep_port_001',
-        storageUsed: 2450000,
-        customDomain: 'portfolio.alexrivera.dev',
-        customDomainVerified: true,
-        sslEnabled: true,
-        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      const phpProject: IProject = {
-        _id: 'prj_shop_002',
-        userId: devUser._id,
-        name: 'Retro Games API',
-        slug: 'retro-games-api',
-        type: 'PHP',
-        status: 'ACTIVE',
-        currentDeploymentId: 'dep_php_002',
-        storageUsed: 6200000,
-        createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      this.projects.push(portfolioProject, phpProject);
-
-      this.deployments.push({
-        _id: 'dep_port_001',
-        projectId: portfolioProject._id,
-        userId: devUser._id,
-        version: 1,
-        source: 'ZIP_UPLOAD',
-        status: 'LIVE',
-        deploymentUrl: `http://localhost:${config.port}/sites/alex-portfolio/`,
-        logs: [
-          { timestamp: new Date(Date.now() - 3600000).toISOString(), message: 'Deployment initialized for alex-portfolio', stage: 'QUEUE', level: 'info' },
-          { timestamp: new Date(Date.now() - 3590000).toISOString(), message: 'Extracting archive securely... 14 files unpacked', stage: 'EXTRACT', level: 'info' },
-          { timestamp: new Date(Date.now() - 3580000).toISOString(), message: 'Security Scan: 0 vulnerabilities found, MIME types valid', stage: 'SCAN', level: 'success' },
-          { timestamp: new Date(Date.now() - 3570000).toISOString(), message: 'Artifact compiled and mounted to static edge route', stage: 'DEPLOY', level: 'info' },
-          { timestamp: new Date(Date.now() - 3560000).toISOString(), message: 'Deployment is LIVE at http://alex-portfolio.deployhub.local', stage: 'LIVE', level: 'success' },
-        ],
-        startedAt: new Date(Date.now() - 3600000).toISOString(),
-        completedAt: new Date(Date.now() - 3560000).toISOString(),
-        createdAt: new Date(Date.now() - 3600000).toISOString(),
-      });
-
-      this.deployments.push({
-        _id: 'dep_php_002',
-        projectId: phpProject._id,
-        userId: devUser._id,
-        version: 1,
-        source: 'ZIP_UPLOAD',
-        status: 'LIVE',
-        deploymentUrl: `http://localhost:${config.port}/sites/retro-games-api/`,
-        logs: [
-          { timestamp: new Date(Date.now() - 7200000).toISOString(), message: 'PHP Deployment initiated for retro-games-api', stage: 'QUEUE', level: 'info' },
-          { timestamp: new Date(Date.now() - 7190000).toISOString(), message: 'Verifying PHP 8.2 runtime dependencies and index.php entrypoint', stage: 'VALIDATE', level: 'info' },
-          { timestamp: new Date(Date.now() - 7180000).toISOString(), message: 'Configuring isolated tenant sandbox & PHP execution boundary', stage: 'ISOLATION', level: 'info' },
-          { timestamp: new Date(Date.now() - 7170000).toISOString(), message: 'PHP Application online and healthy', stage: 'LIVE', level: 'success' },
-        ],
-        startedAt: new Date(Date.now() - 7200000).toISOString(),
-        completedAt: new Date(Date.now() - 7170000).toISOString(),
-        createdAt: new Date(Date.now() - 7200000).toISOString(),
-      });
-
-      // Sample sample sites files on disk so they immediately render if clicked!
-      this.seedSampleSiteFiles(portfolioProject.slug, 'static');
-      this.seedSampleSiteFiles(phpProject.slug, 'php');
-    }
+    // Default websites are not seeded - platform starts clean with 0 hosted sites
 
     // Seed Advertisements for monetization system
     if (this.ads.length === 0) {
@@ -331,53 +259,6 @@ class DataStore {
       );
     }
 
-    this.save();
-  }
-
-  private seedSampleSiteFiles(slug: string, type: 'static' | 'php') {
-    const siteDir = path.join(config.storageDir, 'sites', slug);
-    if (!fs.existsSync(siteDir)) {
-      fs.mkdirSync(siteDir, { recursive: true });
-      if (type === 'static') {
-        const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alex Rivera - Full Stack Engineer</title>
-  <style>
-    body { margin: 0; background: #0B1120; color: #F8FAFC; font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .card { background: #172033; border: 1px solid #263449; border-radius: 16px; padding: 40px; max-width: 600px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    h1 { color: #38BDF8; margin-top: 0; }
-    p { color: #94A3B8; line-height: 1.6; }
-    .badge { display: inline-block; background: #2563EB; color: white; padding: 6px 14px; border-radius: 9999px; font-size: 12px; font-weight: bold; margin-bottom: 20px; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="badge">🚀 Deployed on DeployHub</div>
-    <h1>Alex Rivera's Portfolio</h1>
-    <p>Welcome to my static deployment hosted seamlessly on DeployHub high performance edge router.</p>
-    <p>Fast. Secure. Multi-tenant isolated.</p>
-  </div>
-</body>
-</html>`;
-        fs.writeFileSync(path.join(siteDir, 'index.html'), html);
-      } else {
-        const php = `<?php
-header('Content-Type: application/json');
-echo json_encode([
-  'status' => 'success',
-  'message' => 'Hello from isolated DeployHub PHP Engine!',
-  'platform' => 'DeployHub v1.0.0',
-  'php_version' => PHP_VERSION,
-  'timestamp' => date('Y-m-d H:i:s')
-]);
-`;
-        fs.writeFileSync(path.join(siteDir, 'index.php'), php);
-      }
-    }
-
     // Seed initial Primary AWS EC2 Free Tier Node if none exist
     if (this.serverNodes.length === 0) {
       this.serverNodes.push({
@@ -401,6 +282,8 @@ echo json_encode([
         lastHeartbeatAt: new Date().toISOString(),
       });
     }
+
+    this.save();
   }
 }
 

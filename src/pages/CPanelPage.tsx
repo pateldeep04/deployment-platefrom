@@ -68,6 +68,7 @@ export const CPanelPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<IProjectFile | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
   const [originalContent, setOriginalContent] = useState<string>('');
+  const hasUnsavedChanges = fileContent !== originalContent;
   
   const [isLoadingFiles, setIsLoadingFiles] = useState<boolean>(true);
   const [isLoadingContent, setIsLoadingContent] = useState<boolean>(false);
@@ -549,7 +550,6 @@ export const CPanelPage: React.FC = () => {
     return <FileText className="w-4 h-4 text-deployText-secondary shrink-0" />;
   };
 
-  const hasUnsavedChanges = fileContent !== originalContent;
   const liveUrl = project ? getLiveProjectUrl(project) : '';
 
   return (
