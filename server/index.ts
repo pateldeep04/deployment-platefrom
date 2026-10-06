@@ -16,15 +16,30 @@ const app = express();
 // Initialize disk storage paths
 ensureStorageDirectories();
 
-// Subdomain Host Router: Intercept *.pateldeeep.me, *.deployhub.local, or custom domains
+// Subdomain Host Router: Intercept *.deployeai.duckdns.org, *.pateldeeep.me, or custom domains
 app.use((req, res, next) => {
   const host = (req.headers.host || '').split(':')[0].toLowerCase();
   const isApi = req.path.startsWith('/api') || req.path === '/health';
   if (isApi) return next();
 
-  // If host is a subdomain (e.g. my-app.pateldeeep.me or my-app.localhost)
+  const platformDomain = (config.platformDomain || 'deployeai.duckdns.org').toLowerCase();
+
+  // If host is the root platform domain or localhost, serve main app
+  if (host === platformDomain || host === `www.${platformDomain}` || host === 'localhost' || host === '127.0.0.1') {
+    return next();
+  }
+
+  // If host is a subdomain of the platform domain (e.g. my-app.deployeai.duckdns.org)
+  if (host.endsWith('.' + platformDomain)) {
+    const subdomain = host.slice(0, -(platformDomain.length + 1));
+    if (subdomain && subdomain !== 'www' && subdomain !== 'api' && subdomain !== 'app' && subdomain !== 'admin') {
+      return handleSiteRequest(req, res, next);
+    }
+  }
+
+  // Local development fallback: my-app.localhost
   const parts = host.split('.');
-  if (parts.length > 2 || (parts.length === 2 && (parts[1] === 'localhost' || parts[1] === 'local'))) {
+  if (parts.length === 2 && (parts[1] === 'localhost' || parts[1] === 'local')) {
     const subdomain = parts[0];
     if (subdomain !== 'www' && subdomain !== 'api' && subdomain !== 'app' && subdomain !== 'admin') {
       return handleSiteRequest(req, res, next);

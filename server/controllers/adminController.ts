@@ -5,7 +5,7 @@ import fs from 'fs';
 import bcrypt from 'bcryptjs';
 import { dbStore, IProject, IUser } from '../database/store';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { config } from '../config';
+import { config, getDeploymentUrl } from '../config';
 import { deploymentEngine } from '../queue/deploymentQueue';
 
 function getDirectorySize(dirPath: string): number {
@@ -227,7 +227,7 @@ export const listAllProjects = (req: AuthenticatedRequest, res: Response): void 
         ...p,
         owner: owner ? { id: owner._id, name: owner.name, email: owner.email, plan: owner.plan } : null,
         deploymentCount: projectDeployments.length,
-        liveUrl: `http://localhost:${config.port}/sites/${p.slug}/`,
+        liveUrl: getDeploymentUrl(p),
       };
     });
 

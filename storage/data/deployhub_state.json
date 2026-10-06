@@ -1222,6 +1222,84 @@
         "isRealAws": false
       },
       "createdAt": "2026-10-06T05:54:28.376Z"
+    },
+    {
+      "_id": "audit_1791284299683",
+      "action": "AWS_EC2_FREE_TIER_SPINUP",
+      "ip": "system-agent",
+      "details": {
+        "instanceId": "i-000a77e1e52dcaa",
+        "nodeName": "DeployHub-Fleet-Worker-25 (t2.micro Free Tier)",
+        "reason": "Storage threshold exceeded on DeployHub-Fleet-Worker-1 (t2.micro Free Tier) (88%)",
+        "publicIp": "13.235.11.199",
+        "isRealAws": false
+      },
+      "createdAt": "2026-10-06T10:58:19.683Z"
+    },
+    {
+      "_id": "audit_1791284923870",
+      "action": "AWS_EC2_FREE_TIER_SPINUP",
+      "ip": "system-agent",
+      "details": {
+        "instanceId": "i-049636b4a7cf3c2",
+        "nodeName": "DeployHub-Fleet-Worker-26 (t2.micro Free Tier)",
+        "reason": "Storage threshold exceeded on DeployHub-Fleet-Worker-1 (t2.micro Free Tier) (88%)",
+        "publicIp": "13.235.183.171",
+        "isRealAws": false
+      },
+      "createdAt": "2026-10-06T11:08:43.870Z"
+    },
+    {
+      "_id": "audit_1791287205987",
+      "action": "AWS_EC2_FREE_TIER_SPINUP",
+      "ip": "system-agent",
+      "details": {
+        "instanceId": "i-063d4b2a3970518",
+        "nodeName": "DeployHub-Fleet-Worker-27 (t2.micro Free Tier)",
+        "reason": "Storage threshold exceeded on DeployHub-Fleet-Worker-1 (t2.micro Free Tier) (88%)",
+        "publicIp": "13.235.21.38",
+        "isRealAws": false
+      },
+      "createdAt": "2026-10-06T11:46:45.987Z"
+    },
+    {
+      "_id": "audit_1791287505997",
+      "action": "AWS_EC2_FREE_TIER_SPINUP",
+      "ip": "system-agent",
+      "details": {
+        "instanceId": "i-09cfec0c1c43de3",
+        "nodeName": "DeployHub-Fleet-Worker-28 (t2.micro Free Tier)",
+        "reason": "Storage threshold exceeded on DeployHub-Fleet-Worker-1 (t2.micro Free Tier) (88%)",
+        "publicIp": "13.235.56.198",
+        "isRealAws": false
+      },
+      "createdAt": "2026-10-06T11:51:45.997Z"
+    },
+    {
+      "_id": "audit_1791287806008",
+      "action": "AWS_EC2_FREE_TIER_SPINUP",
+      "ip": "system-agent",
+      "details": {
+        "instanceId": "i-045580f8e7ac7d6",
+        "nodeName": "DeployHub-Fleet-Worker-29 (t2.micro Free Tier)",
+        "reason": "Storage threshold exceeded on DeployHub-Fleet-Worker-1 (t2.micro Free Tier) (88%)",
+        "publicIp": "13.235.110.57",
+        "isRealAws": false
+      },
+      "createdAt": "2026-10-06T11:56:46.008Z"
+    },
+    {
+      "_id": "audit_1791288187547",
+      "action": "AWS_EC2_FREE_TIER_SPINUP",
+      "ip": "system-agent",
+      "details": {
+        "instanceId": "i-00ee5e407940671",
+        "nodeName": "DeployHub-Fleet-Worker-30 (t2.micro Free Tier)",
+        "reason": "Storage threshold exceeded on DeployHub-Fleet-Worker-1 (t2.micro Free Tier) (88%)",
+        "publicIp": "13.235.55.13",
+        "isRealAws": false
+      },
+      "createdAt": "2026-10-06T12:03:07.547Z"
     }
   ],
   "serverNodes": [
@@ -1704,6 +1782,127 @@
       "isAcceptingTraffic": true,
       "createdAt": "2026-10-06T05:54:28.376Z",
       "lastHeartbeatAt": "2026-10-06T05:54:28.376Z"
+    },
+    {
+      "_id": "node_ec2_1791284299683_f01w",
+      "instanceId": "i-000a77e1e52dcaa",
+      "name": "DeployHub-Fleet-Worker-25 (t2.micro Free Tier)",
+      "publicIp": "13.235.11.199",
+      "privateIp": "172.31.21.23",
+      "instanceType": "t2.micro",
+      "region": "ap-south-1",
+      "provider": "AWS_EC2",
+      "status": "RUNNING",
+      "storageTotalBytes": 32212254720,
+      "storageUsedBytes": 3758096384,
+      "storageUsagePercent": 11.6,
+      "maxAllowedStoragePercent": 85,
+      "assignedProjectsCount": 0,
+      "isPrimaryNode": false,
+      "isAcceptingTraffic": true,
+      "createdAt": "2026-10-06T10:58:19.683Z",
+      "lastHeartbeatAt": "2026-10-06T10:58:19.683Z"
+    },
+    {
+      "_id": "node_ec2_1791284923870_mukh",
+      "instanceId": "i-049636b4a7cf3c2",
+      "name": "DeployHub-Fleet-Worker-26 (t2.micro Free Tier)",
+      "publicIp": "13.235.183.171",
+      "privateIp": "172.31.38.82",
+      "instanceType": "t2.micro",
+      "region": "ap-south-1",
+      "provider": "AWS_EC2",
+      "status": "RUNNING",
+      "storageTotalBytes": 32212254720,
+      "storageUsedBytes": 3758096384,
+      "storageUsagePercent": 11.6,
+      "maxAllowedStoragePercent": 85,
+      "assignedProjectsCount": 0,
+      "isPrimaryNode": false,
+      "isAcceptingTraffic": true,
+      "createdAt": "2026-10-06T11:08:43.870Z",
+      "lastHeartbeatAt": "2026-10-06T11:08:43.870Z"
+    },
+    {
+      "_id": "node_ec2_1791287205986_rbvw",
+      "instanceId": "i-063d4b2a3970518",
+      "name": "DeployHub-Fleet-Worker-27 (t2.micro Free Tier)",
+      "publicIp": "13.235.21.38",
+      "privateIp": "172.31.52.88",
+      "instanceType": "t2.micro",
+      "region": "ap-south-1",
+      "provider": "AWS_EC2",
+      "status": "RUNNING",
+      "storageTotalBytes": 32212254720,
+      "storageUsedBytes": 3758096384,
+      "storageUsagePercent": 11.6,
+      "maxAllowedStoragePercent": 85,
+      "assignedProjectsCount": 0,
+      "isPrimaryNode": false,
+      "isAcceptingTraffic": true,
+      "createdAt": "2026-10-06T11:46:45.986Z",
+      "lastHeartbeatAt": "2026-10-06T11:46:45.987Z"
+    },
+    {
+      "_id": "node_ec2_1791287505997_o1fm",
+      "instanceId": "i-09cfec0c1c43de3",
+      "name": "DeployHub-Fleet-Worker-28 (t2.micro Free Tier)",
+      "publicIp": "13.235.56.198",
+      "privateIp": "172.31.58.24",
+      "instanceType": "t2.micro",
+      "region": "ap-south-1",
+      "provider": "AWS_EC2",
+      "status": "RUNNING",
+      "storageTotalBytes": 32212254720,
+      "storageUsedBytes": 3758096384,
+      "storageUsagePercent": 11.6,
+      "maxAllowedStoragePercent": 85,
+      "assignedProjectsCount": 0,
+      "isPrimaryNode": false,
+      "isAcceptingTraffic": true,
+      "createdAt": "2026-10-06T11:51:45.997Z",
+      "lastHeartbeatAt": "2026-10-06T11:51:45.997Z"
+    },
+    {
+      "_id": "node_ec2_1791287806007_4pmm",
+      "instanceId": "i-045580f8e7ac7d6",
+      "name": "DeployHub-Fleet-Worker-29 (t2.micro Free Tier)",
+      "publicIp": "13.235.110.57",
+      "privateIp": "172.31.23.141",
+      "instanceType": "t2.micro",
+      "region": "ap-south-1",
+      "provider": "AWS_EC2",
+      "status": "RUNNING",
+      "storageTotalBytes": 32212254720,
+      "storageUsedBytes": 3758096384,
+      "storageUsagePercent": 11.6,
+      "maxAllowedStoragePercent": 85,
+      "assignedProjectsCount": 0,
+      "isPrimaryNode": false,
+      "isAcceptingTraffic": true,
+      "createdAt": "2026-10-06T11:56:46.008Z",
+      "lastHeartbeatAt": "2026-10-06T11:56:46.008Z"
+    },
+    {
+      "_id": "node_ec2_1791288187546_1ojw",
+      "instanceId": "i-00ee5e407940671",
+      "name": "DeployHub-Fleet-Worker-30 (t2.micro Free Tier)",
+      "publicIp": "13.235.55.13",
+      "privateIp": "172.31.41.199",
+      "instanceType": "t2.micro",
+      "region": "ap-south-1",
+      "provider": "AWS_EC2",
+      "status": "RUNNING",
+      "storageTotalBytes": 32212254720,
+      "storageUsedBytes": 3758096384,
+      "storageUsagePercent": 11.6,
+      "maxAllowedStoragePercent": 85,
+      "assignedProjectsCount": 0,
+      "isPrimaryNode": false,
+      "isAcceptingTraffic": true,
+      "createdAt": "2026-10-06T12:03:07.546Z",
+      "lastHeartbeatAt": "2026-10-06T12:03:07.547Z"
     }
-  ]
+  ],
+  "trafficLogs": []
 }

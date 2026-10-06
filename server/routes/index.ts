@@ -1,6 +1,13 @@
 import { Router } from 'express';
 import { authenticateJwt, requireRole } from '../middleware/auth';
 import { uploadMiddleware } from '../middleware/upload';
+import {
+  authLimiter,
+  uploadLimiter,
+  cpanelActionLimiter,
+  subdomainCheckLimiter,
+  adInteractionLimiter,
+} from '../middleware/rateLimiter';
 
 import * as authCtrl from '../controllers/authController';
 import * as projectCtrl from '../controllers/projectController';
@@ -16,13 +23,14 @@ import * as fleetCtrl from '../controllers/cloudFleetController';
 const router = Router();
 
 // ================= AUTHENTICATION =================
-router.post('/auth/register', authCtrl.register);
-router.post('/auth/login', authCtrl.login);
-router.post('/auth/refresh', authCtrl.refreshToken);
+router.post('/auth/register', authLimiter, authCtrl.register);
+router.post('/auth/login', authLimiter, authCtrl.login);
+router.post('/auth/refresh', authLimiter, authCtrl.refreshToken);
 router.get('/auth/me', authenticateJwt, authCtrl.getCurrentUser);
 
 // ================= PROJECTS =================
 router.get('/projects', authenticateJwt, projectCtrl.listProjects);
+router.get('/projects/telemetry', authenticateJwt, projectCtrl.getTelemetryAnalytics);
 router.post('/projects', authenticateJwt, projectCtrl.createProject);
 router.get('/projects/:id', authenticateJwt, projectCtrl.getProject);
 router.patch('/projects/:id', authenticateJwt, projectCtrl.updateProject);
@@ -31,19 +39,21 @@ router.delete('/projects/:id', authenticateJwt, projectCtrl.deleteProject);
 // ================= FILE MANAGER / CPANEL =================
 router.get('/projects/:projectId/files', authenticateJwt, fileCtrl.listFiles);
 router.get('/projects/:projectId/files/content', authenticateJwt, fileCtrl.getFileContent);
-router.put('/projects/:projectId/files/content', authenticateJwt, fileCtrl.saveFileContent);
-router.post('/projects/:projectId/files/create', authenticateJwt, fileCtrl.createFileOrFolder);
-router.delete('/projects/:projectId/files', authenticateJwt, fileCtrl.deleteFileOrFolder);
-router.post('/projects/:projectId/files/rename', authenticateJwt, fileCtrl.renameFileOrFolder);
-router.post('/projects/:projectId/files/upload', authenticateJwt, uploadMiddleware.array('files', 50), fileCtrl.uploadIndividualFiles);
-router.post('/projects/:projectId/files/extract', authenticateJwt, fileCtrl.extractArchive);
-router.post('/projects/:projectId/files/upload-and-extract', authenticateJwt, uploadMiddleware.single('file'), fileCtrl.uploadAndExtractArchive);
-router.post('/projects/:projectId/files/initialize-template', authenticateJwt, fileCtrl.initializeTemplate);
+router.put('/projects/:projectId/files/content', authenticateJwt, cpanelActionLimiter, fileCtrl.saveFileContent);
+router.post('/projects/:projectId/files/create', authenticateJwt, cpanelActionLimiter, fileCtrl.createFileOrFolder);
+router.delete('/projects/:projectId/files', authenticateJwt, cpanelActionLimiter, fileCtrl.deleteFileOrFolder);
+router.post('/projects/:projectId/files/rename', authenticateJwt, cpanelActionLimiter, fileCtrl.renameFileOrFolder);
+router.post('/projects/:projectId/files/upload', authenticateJwt, uploadLimiter, uploadMiddleware.array('files', 50), fileCtrl.uploadIndividualFiles);
+router.post('/projects/:projectId/files/extract', authenticateJwt, cpanelActionLimiter, fileCtrl.extractArchive);
+router.post('/projects/:projectId/files/upload-and-extract', authenticateJwt, uploadLimiter, uploadMiddleware.single('file'), fileCtrl.uploadAndExtractArchive);
+router.post('/projects/:projectId/files/compress', authenticateJwt, uploadLimiter, fileCtrl.compressFolderOrFiles);
+router.post('/projects/:projectId/files/initialize-template', authenticateJwt, cpanelActionLimiter, fileCtrl.initializeTemplate);
 
 // ================= DEPLOYMENTS =================
 router.post(
   '/projects/:projectId/deploy',
   authenticateJwt,
+  uploadLimiter,
   uploadMiddleware.single('file'),
   deployCtrl.uploadAndDeploy
 );
@@ -63,27 +73,29 @@ router.post('/projects/:projectId/domains/verify', authenticateJwt, domainCtrl.v
 router.delete('/projects/:projectId/domains', authenticateJwt, domainCtrl.removeCustomDomain);
 
 // ================= AUTOMATED SUBDOMAINS & NAMECHEAP =================
-router.get('/subdomains/check', domainCtrl.checkSubdomainAvailability);
-router.post('/subdomains/assign', authenticateJwt, domainCtrl.assignSubdomain);
-router.get('/subdomains/verify', domainCtrl.verifySubdomainDns);
+router.get('/subdomains/check', subdomainCheckLimiter, domainCtrl.checkSubdomainAvailability);
+router.post('/subdomains/assign', authenticateJwt, subdomainCheckLimiter, domainCtrl.assignSubdomain);
+router.get('/subdomains/verify', subdomainCheckLimiter, domainCtrl.verifySubdomainDns);
 
-// ================= AWS EC2 FLEET & AUTO-SPINUP =================
-router.get('/fleet/nodes', fleetCtrl.listFleetNodes);
-router.get('/fleet/nodes/:id', fleetCtrl.getNodeDetails);
-router.post('/fleet/spinup', authenticateJwt, fleetCtrl.triggerSpinUpNode);
-router.post('/fleet/check-storage-threshold', fleetCtrl.checkStorageThreshold);
-router.post('/fleet/simulate-storage-full', authenticateJwt, fleetCtrl.simulateStorageFull);
-router.get('/fleet/dns-status', fleetCtrl.getDnsStatus);
+// ================= AWS EC2 FLEET & AUTO-SPINUP (SECURED) =================
+router.get('/fleet/nodes', authenticateJwt, fleetCtrl.listFleetNodes);
+router.get('/fleet/nodes/:id', authenticateJwt, fleetCtrl.getNodeDetails);
+router.post('/fleet/spinup', authenticateJwt, requireRole('ADMIN'), fleetCtrl.triggerSpinUpNode);
+router.post('/fleet/check-storage-threshold', authenticateJwt, requireRole('ADMIN'), fleetCtrl.checkStorageThreshold);
+router.post('/fleet/simulate-storage-full', authenticateJwt, requireRole('ADMIN'), fleetCtrl.simulateStorageFull);
+router.get('/fleet/dns-status', authenticateJwt, fleetCtrl.getDnsStatus);
 
 // ================= BILLING & PLANS =================
 router.get('/billing/plans', billingCtrl.getPlans);
+router.get('/billing/upi-details', billingCtrl.getUpiPaymentDetails);
+router.post('/billing/upi-verify', authenticateJwt, billingCtrl.verifyUpiPayment);
 router.post('/billing/checkout', authenticateJwt, billingCtrl.createCheckoutOrder);
 router.post('/billing/verify', authenticateJwt, billingCtrl.verifyPaymentAndUpgrade);
 
 // ================= ADVERTISEMENTS =================
 router.get('/ads', adsCtrl.getAdsByPlacement);
-router.post('/ads/:id/impression', adsCtrl.recordImpression);
-router.post('/ads/:id/click', adsCtrl.recordClick);
+router.post('/ads/:id/impression', adInteractionLimiter, adsCtrl.recordImpression);
+router.post('/ads/:id/click', adInteractionLimiter, adsCtrl.recordClick);
 
 // Admin Ads
 router.get('/admin/ads', authenticateJwt, requireRole('ADMIN'), adsCtrl.listAllAds);

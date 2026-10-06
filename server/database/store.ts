@@ -109,6 +109,17 @@ export interface IAuditLog {
   createdAt: string;
 }
 
+export interface ITrafficLog {
+  _id: string;
+  userId: string;
+  projectId: string;
+  timestamp: string;
+  date: string; // 'YYYY-MM-DD'
+  bytesSent: number;
+  path: string;
+  statusCode: number;
+}
+
 // In-memory + persistent JSON store for high performance and zero-dependency local setup
 class DataStore {
   private filePath: string;
@@ -119,6 +130,7 @@ class DataStore {
   public ads: IAdvertisement[] = [];
   public auditLogs: IAuditLog[] = [];
   public serverNodes: IServerNode[] = [];
+  public trafficLogs: ITrafficLog[] = [];
 
   constructor() {
     this.filePath = path.join(config.storageDir, 'data', 'deployhub_state.json');
@@ -138,6 +150,7 @@ class DataStore {
         this.ads = data.ads || [];
         this.auditLogs = data.auditLogs || [];
         this.serverNodes = data.serverNodes || [];
+        this.trafficLogs = data.trafficLogs || [];
       }
     } catch (e) {
       console.warn('Could not read existing state file, initializing fresh store');
@@ -154,6 +167,7 @@ class DataStore {
         ads: this.ads,
         auditLogs: this.auditLogs,
         serverNodes: this.serverNodes,
+        trafficLogs: this.trafficLogs,
       };
       const dir = path.dirname(this.filePath);
       if (!fs.existsSync(dir)) {

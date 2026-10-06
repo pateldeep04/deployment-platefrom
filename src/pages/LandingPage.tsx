@@ -115,7 +115,7 @@ export const LandingPage: React.FC = () => {
   ];
 
   const hostingSpecs = [
-    '5 GB Fast SSD Storage',
+    '1 GB Fast SSD Storage (Up to 3 Websites)',
     'Unlimited Bandwidth / Month',
     'PHP 8.4 Isolated Execution',
     'Static HTML/CSS/JS Fast CDN',
@@ -357,8 +357,8 @@ export const LandingPage: React.FC = () => {
               <p className="text-xs text-deployText-secondary mt-1 font-medium">Free Forever (No Trial)</p>
             </div>
             <div className="pt-2 md:pt-0">
-              <div className="text-3xl sm:text-4xl font-black text-accent">5 GB</div>
-              <p className="text-xs text-deployText-secondary mt-1 font-medium">Fast SSD Storage, Free</p>
+              <div className="text-3xl sm:text-4xl font-black text-accent">1 GB</div>
+              <p className="text-xs text-deployText-secondary mt-1 font-medium">SSD Storage (3 Websites)</p>
             </div>
             <div className="pt-2 md:pt-0">
               <div className="text-3xl sm:text-4xl font-black text-emerald-400">Unlimited</div>

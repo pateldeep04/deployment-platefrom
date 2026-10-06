@@ -1,10 +1,12 @@
 import { Response } from 'express';
 import path from 'path';
 import fs from 'fs';
-import { config } from '../config';
+import { config, getDeploymentUrl } from '../config';
 import { dbStore, IDeployment } from '../database/store';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { SecurityValidator } from '../middleware/securityValidator';
+import { MalwareScanner } from '../services/malwareScanner';
+import AdmZip from 'adm-zip';
 
 /**
  * Safely resolves and checks that a requested relative path stays strictly within the project's site directory.
@@ -165,7 +167,7 @@ export const listFiles = async (req: AuthenticatedRequest, res: Response): Promi
           slug: project.slug,
           type: project.type,
           status: project.status,
-          deploymentUrl: `http://localhost:${config.port}/sites/${project.slug}/`,
+          deploymentUrl: getDeploymentUrl(project),
         },
         currentDir: subDir.replace(/\\/g, '/'),
         files,
@@ -261,6 +263,16 @@ export const saveFileContent = async (req: AuthenticatedRequest, res: Response):
     const forbiddenExtensions = ['exe', 'bat', 'cmd', 'sh', 'msi', 'vbs', 'dll'];
     if (forbiddenExtensions.includes(ext)) {
       res.status(400).json({ success: false, error: `Writing executable '${ext}' files is blocked for security.` });
+      return;
+    }
+
+    // Antivirus and Webshell inspection on edited content
+    const codeThreats = MalwareScanner.scanCodeContent(content, path.basename(targetFile));
+    if (codeThreats.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: `Security Alert: Disallowed code pattern detected: ${codeThreats.join('; ')}`,
+      });
       return;
     }
 
@@ -561,6 +573,20 @@ export const uploadIndividualFiles = async (req: AuthenticatedRequest, res: Resp
       return;
     }
 
+    // Enforce 1 GB SSD Storage Quota
+    const MAX_STORAGE_BYTES = 1024 * 1024 * 1024; // 1 GB
+    const totalUploadBytes = files.reduce((acc, f) => acc + f.size, 0);
+    if ((user.storageUsed || 0) + totalUploadBytes > MAX_STORAGE_BYTES) {
+      for (const f of files) {
+        try { fs.unlinkSync(f.path); } catch {}
+      }
+      res.status(413).json({
+        success: false,
+        error: `Storage quota exceeded! Your account has a 1 GB SSD storage limit across your 3 websites. Current usage: ${((user.storageUsed || 0) / (1024 * 1024)).toFixed(1)} MB.`
+      });
+      return;
+    }
+
     const targetDirParam = (req.body.targetDir as string) || '';
     const siteDir = ensureSiteDir(project.slug);
     const destinationDir = resolveSafePath(siteDir, targetDirParam);
@@ -571,6 +597,22 @@ export const uploadIndividualFiles = async (req: AuthenticatedRequest, res: Resp
 
     const uploadedNames: string[] = [];
     let uploadedBytes = 0;
+
+    // Scan each file through antivirus and integrity verification
+    for (const file of files) {
+      const scanResult = await SecurityValidator.validateSingleFile(file.path, user);
+      if (!scanResult.valid) {
+        // Clean up all temporary uploads
+        for (const f of files) {
+          try { fs.unlinkSync(f.path); } catch {}
+        }
+        res.status(400).json({
+          success: false,
+          error: `Security Alert on '${file.originalname}': ${scanResult.error || 'Malware or corrupted file detected'}`,
+        });
+        return;
+      }
+    }
 
     for (const file of files) {
       const originalName = path.basename(file.originalname);
@@ -599,7 +641,7 @@ export const uploadIndividualFiles = async (req: AuthenticatedRequest, res: Resp
       data: {
         uploadedFiles: uploadedNames,
         targetDir: targetDirParam,
-        deploymentUrl: `http://localhost:${config.port}/sites/${project.slug}/`,
+        deploymentUrl: getDeploymentUrl(project),
       }
     });
   } catch (err: any) {
@@ -752,7 +794,7 @@ console.log('${project.name} initialized successfully.');
       success: true,
       message: `Initialized ${template} website template (HTML, CSS, JS${template === 'PHP' ? ', PHP' : ''})`,
       data: {
-        deploymentUrl: `http://localhost:${config.port}/sites/${project.slug}/`,
+        deploymentUrl: getDeploymentUrl(project),
       }
     });
   } catch (err: any) {
@@ -848,7 +890,7 @@ export const extractArchive = async (req: AuthenticatedRequest, res: Response): 
         targetDir: targetDir || '/',
         flattened: wasFlattened,
         archiveDeleted: !!deleteArchiveAfter,
-        deploymentUrl: `http://localhost:${config.port}/sites/${project.slug}/`,
+        deploymentUrl: getDeploymentUrl(project),
       }
     });
   } catch (err: any) {
@@ -874,6 +916,17 @@ export const uploadAndExtractArchive = async (req: AuthenticatedRequest, res: Re
 
     if (!req.file) {
       res.status(400).json({ success: false, error: 'No archive file uploaded. Please upload a .zip or .rar file.' });
+      return;
+    }
+
+    // Enforce 1 GB SSD Storage Quota
+    const MAX_STORAGE_BYTES = 1024 * 1024 * 1024; // 1 GB
+    if ((user.storageUsed || 0) + req.file.size > MAX_STORAGE_BYTES) {
+      try { fs.unlinkSync(req.file.path); } catch {}
+      res.status(413).json({
+        success: false,
+        error: `Storage quota exceeded! Your account has a 1 GB SSD storage limit across your 3 websites. Current usage: ${((user.storageUsed || 0) / (1024 * 1024)).toFixed(1)} MB.`
+      });
       return;
     }
 
@@ -935,12 +988,62 @@ export const uploadAndExtractArchive = async (req: AuthenticatedRequest, res: Re
         archiveFormat: validation.archiveFormat,
         targetDir: targetDirParam || '/',
         flattened: wasFlattened,
-        deploymentUrl: `http://localhost:${config.port}/sites/${project.slug}/`,
+        deploymentUrl: getDeploymentUrl(project),
       }
     });
   } catch (err: any) {
     if (req.file) try { fs.unlinkSync(req.file.path); } catch {}
     res.status(500).json({ success: false, error: err.message || 'Archive upload and extraction failed' });
+  }
+};
+
+/**
+ * POST /api/v1/projects/:projectId/files/compress
+ * Compresses a directory or project into a downloadable .zip archive
+ */
+export const compressFolderOrFiles = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { projectId } = req.params;
+    const { targetDir = '', archiveName } = req.body;
+    const user = req.user!;
+
+    const project = dbStore.projects.find(p => p._id === projectId && (p.userId === user._id || user.role === 'ADMIN'));
+    if (!project) {
+      res.status(404).json({ success: false, error: 'Project not found' });
+      return;
+    }
+
+    const siteDir = ensureSiteDir(project.slug);
+    const folderToCompress = resolveSafePath(siteDir, targetDir);
+
+    if (!fs.existsSync(folderToCompress)) {
+      res.status(404).json({ success: false, error: 'Target directory not found' });
+      return;
+    }
+
+    const zip = new AdmZip();
+    const cleanArchiveName = (archiveName || `${path.basename(folderToCompress) || project.slug}-archive.zip`).replace(/[/\\]/g, '');
+    const finalArchiveName = cleanArchiveName.endsWith('.zip') ? cleanArchiveName : `${cleanArchiveName}.zip`;
+
+    if (fs.statSync(folderToCompress).isDirectory()) {
+      zip.addLocalFolder(folderToCompress);
+    } else {
+      zip.addLocalFile(folderToCompress);
+    }
+
+    const outputZipPath = path.join(path.dirname(folderToCompress), finalArchiveName);
+    zip.writeZip(outputZipPath);
+
+    res.json({
+      success: true,
+      message: `Successfully created archive '${finalArchiveName}'`,
+      data: {
+        archiveName: finalArchiveName,
+        path: path.relative(siteDir, outputZipPath).replace(/\\/g, '/'),
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Compression failed' });
   }
 };
 

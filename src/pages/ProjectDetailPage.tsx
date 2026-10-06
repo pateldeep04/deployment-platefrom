@@ -26,6 +26,7 @@ import {
   Copy, 
   Check
 } from 'lucide-react';
+import { getLiveProjectUrl } from '../utils/url';
 
 const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.me';
 
@@ -249,7 +250,7 @@ export const ProjectDetailPage: React.FC = () => {
     );
   }
 
-  const liveUrl = `http://localhost:5000/sites/${project.slug}/`;
+  const liveUrl = getLiveProjectUrl(project);
 
   return (
     <div className="min-h-screen bg-background text-deployText pb-16">

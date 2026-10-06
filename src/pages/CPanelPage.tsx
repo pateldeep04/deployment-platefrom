@@ -33,6 +33,7 @@ import {
   FileArchive,
   PackageOpen
 } from 'lucide-react';
+import { getLiveProjectUrl } from '../utils/url';
 
 interface IProjectFile {
   name: string;
@@ -97,6 +98,12 @@ export const CPanelPage: React.FC = () => {
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const uploadArchiveInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
+
+  const [isCompressing, setIsCompressing] = useState<boolean>(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(false);
+  const [fontSize, setFontSize] = useState<number>(13);
+  const [cursorPosition, setCursorPosition] = useState<{ line: number; col: number }>({ line: 1, col: 1 });
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
@@ -274,7 +281,16 @@ export const CPanelPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedFile, fileContent]);
 
-  // Tab key inside editor
+  // Auto-Save effect
+  useEffect(() => {
+    if (!autoSaveEnabled || !selectedFile || !hasUnsavedChanges || isSaving) return;
+    const timer = setTimeout(() => {
+      handleSaveContent();
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [fileContent, autoSaveEnabled, hasUnsavedChanges, isSaving, selectedFile]);
+
+  // Tab key & cursor tracker inside editor
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -285,6 +301,43 @@ export const CPanelPage: React.FC = () => {
       target.value = val.substring(0, start) + '  ' + val.substring(end);
       target.selectionStart = target.selectionEnd = start + 2;
       setFileContent(target.value);
+    }
+  };
+
+  const updateCursorPos = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const target = e.currentTarget;
+    const val = target.value.substring(0, target.selectionStart);
+    const lines = val.split('\n');
+    setCursorPosition({
+      line: lines.length,
+      col: lines[lines.length - 1].length + 1,
+    });
+  };
+
+  const handleEditorScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
+    }
+  };
+
+  // Compress folder to ZIP
+  const handleCompressFolder = async () => {
+    if (!id) return;
+    setIsCompressing(true);
+    try {
+      const folderName = currentDir ? currentDir.split('/').pop() : project?.slug || 'site';
+      const res = await api.post(`/projects/${id}/files/compress`, {
+        targetDir: currentDir,
+        archiveName: `${folderName}-backup.zip`,
+      });
+      if (res.data.success) {
+        showToast(res.data.message || 'Folder compressed to ZIP successfully!');
+        fetchFiles(currentDir);
+      }
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to compress folder', 'error');
+    } finally {
+      setIsCompressing(false);
     }
   };
 
@@ -497,7 +550,7 @@ export const CPanelPage: React.FC = () => {
   };
 
   const hasUnsavedChanges = fileContent !== originalContent;
-  const liveUrl = project ? `http://localhost:5000/sites/${project.slug}/` : '';
+  const liveUrl = project ? getLiveProjectUrl(project) : '';
 
   return (
     <div className="min-h-screen bg-[#070b14] text-deployText flex flex-col font-sans">
@@ -631,6 +684,19 @@ export const CPanelPage: React.FC = () => {
               onChange={handleUploadAndExtract}
             />
 
+            <button
+              onClick={handleCompressFolder}
+              disabled={isCompressing}
+              className="flex items-center space-x-1.5 bg-surface hover:bg-deployBorder border border-deployBorder text-amber-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              title="Compress this current folder into a downloadable .zip archive"
+            >
+              {isCompressing ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+              ) : (
+                <Archive className="w-3.5 h-3.5 text-amber-400" />
+              )}
+              <span>{isCompressing ? 'Compressing...' : 'Compress (ZIP)'}</span>
+            </button>
             {/* Template drop */}
             <div className="relative group inline-block">
               <button
@@ -1087,23 +1153,96 @@ export const CPanelPage: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  /* Standard Code Editor */
-                  <div className="relative flex-1 flex flex-col bg-[#070b14]">
+                  /* Professional Code Editor with Line Numbers, Status Bar, and Auto-Save */
+                  <div className="relative flex-1 flex flex-col bg-[#070b14] overflow-hidden">
+                    {/* Editor Status Bar */}
+                    <div className="flex items-center justify-between px-3 py-1.5 bg-[#0a0f1d] border-b border-[#1e293b] text-xs">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-primary/20 text-primary border border-primary/30 uppercase font-bold">
+                          {selectedFile.extension.toUpperCase() || 'PLAINTEXT'}
+                        </span>
+                        <span className="text-[11px] text-deployText-secondary font-mono">
+                          Ln {cursorPosition.line}, Col {cursorPosition.col} • {fileContent.split('\n').length} lines • {(new TextEncoder().encode(fileContent).length / 1024).toFixed(1)} KB
+                        </span>
+                      </div>
+
+                      <div className="flex items-center space-x-3">
+                        <label className="flex items-center space-x-1.5 cursor-pointer text-[11px] text-deployText-secondary hover:text-white select-none">
+                          <input
+                            type="checkbox"
+                            checked={autoSaveEnabled}
+                            onChange={(e) => setAutoSaveEnabled(e.target.checked)}
+                            className="rounded border-deployBorder bg-[#070b14] text-emerald-500 focus:ring-emerald-400 w-3 h-3"
+                          />
+                          <span>Auto-Save (2.5s)</span>
+                        </label>
+
+                        <div className="flex items-center space-x-1 bg-[#111827] border border-[#1e293b] rounded px-1.5 py-0.5">
+                          <button
+                            onClick={() => setFontSize(Math.max(11, fontSize - 1))}
+                            className="text-[11px] text-deployText-secondary hover:text-white px-1"
+                            title="Decrease font size"
+                          >
+                            A-
+                          </button>
+                          <span className="text-[10px] text-deployText font-mono px-1">{fontSize}px</span>
+                          <button
+                            onClick={() => setFontSize(Math.min(18, fontSize + 1))}
+                            className="text-[11px] text-deployText-secondary hover:text-white px-1"
+                            title="Increase font size"
+                          >
+                            A+
+                          </button>
+                        </div>
+
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono">
+                          UTF-8
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Main Editor Body */}
                     {isLoadingContent ? (
                       <div className="flex-1 flex items-center justify-center text-xs text-deployText-secondary">
                         <RefreshCw className="w-5 h-5 text-primary animate-spin mr-2" />
                         Loading file contents...
                       </div>
                     ) : (
-                      <textarea
-                        ref={textareaRef}
-                        value={fileContent}
-                        onChange={(e) => setFileContent(e.target.value)}
-                        onKeyDown={handleEditorKeyDown}
-                        spellCheck={false}
-                        className="w-full flex-1 p-4 bg-transparent text-emerald-300 font-mono text-xs sm:text-sm leading-relaxed resize-none focus:outline-none selection:bg-primary/30"
-                        placeholder="Start writing HTML, CSS, JS or PHP code..."
-                      />
+                      <div className="flex-1 flex overflow-hidden">
+                        {/* Line Numbers Gutter */}
+                        <div
+                          ref={lineNumbersRef}
+                          className="w-12 py-4 select-none bg-[#0a0f1d] border-r border-[#1e293b] text-deployText-secondary/40 font-mono text-right pr-3 overflow-hidden"
+                          style={{ fontSize: `${fontSize}px`, lineHeight: '1.625' }}
+                        >
+                          {fileContent.split('\n').map((_, idx) => (
+                            <div
+                              key={idx}
+                              className={cursorPosition.line === idx + 1 ? 'text-primary font-bold' : ''}
+                            >
+                              {idx + 1}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Textarea */}
+                        <textarea
+                          ref={textareaRef}
+                          value={fileContent}
+                          onChange={(e) => {
+                            setFileContent(e.target.value);
+                            updateCursorPos(e);
+                          }}
+                          onKeyUp={updateCursorPos}
+                          onClick={updateCursorPos}
+                          onScroll={handleEditorScroll}
+                          onKeyDown={handleEditorKeyDown}
+                          spellCheck={false}
+                          className="w-full flex-1 p-4 bg-transparent text-emerald-300 font-mono leading-relaxed resize-none focus:outline-none selection:bg-primary/30 whitespace-pre overflow-auto"
+                          style={{ fontSize: `${fontSize}px`, lineHeight: '1.625', tabSize: 2 }}
+                          placeholder="Start writing HTML, CSS, JS or PHP code..."
+                        />
+                      </div>
                     )}
                   </div>
                 )

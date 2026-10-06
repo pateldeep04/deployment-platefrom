@@ -41,19 +41,14 @@ export const createProject = (req: AuthenticatedRequest, res: Response): void =>
     return;
   }
 
-  // Check project limit based on plan
-  const planLimits: Record<string, number> = {
-    FREE: 3,
-    DEVELOPER: 20,
-    PRO: 1000,
-  };
-  const maxProjects = planLimits[user.plan] || 3;
+  // Strictly enforce 3 website hosting limit
+  const MAX_PROJECTS = 3;
   const existingCount = dbStore.projects.filter(p => p.userId === user._id).length;
 
-  if (existingCount >= maxProjects) {
+  if (existingCount >= MAX_PROJECTS) {
     res.status(403).json({
       success: false,
-      error: `Project limit reached for ${user.plan} plan (${existingCount}/${maxProjects}). Please upgrade your plan to create more projects.`
+      error: `Hosting limit reached (${existingCount}/${MAX_PROJECTS} websites). You can host a maximum of 3 websites. Please delete an unused website to create a new one.`
     });
     return;
   }
@@ -147,4 +142,39 @@ export const deleteProject = (req: AuthenticatedRequest, res: Response): void =>
   dbStore.save();
 
   res.json({ success: true, message: `Project '${project.name}' deleted successfully` });
+};
+
+export const getTelemetryAnalytics = (req: AuthenticatedRequest, res: Response): void => {
+  const userId = req.user!._id;
+  const userLogs = (dbStore.trafficLogs || []).filter(l => l.userId === userId);
+
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const telemetry = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const dayName = daysOfWeek[d.getDay()];
+
+    const dayLogs = userLogs.filter(l => l.date === dateStr);
+    const requests = dayLogs.length;
+    const bandwidthMB = +(dayLogs.reduce((sum, l) => sum + (l.bytesSent || 0), 0) / (1024 * 1024)).toFixed(2);
+
+    telemetry.push({
+      day: dayName,
+      date: dateStr,
+      requests,
+      bandwidth: bandwidthMB,
+    });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      telemetry,
+      totalRequests: userLogs.length,
+      totalBandwidthMB: +(userLogs.reduce((sum, l) => sum + (l.bytesSent || 0), 0) / (1024 * 1024)).toFixed(2),
+    },
+  });
 };

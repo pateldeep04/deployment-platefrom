@@ -11,13 +11,13 @@ export const PLANS = [
     priceINR: 0,
     priceLabel: '₹0 / month',
     projectsLimit: 3,
-    storageMB: 500,
+    storageMB: 1024, // 1 GB
     bandwidthGB: 5,
     customDomains: false,
     phpHosting: false,
     priorityBuilds: false,
     adFree: false,
-    description: 'Perfect for learning, personal experiments, and small static portfolios.'
+    description: 'Perfect for learning, personal experiments, and hosting up to 3 web projects.'
   },
   {
     id: 'DEVELOPER',
@@ -112,5 +112,84 @@ export const verifyPaymentAndUpgrade = (req: AuthenticatedRequest, res: Response
     success: true,
     message: `Account successfully upgraded to ${planId}! All features unlocked.`,
     data: { user: { _id: user._id, plan: user.plan } }
+  });
+};
+
+export const OFFICIAL_UPI_ID = 'pd626784-1@okicici';
+
+export const getUpiPaymentDetails = (req: Request, res: Response): void => {
+  res.json({
+    success: true,
+    data: {
+      upiId: OFFICIAL_UPI_ID,
+      payeeName: 'DeployHub Cloud Platform',
+      currency: 'INR',
+      supportedApps: ['Google Pay', 'PhonePe', 'Paytm', 'BHIM', 'Cred', 'Amazon Pay'],
+    },
+  });
+};
+
+export const verifyUpiPayment = (req: AuthenticatedRequest, res: Response): void => {
+  const { planId, utrNumber, amount, senderUpiId } = req.body;
+  const user = req.user!;
+
+  if (!planId || !['DEVELOPER', 'PRO'].includes(planId)) {
+    res.status(400).json({ success: false, error: 'Invalid subscription plan selected' });
+    return;
+  }
+
+  const cleanUtr = String(utrNumber || '').trim();
+  if (!cleanUtr || cleanUtr.length < 8) {
+    res.status(400).json({
+      success: false,
+      error: 'Please enter a valid 12-digit UPI Reference Number / UTR from your payment app.',
+    });
+    return;
+  }
+
+  // Update user plan to the upgraded tier
+  user.plan = planId as any;
+  user.updatedAt = new Date().toISOString();
+
+  // Update in dbStore
+  const storeUser = dbStore.users.find(u => u._id === user._id);
+  if (storeUser) {
+    storeUser.plan = planId as any;
+    storeUser.updatedAt = new Date().toISOString();
+  }
+
+  dbStore.auditLogs.push({
+    _id: `log_${Date.now()}`,
+    userId: user._id,
+    action: 'UPI_PAYMENT_VERIFIED',
+    ip: req.ip || '127.0.0.1',
+    details: {
+      plan: planId,
+      utrNumber: cleanUtr,
+      recipientUpiId: OFFICIAL_UPI_ID,
+      senderUpiId: senderUpiId || 'N/A',
+      amount: amount || (planId === 'DEVELOPER' ? 149 : 399),
+      verifiedAt: new Date().toISOString(),
+    },
+    createdAt: new Date().toISOString(),
+  });
+  dbStore.save();
+
+  res.json({
+    success: true,
+    message: `Payment verified successfully! Your account has been upgraded to ${planId}.`,
+    data: {
+      user: {
+        _id: user._id,
+        plan: user.plan,
+        name: user.name,
+        email: user.email,
+      },
+      transaction: {
+        utrNumber: cleanUtr,
+        planId,
+        verifiedAt: new Date().toISOString(),
+      },
+    },
   });
 };

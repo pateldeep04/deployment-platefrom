@@ -4,38 +4,93 @@ import fs from 'fs';
 import { spawn } from 'child_process';
 import { config } from '../config';
 import { dbStore } from '../database/store';
+import { redisCacheService } from '../services/redisCacheService';
 
-export const handleSiteRequest = (req: Request, res: Response, next: NextFunction): void => {
-  let slug = req.params.slug;
+export const handleSiteRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  let slug: string = (req.params.slug as string) || '';
 
-  // Support host-based routing (e.g. my-project.deployhub.local or my-portfolio.localhost)
-  const host = req.headers.host || '';
+  // Support host-based routing (e.g. my-project.deployeai.duckdns.org, my-project.pateldeeep.me, or custom domain)
+  const host: string = (req.headers.host || '').split(':')[0].toLowerCase();
+  const platformDomain = (config.platformDomain || 'deployeai.duckdns.org').toLowerCase();
+
   if (!slug) {
-    const parts = host.split('.');
-    if (parts.length > 1 && parts[0] !== 'localhost' && parts[0] !== '127') {
-      slug = parts[0];
+    if (host.endsWith('.' + platformDomain)) {
+      slug = host.slice(0, -(platformDomain.length + 1));
+    } else {
+      const parts = host.split('.');
+      if (parts.length > 1 && parts[0] !== 'localhost' && parts[0] !== '127') {
+        slug = parts[0];
+      }
     }
   }
 
-  if (!slug) {
+  if (!slug && !host) {
     next();
     return;
   }
 
-  const project = dbStore.projects.find(p => p.slug === slug || p.customDomain === host);
+  // 1. Fast Redis / RAM Cache Lookup
+  const cacheKey: string = slug || host;
+  let targetSlug: string = slug;
+  let cachedRoute = await redisCacheService.getRoute(cacheKey);
+
+  let project = null;
+  if (cachedRoute) {
+    targetSlug = cachedRoute.slug;
+    project = dbStore.projects.find(p => p._id === cachedRoute!.projectId || p.slug === targetSlug);
+  }
+
+  // 2. Fallback to Store if not in cache
+  if (!project) {
+    project = dbStore.projects.find(p => p.slug === slug || p.assignedSubdomain === slug || p.customDomain === host);
+    if (project) {
+      // Populate Redis Cache (TTL: 10 mins)
+      await redisCacheService.setRoute(cacheKey, {
+        projectId: project._id,
+        slug: project.slug,
+        customDomain: project.customDomain,
+        assignedSubdomain: project.assignedSubdomain,
+        status: project.status,
+      }, 600);
+      targetSlug = project.slug;
+    }
+  }
+
   if (!project) {
     res.status(404).send(`
       <!DOCTYPE html>
       <html>
         <head><title>404 - Project Not Found | DeployHub</title><style>body{background:#0B1120;color:#F8FAFC;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}.box{text-align:center;border:1px solid #263449;padding:40px;border-radius:12px;background:#111827;}h1{color:#EF4444;margin:0 0 10px;}</style></head>
-        <body><div class="box"><h1>404: Not Found</h1><p>No deployment found for <code>${slug}</code> on DeployHub edge router.</p></div></body>
+        <body><div class="box"><h1>404: Not Found</h1><p>No deployment found for <code>${escapeHtml(slug || host)}</code> on DeployHub edge router.</p></div></body>
       </html>
     `);
     return;
   }
 
-  // Increment project bandwidth usage metric
-  project.storageUsed = project.storageUsed || 0;
+  // Record Real Visitor Traffic & Analytics
+  const todayStr = new Date().toISOString().split('T')[0];
+  const estimatedBytes = 2048; // baseline HTTP response size
+  dbStore.trafficLogs = dbStore.trafficLogs || [];
+  dbStore.trafficLogs.push({
+    _id: `trf_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    userId: project.userId,
+    projectId: project._id,
+    timestamp: new Date().toISOString(),
+    date: todayStr,
+    bytesSent: estimatedBytes,
+    path: req.path,
+    statusCode: 200,
+  });
+
+  // Keep last 10,000 logs to prevent unbounded growth
+  if (dbStore.trafficLogs.length > 10000) {
+    dbStore.trafficLogs = dbStore.trafficLogs.slice(-10000);
+  }
+
+  const projectOwner = dbStore.users.find(u => u._id === project.userId);
+  if (projectOwner) {
+    projectOwner.bandwidthUsed = (projectOwner.bandwidthUsed || 0) + estimatedBytes;
+  }
   dbStore.save();
 
   const siteDir = path.join(config.storageDir, 'sites', project.slug);

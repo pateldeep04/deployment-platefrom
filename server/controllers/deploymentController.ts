@@ -1,9 +1,10 @@
 import { Response } from 'express';
 import path from 'path';
 import fs from 'fs';
-import { config } from '../config';
+import { config, getDeploymentUrl } from '../config';
 import { dbStore, IDeployment } from '../database/store';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { SecurityValidator } from '../middleware/securityValidator';
 import { deploymentEngine } from '../queue/deploymentQueue';
 
 export const uploadAndDeploy = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -22,6 +23,17 @@ export const uploadAndDeploy = async (req: AuthenticatedRequest, res: Response):
       return;
     }
 
+    // Enforce 1 GB SSD Storage Quota
+    const MAX_STORAGE_BYTES = 1024 * 1024 * 1024; // 1 GB
+    if ((user.storageUsed || 0) + req.file.size > MAX_STORAGE_BYTES) {
+      try { fs.unlinkSync(req.file.path); } catch {}
+      res.status(413).json({
+        success: false,
+        error: `Storage quota exceeded! Your account has a 1 GB SSD storage limit across your 3 websites. Current usage: ${((user.storageUsed || 0) / (1024 * 1024)).toFixed(1)} MB.`
+      });
+      return;
+    }
+
     const ext = path.extname(req.file.originalname).toLowerCase();
     const isArchive = ['.zip', '.rar', '.tar', '.gz', '.tgz', '.7z'].includes(ext);
     const projectDeployments = dbStore.deployments.filter(d => d.projectId === project._id);
@@ -30,6 +42,14 @@ export const uploadAndDeploy = async (req: AuthenticatedRequest, res: Response):
 
     // Handle single file upload (.html, .php, .css, .js)
     if (!isArchive) {
+      // 0. Antivirus, Corruption & Webshell Inspection
+      const fileScan = await SecurityValidator.validateSingleFile(req.file.path, user);
+      if (!fileScan.valid) {
+        try { fs.unlinkSync(req.file.path); } catch {}
+        res.status(400).json({ success: false, error: fileScan.error || 'Uploaded file failed security validation' });
+        return;
+      }
+
       const siteDir = path.join(config.storageDir, 'sites', project.slug);
       if (!fs.existsSync(siteDir)) {
         fs.mkdirSync(siteDir, { recursive: true });
@@ -60,7 +80,7 @@ export const uploadAndDeploy = async (req: AuthenticatedRequest, res: Response):
         status: 'LIVE',
         buildCommand: project.buildCommand,
         outputDirectory: project.outputDirectory,
-        deploymentUrl: `http://localhost:${config.port}/sites/${project.slug}/`,
+        deploymentUrl: getDeploymentUrl(project),
         logs: [
           {
             timestamp: new Date().toISOString(),
@@ -76,7 +96,7 @@ export const uploadAndDeploy = async (req: AuthenticatedRequest, res: Response):
           },
           {
             timestamp: new Date().toISOString(),
-            message: `🎉 Deployment LIVE: http://localhost:${config.port}/sites/${project.slug}/`,
+            message: `🎉 Deployment LIVE: ${getDeploymentUrl(project)}`,
             stage: 'LIVE',
             level: 'success'
           }
@@ -112,7 +132,7 @@ export const uploadAndDeploy = async (req: AuthenticatedRequest, res: Response):
       status: 'QUEUED',
       buildCommand: project.buildCommand,
       outputDirectory: project.outputDirectory,
-      deploymentUrl: `http://localhost:${config.port}/sites/${project.slug}/`,
+      deploymentUrl: getDeploymentUrl(project),
       logs: [
         {
           timestamp: new Date().toISOString(),

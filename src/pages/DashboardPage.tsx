@@ -30,6 +30,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { getLiveProjectUrl } from '../utils/url';
 
 const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.me';
 
@@ -47,12 +48,33 @@ export const DashboardPage: React.FC = () => {
   const [modalInitialSlug, setModalInitialSlug] = useState('');
   const [modalInitialType, setModalInitialType] = useState<'STATIC' | 'PHP' | 'REACT' | 'VITE'>('STATIC');
 
+  // Live Telemetry data for real traffic chart
+  const [telemetryData, setTelemetryData] = useState<Array<{ day: string; date?: string; requests: number; bandwidth: number }>>([
+    { day: 'Mon', requests: 0, bandwidth: 0 },
+    { day: 'Tue', requests: 0, bandwidth: 0 },
+    { day: 'Wed', requests: 0, bandwidth: 0 },
+    { day: 'Thu', requests: 0, bandwidth: 0 },
+    { day: 'Fri', requests: 0, bandwidth: 0 },
+    { day: 'Sat', requests: 0, bandwidth: 0 },
+    { day: 'Sun', requests: 0, bandwidth: 0 },
+  ]);
+  const [totalTrafficRequests, setTotalTrafficRequests] = useState<number>(0);
+
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get('/projects');
-      if (res.data.success) {
-        setProjects(res.data.data.projects);
+      const [projectsRes, telemetryRes] = await Promise.all([
+        api.get('/projects'),
+        api.get('/projects/telemetry').catch(() => ({ data: { success: false, data: null } })),
+      ]);
+
+      if (projectsRes.data.success) {
+        setProjects(projectsRes.data.data.projects);
+      }
+
+      if (telemetryRes.data?.success && telemetryRes.data.data?.telemetry) {
+        setTelemetryData(telemetryRes.data.data.telemetry);
+        setTotalTrafficRequests(telemetryRes.data.data.totalRequests || 0);
       }
     } catch (e) {
       console.error('Error fetching dashboard projects:', e);
@@ -74,39 +96,20 @@ export const DashboardPage: React.FC = () => {
   }, [location.search]);
 
   const handleLaunchModal = (slug = '', type: 'STATIC' | 'PHP' | 'REACT' | 'VITE' = 'STATIC') => {
+    if (projects.length >= 3) {
+      alert('Maximum hosting limit reached: You can host up to 3 websites. Please delete or replace an existing website to create a new one.');
+      return;
+    }
     setModalInitialSlug(slug || quickSubdomain.toLowerCase().replace(/[^a-z0-9-]/g, ''));
     setModalInitialType(type);
     setIsNewProjectOpen(true);
   };
 
-  const getStorageQuotaMB = (plan?: string) => {
-    if (plan === 'PRO') return 51200;
-    if (plan === 'DEVELOPER') return 10240;
-    return 5000; // InfinityFree standard 5 GB
-  };
-
-  const getProjectLimit = (plan?: string) => {
-    if (plan === 'PRO') return 1000;
-    if (plan === 'DEVELOPER') return 20;
-    return 10;
-  };
-
+  // Enforce strictly 3 websites hosting and 1 GB SSD storage
+  const maxProjects = 3;
+  const quotaStorageMB = 1024; // 1 GB (1024 MB) Total SSD Storage for 3 websites
   const usedStorageMB = ((user?.storageUsed || 0) / (1024 * 1024)).toFixed(1);
-  const quotaStorageMB = getStorageQuotaMB(user?.plan);
   const storagePercentage = Math.min(100, Math.round(((user?.storageUsed || 0) / (quotaStorageMB * 1024 * 1024)) * 100));
-
-  const maxProjects = getProjectLimit(user?.plan);
-
-  // Telemetry data for traffic chart
-  const telemetryData = [
-    { day: 'Mon', requests: 120, bandwidth: 4.2 },
-    { day: 'Tue', requests: 240, bandwidth: 7.8 },
-    { day: 'Wed', requests: 180, bandwidth: 5.9 },
-    { day: 'Thu', requests: 390, bandwidth: 12.1 },
-    { day: 'Fri', requests: 520, bandwidth: 18.4 },
-    { day: 'Sat', requests: 430, bandwidth: 14.2 },
-    { day: 'Sun', requests: 680, bandwidth: 22.0 },
-  ];
 
   return (
     <div className="min-h-screen bg-background text-deployText pb-16">
@@ -242,7 +245,7 @@ export const DashboardPage: React.FC = () => {
               <HardDrive className="w-4 h-4" />
             </div>
             <div className="text-xs font-bold text-white">Disk & Bandwidth</div>
-            <div className="text-[11px] text-deployText-secondary mt-0.5">{quotaStorageMB >= 1024 ? `${quotaStorageMB / 1024} GB` : `${quotaStorageMB} MB`} Quota</div>
+            <div className="text-[11px] text-deployText-secondary mt-0.5">1 GB Quota</div>
           </Link>
 
           <button
@@ -270,12 +273,12 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-3 flex items-baseline space-x-2">
               <span className="text-3xl font-extrabold text-white">{projects.length}</span>
-              <span className="text-xs text-deployText-muted">/ {maxProjects} allowed</span>
+              <span className="text-xs text-deployText-muted">/ 3 allowed</span>
             </div>
             <div className="mt-3 w-full bg-deployBorder h-1.5 rounded-full overflow-hidden">
               <div
                 className="bg-primary h-full transition-all"
-                style={{ width: `${(projects.length / maxProjects) * 100}%` }}
+                style={{ width: `${(projects.length / 3) * 100}%` }}
               />
             </div>
           </div>
@@ -290,7 +293,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div className="mt-3 flex items-baseline space-x-2">
               <span className="text-3xl font-extrabold text-white">{usedStorageMB}</span>
-              <span className="text-xs text-deployText-muted">MB of {quotaStorageMB >= 1024 ? `${quotaStorageMB / 1024} GB` : `${quotaStorageMB} MB`}</span>
+              <span className="text-xs text-deployText-muted">MB of 1 GB</span>
             </div>
             <div className="mt-3 w-full bg-deployBorder h-1.5 rounded-full overflow-hidden">
               <div
@@ -350,8 +353,9 @@ export const DashboardPage: React.FC = () => {
                 <h3 className="text-base font-bold text-white">Visitor Traffic & Requests</h3>
                 <p className="text-xs text-deployText-secondary">Analytics across your deployed websites</p>
               </div>
-              <span className="text-xs font-mono text-accent bg-accent/10 px-2.5 py-1 rounded-md">
-                Last 7 Days
+              <span className="text-xs font-mono text-accent bg-accent/10 px-2.5 py-1 rounded-md flex items-center space-x-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Live Analytics ({totalTrafficRequests} Hits)</span>
               </span>
             </div>
             <div className="h-56 w-full">
@@ -372,6 +376,11 @@ export const DashboardPage: React.FC = () => {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+            {totalTrafficRequests === 0 && (
+              <div className="mt-2 text-center py-2 px-3 rounded-lg bg-surface/50 border border-deployBorder text-[11px] text-deployText-muted">
+                Active real-time analytics monitoring. Traffic charts update automatically as visitors browse your deployed websites.
+              </div>
+            )}
           </div>
 
           {/* Quick System Environment Summary */}
@@ -539,7 +548,7 @@ export const DashboardPage: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         {/* Primary live link: uses local proxy endpoint in dev, or real subdomain in prod */}
                         <a
-                          href={`http://localhost:5000/sites/${project.slug}/`}
+                          href={getLiveProjectUrl(project)}
                           target="_blank"
                           rel="noreferrer"
                           className="flex items-center space-x-1 text-xs font-bold text-accent hover:text-white bg-accent/15 hover:bg-accent/30 px-3 py-1 rounded-lg transition-colors cursor-pointer"

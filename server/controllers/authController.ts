@@ -1,10 +1,29 @@
 import { Request, Response } from 'express';
+import path from 'path';
+import fs from 'fs';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import { dbStore, IUser } from '../database/store';
 import { registerSchema, loginSchema } from '../validators';
 import { AuthenticatedRequest } from '../middleware/auth';
+
+function calculateDirSize(dirPath: string): number {
+  let size = 0;
+  try {
+    if (!fs.existsSync(dirPath)) return 0;
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) {
+        size += calculateDirSize(fullPath);
+      } else {
+        size += fs.statSync(fullPath).size;
+      }
+    }
+  } catch {}
+  return size;
+}
 
 const generateTokens = (user: IUser) => {
   const accessToken = jwt.sign(
@@ -128,7 +147,27 @@ export const getCurrentUser = (req: AuthenticatedRequest, res: Response): void =
     res.status(401).json({ success: false, error: 'Not authenticated' });
     return;
   }
+
+  // Calculate real live SSD storage used across all user's projects on disk
+  const userProjects = dbStore.projects.filter(p => p.userId === req.user!._id);
+  let realStorageBytes = 0;
+  for (const p of userProjects) {
+    const siteDir = path.join(config.storageDir, 'sites', p.slug);
+    if (fs.existsSync(siteDir)) {
+      const siteSize = calculateDirSize(siteDir);
+      p.storageUsed = siteSize;
+      realStorageBytes += siteSize;
+    }
+  }
+
+  const user = dbStore.users.find(u => u._id === req.user!._id);
+  if (user) {
+    user.storageUsed = realStorageBytes;
+    dbStore.save();
+  }
+
   const { passwordHash: _, ...safeUser } = req.user;
+  safeUser.storageUsed = realStorageBytes;
   res.json({ success: true, data: { user: safeUser } });
 };
 

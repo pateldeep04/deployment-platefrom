@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /docs
+Allow: /login
+Allow: /register
+
+# Disallow internal API endpoints, developer console private areas, and admin panels
+Disallow: /api/
+Disallow: /admin
+Disallow: /cpanel/
+Disallow: /projects/
+
+# Canonical Sitemap URL
+Sitemap: https://pateldeeep.me/sitemap.xml

@@ -2,7 +2,7 @@ import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import path from 'path';
 import fs from 'fs';
-import { config } from '../config';
+import { config, getDeploymentUrl } from '../config';
 import { dbStore, IDeployment } from '../database/store';
 import { SecurityValidator } from '../middleware/securityValidator';
 import { awsFleetService } from '../services/awsFleetService';
@@ -200,7 +200,7 @@ class DeploymentEngine {
                 <div class="card">
                   <h1>🚀 ${project.name}</h1>
                   <p>Your project is live! Use the <strong>cPanel File Manager</strong> in your DeployHub dashboard to upload your HTML, CSS, JS, or PHP files.</p>
-                  <a class="btn" href="http://localhost:3000/projects/${project._id}/cpanel">Open cPanel File Manager</a>
+                  <a class="btn" href="/projects/${project._id}/cpanel">Open cPanel File Manager</a>
                 </div>
               </body>
             </html>
@@ -232,9 +232,7 @@ class DeploymentEngine {
 
       deployment.status = 'LIVE';
       deployment.completedAt = new Date().toISOString();
-      deployment.deploymentUrl = project.assignedSubdomain
-        ? `http://${project.assignedSubdomain}.${config.platformDomain}/`
-        : `http://localhost:${config.port}/sites/${project.slug}/`;
+      deployment.deploymentUrl = getDeploymentUrl(project);
 
       project.status = 'ACTIVE';
       project.currentDeploymentId = deployment._id;

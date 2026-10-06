@@ -3,6 +3,7 @@ import path from 'path';
 import AdmZip from 'adm-zip';
 import { createExtractorFromData } from 'node-unrar-js';
 import { IUser } from '../database/store';
+import { MalwareScanner } from '../services/malwareScanner';
 
 export interface ValidationResult {
   valid: boolean;
@@ -34,6 +35,23 @@ export class SecurityValidator {
     }
 
     const ext = path.extname(archiveFilePath).toLowerCase();
+    const archiveFormat: 'ZIP' | 'RAR' = ext === '.rar' ? 'RAR' : 'ZIP';
+
+    // 0. Antivirus, Corruption & Webshell Heuristic Inspection
+    const malwareScan = await MalwareScanner.scanFile(archiveFilePath);
+    if (!malwareScan.isClean) {
+      return {
+        valid: false,
+        error: malwareScan.threats.join('; ') || malwareScan.errorMessage || 'Archive failed antivirus and integrity scan',
+        totalSize: 0,
+        fileCount: 0,
+        hasIndexHtml: false,
+        hasIndexPhp: false,
+        hasPackageJson: false,
+        archiveFormat,
+      };
+    }
+
     const maxFiles = 10000;
     const forbiddenExtensions = ['.exe', '.bat', '.cmd', '.msi', '.vbs', '.scr', '.pif', '.dll', '.so', '.dylib'];
 
@@ -42,7 +60,6 @@ export class SecurityValidator {
     let hasIndexHtml = false;
     let hasIndexPhp = false;
     let hasPackageJson = false;
-    const archiveFormat: 'ZIP' | 'RAR' = ext === '.rar' ? 'RAR' : 'ZIP';
 
     if (ext === '.rar') {
       try {
@@ -254,6 +271,37 @@ export class SecurityValidator {
       hasPackageJson,
       archiveFormat,
     };
+  }
+
+  /**
+   * Scans a single uploaded file (e.g. index.html, index.php, image, script) for malware, webshells, and corruption
+   */
+  public static async validateSingleFile(filePath: string, user: IUser): Promise<{ valid: boolean; error?: string }> {
+    const scan = await MalwareScanner.scanFile(filePath);
+    if (!scan.isClean) {
+      return {
+        valid: false,
+        error: scan.threats.join('; ') || scan.errorMessage || 'File failed security validation',
+      };
+    }
+
+    try {
+      const stats = fs.statSync(filePath);
+      const userPlanLimits: Record<string, number> = {
+        FREE: 1024 * 1024 * 1024,
+        DEVELOPER: 10 * 1024 * 1024 * 1024,
+        PRO: 50 * 1024 * 1024 * 1024,
+      };
+      const quota = userPlanLimits[user.plan] || userPlanLimits.FREE;
+      if (user.storageUsed + stats.size > quota) {
+        return {
+          valid: false,
+          error: `Storage quota exceeded for ${user.plan} plan.`,
+        };
+      }
+    } catch {}
+
+    return { valid: true };
   }
 
   /**

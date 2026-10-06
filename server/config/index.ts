@@ -56,3 +56,23 @@ export const config = {
   primaryServerIp: process.env.PRIMARY_SERVER_IP || '13.233.142.85',
 };
 
+export interface ProjectUrlTarget {
+  slug: string;
+  customDomain?: string | null;
+  assignedSubdomain?: string | null;
+}
+
+export const getDeploymentUrl = (project: ProjectUrlTarget): string => {
+  if (project.customDomain && project.customDomain.trim()) {
+    const domain = project.customDomain.trim();
+    return domain.startsWith('http://') || domain.startsWith('https://')
+      ? domain
+      : `http://${domain}/`;
+  }
+  if (project.assignedSubdomain && project.assignedSubdomain.trim()) {
+    return `http://${project.assignedSubdomain.trim()}.${config.platformDomain}/`;
+  }
+  return `${config.apiUrl}/sites/${project.slug}/`;
+};
+
+
