@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { dbStore } from '../database/store';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { customDomainSchema } from '../validators';
-import { config } from '../config';
+import { config, AVAILABLE_PLATFORM_DOMAINS } from '../config';
 import { subdomainService } from '../services/subdomainService';
 import { namecheapService } from '../services/namecheapService';
 
@@ -103,12 +103,26 @@ export const removeCustomDomain = (req: AuthenticatedRequest, res: Response): vo
 };
 
 /**
- * GET /api/v1/subdomains/check?subdomain=...
- * Search & check if a subdomain is available under pateldeeep.me. Returns suggestions if taken.
+ * GET /api/v1/domains/available
+ * Returns the list of free platform domains that users can choose from.
+ */
+export const getAvailableDomains = (req: Request, res: Response): void => {
+  res.json({
+    success: true,
+    data: {
+      domains: AVAILABLE_PLATFORM_DOMAINS,
+    },
+  });
+};
+
+/**
+ * GET /api/v1/subdomains/check?subdomain=...&domain=...
+ * Search & check if a subdomain is available under the chosen platform domain. Returns suggestions if taken.
  */
 export const checkSubdomainAvailability = (req: Request, res: Response): void => {
   try {
     const rawSubdomain = (req.query.subdomain || req.query.query || '') as string;
+    const baseDomain = (req.query.domain || req.query.baseDomain || '') as string;
     const projectId = req.query.projectId as string | undefined;
 
     if (!rawSubdomain) {
@@ -116,7 +130,7 @@ export const checkSubdomainAvailability = (req: Request, res: Response): void =>
       return;
     }
 
-    const result = subdomainService.checkAvailability(rawSubdomain, projectId);
+    const result = subdomainService.checkAvailability(rawSubdomain, projectId, baseDomain);
 
     res.json({
       success: true,
@@ -129,11 +143,11 @@ export const checkSubdomainAvailability = (req: Request, res: Response): void =>
 
 /**
  * POST /api/v1/subdomains/assign
- * Claims an available subdomain, provisions Namecheap DNS host, and routes to active AWS EC2 host.
+ * Claims an available subdomain, provisions DNS host, and routes to active AWS EC2 host.
  */
 export const assignSubdomain = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { projectId, subdomain } = req.body;
+    const { projectId, subdomain, baseDomain } = req.body;
     const user = req.user!;
 
     if (!projectId || !subdomain) {
@@ -141,13 +155,14 @@ export const assignSubdomain = async (req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    const result = await subdomainService.assignSubdomain(projectId, subdomain, user._id);
+    const result = await subdomainService.assignSubdomain(projectId, subdomain, user._id, baseDomain);
 
     res.json({
       success: true,
       message: result.message,
       data: {
         subdomain: result.subdomain,
+        baseDomain: result.baseDomain,
         fqdn: result.fqdn,
         publicIp: result.publicIp,
         serverNodeName: result.serverNodeName,

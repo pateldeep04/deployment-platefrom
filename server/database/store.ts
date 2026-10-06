@@ -33,6 +33,7 @@ export interface IProject {
   sslEnabled?: boolean;
   assignedServerNodeId?: string;
   assignedSubdomain?: string;
+  platformDomain?: string;
   namecheapDnsConfigured?: boolean;
   createdAt: string;
   updatedAt: string;
@@ -145,6 +146,11 @@ class DataStore {
         const data = JSON.parse(raw);
         this.users = data.users || [];
         this.projects = data.projects || [];
+        this.projects.forEach(p => {
+          if (!p.assignedSubdomain) {
+            p.assignedSubdomain = p.slug;
+          }
+        });
         this.deployments = data.deployments || [];
         this.envVars = data.envVars || [];
         this.ads = data.ads || [];

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
-import { config } from '../config';
+import { config, AVAILABLE_PLATFORM_DOMAINS } from '../config';
 import { dbStore } from '../database/store';
 import { redisCacheService } from '../services/redisCacheService';
 
@@ -14,9 +14,19 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
   const platformDomain = (config.platformDomain || 'deployeai.duckdns.org').toLowerCase();
 
   if (!slug) {
-    if (host.endsWith('.' + platformDomain)) {
-      slug = host.slice(0, -(platformDomain.length + 1));
-    } else {
+    const recognizedDomains = Array.from(new Set([
+      platformDomain,
+      ...AVAILABLE_PLATFORM_DOMAINS.map(d => d.domain.toLowerCase()),
+    ])).filter(Boolean);
+
+    for (const domain of recognizedDomains) {
+      if (host.endsWith('.' + domain)) {
+        slug = host.slice(0, -(domain.length + 1));
+        break;
+      }
+    }
+
+    if (!slug) {
       const parts = host.split('.');
       if (parts.length > 1 && parts[0] !== 'localhost' && parts[0] !== '127') {
         slug = parts[0];
@@ -246,7 +256,39 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
     return;
   }
 
-  // SPA fallback: if file not found and index.html exists, return index.html
+  // Check if static asset with an extension was requested
+  const ext = path.extname(subPath).toLowerCase();
+  const isStaticAsset = ['.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.webp', '.json', '.map'].includes(ext);
+
+  if (isStaticAsset) {
+    // Smart fuzzy fallback for common naming conventions (e.g. style.css vs styles.css)
+    const baseName = path.basename(subPath);
+    const altNames = [
+      baseName,
+      baseName === 'styles.css' ? 'style.css' : (baseName === 'style.css' ? 'styles.css' : null),
+    ].filter(Boolean) as string[];
+
+    for (const name of altNames) {
+      const candidates = [
+        path.join(siteDir, name),
+        path.join(siteDir, 'css', name),
+        path.join(siteDir, 'assets', name),
+        path.join(siteDir, 'static', name),
+      ];
+      for (const cand of candidates) {
+        if (fs.existsSync(cand) && fs.statSync(cand).isFile()) {
+          res.sendFile(cand);
+          return;
+        }
+      }
+    }
+
+    // Never return index.html for missing static assets to prevent browser stylesheet MIME errors
+    res.status(404).type('text/plain').send(`404: Asset '${subPath}' not found`);
+    return;
+  }
+
+  // SPA fallback for HTML client-side routing
   const indexHtml = path.join(siteDir, 'index.html');
   if (fs.existsSync(indexHtml)) {
     res.sendFile(indexHtml);

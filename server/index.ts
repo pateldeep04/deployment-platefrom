@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
-import { config } from './config';
+import { config, AVAILABLE_PLATFORM_DOMAINS } from './config';
 import { connectDatabase, ensureStorageDirectories } from './database';
 import apiRouter from './routes';
 import { handleSiteRequest } from './router/edgeProxy';
@@ -23,17 +23,27 @@ app.use((req, res, next) => {
   if (isApi) return next();
 
   const platformDomain = (config.platformDomain || 'deployeai.duckdns.org').toLowerCase();
+  const recognizedDomains = Array.from(new Set([
+    platformDomain,
+    ...AVAILABLE_PLATFORM_DOMAINS.map(d => d.domain.toLowerCase()),
+  ])).filter(Boolean);
 
   // If host is the root platform domain or localhost, serve main app
-  if (host === platformDomain || host === `www.${platformDomain}` || host === 'localhost' || host === '127.0.0.1') {
+  if (
+    recognizedDomains.some(d => host === d || host === `www.${d}`) ||
+    host === 'localhost' ||
+    host === '127.0.0.1'
+  ) {
     return next();
   }
 
-  // If host is a subdomain of the platform domain (e.g. my-app.deployeai.duckdns.org)
-  if (host.endsWith('.' + platformDomain)) {
-    const subdomain = host.slice(0, -(platformDomain.length + 1));
-    if (subdomain && subdomain !== 'www' && subdomain !== 'api' && subdomain !== 'app' && subdomain !== 'admin') {
-      return handleSiteRequest(req, res, next);
+  // If host is a subdomain of any recognized platform domain
+  for (const domain of recognizedDomains) {
+    if (host.endsWith('.' + domain)) {
+      const subdomain = host.slice(0, -(domain.length + 1));
+      if (subdomain && subdomain !== 'www' && subdomain !== 'api' && subdomain !== 'app' && subdomain !== 'admin') {
+        return handleSiteRequest(req, res, next);
+      }
     }
   }
 

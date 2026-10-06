@@ -53,19 +53,24 @@ export const createProject = (req: AuthenticatedRequest, res: Response): void =>
     return;
   }
 
-  const { name, type, buildCommand, outputDirectory } = parseResult.data;
-  let slug = parseResult.data.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const { name, type, buildCommand, outputDirectory, subdomain: customSub, platformDomain: chosenDomain } = parseResult.data;
+  let slug = parseResult.data.slug || customSub || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   // Ensure unique slug
   if (dbStore.projects.some(p => p.slug === slug)) {
     slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
   }
 
+  const assignedSubdomain = (customSub || slug).toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const platformDomain = chosenDomain || config.platformDomain || 'pateldeeep.me';
+
   const newProject: IProject = {
     _id: `prj_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     userId: user._id,
     name,
     slug,
+    assignedSubdomain,
+    platformDomain,
     type,
     status: 'INACTIVE',
     storageUsed: 0,

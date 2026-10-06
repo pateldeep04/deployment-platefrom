@@ -26,7 +26,7 @@ import {
   Copy, 
   Check
 } from 'lucide-react';
-import { getLiveProjectUrl } from '../utils/url';
+import { getLiveProjectUrl, getDirectProxyUrl } from '../utils/url';
 
 const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'deployeai.duckdns.org';
 
@@ -47,6 +47,13 @@ export const ProjectDetailPage: React.FC = () => {
   // State for custom domain
   const [customDomainInput, setCustomDomainInput] = useState('');
   const [domainSuccessMsg, setDomainSuccessMsg] = useState<string | null>(null);
+
+  // State for platform subdomain selection
+  const [assignSubdomainInput, setAssignSubdomainInput] = useState('');
+  const [assignDomainSelect, setAssignDomainSelect] = useState('deployeai.duckdns.org');
+  const [isAssigningSubdomain, setIsAssigningSubdomain] = useState(false);
+  const [assignCheckResult, setAssignCheckResult] = useState<{ isAvailable: boolean; message?: string } | null>(null);
+  const [isCheckingAssignSubdomain, setIsCheckingAssignSubdomain] = useState(false);
 
   // State for upload
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -230,6 +237,66 @@ export const ProjectDetailPage: React.FC = () => {
     }
   };
 
+  // Real-time check for changing project subdomain
+  useEffect(() => {
+    const clean = assignSubdomainInput.toLowerCase().replace(/[^a-z0-9-]/g, '').trim();
+    if (!clean || clean.length < 2) {
+      setAssignCheckResult(null);
+      return;
+    }
+    setIsCheckingAssignSubdomain(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get(`/subdomains/check?subdomain=${encodeURIComponent(clean)}&domain=${encodeURIComponent(assignDomainSelect)}&projectId=${project?._id || ''}`);
+        if (res.data.success) {
+          setAssignCheckResult({
+            isAvailable: res.data.data.isAvailable,
+            message: res.data.data.reason || (res.data.data.isAvailable ? 'Available!' : 'Taken'),
+          });
+        }
+      } catch (err: any) {
+        setAssignCheckResult({ isAvailable: false, message: 'Check failed' });
+      } finally {
+        setIsCheckingAssignSubdomain(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [assignSubdomainInput, assignDomainSelect, project?._id]);
+
+  const handleAssignSubdomain = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!project || !assignSubdomainInput.trim()) return;
+
+    if (assignCheckResult && !assignCheckResult.isAvailable) {
+      alert(`The subdomain '${assignSubdomainInput}.${assignDomainSelect}' is already claimed. Please choose an available one.`);
+      return;
+    }
+
+    try {
+      setIsAssigningSubdomain(true);
+      const res = await api.post('/subdomains/assign', {
+        projectId: project._id,
+        subdomain: assignSubdomainInput.trim(),
+        baseDomain: assignDomainSelect,
+      });
+
+      if (res.data.success) {
+        setDomainSuccessMsg(res.data.message);
+        setProject((prev) => prev ? {
+          ...prev,
+          assignedSubdomain: res.data.data.subdomain,
+          platformDomain: res.data.data.baseDomain,
+        } : null);
+        setAssignSubdomainInput('');
+        fetchProjectData();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to update subdomain');
+    } finally {
+      setIsAssigningSubdomain(false);
+    }
+  };
+
   const handleDeleteProject = async () => {
     if (!project) return;
     if (window.confirm(`Are you sure you want to permanently delete project '${project.name}'? This cannot be undone.`)) {
@@ -251,6 +318,7 @@ export const ProjectDetailPage: React.FC = () => {
   }
 
   const liveUrl = getLiveProjectUrl(project);
+  const directUrl = getDirectProxyUrl(project);
 
   return (
     <div className="min-h-screen bg-background text-deployText pb-16">
@@ -389,15 +457,28 @@ export const ProjectDetailPage: React.FC = () => {
                         </p>
                       </div>
 
-                      <a
-                        href={liveUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-semibold text-accent hover:underline flex items-center space-x-1"
-                      >
-                        <span>Open Preview</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                      <div className="flex items-center space-x-2">
+                        <a
+                          href={liveUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-accent/15 text-accent border border-accent/30 hover:bg-accent/25 transition-all flex items-center space-x-1"
+                          title="Open Live Subdomain"
+                        >
+                          <span>Open Preview</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                        <a
+                          href={directUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-surface border border-deployBorder text-deployText-secondary hover:text-white transition-all flex items-center space-x-1"
+                          title="Open via /sites/ edge path"
+                        >
+                          <span>Direct Path</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-deployText-secondary pt-2">
@@ -425,13 +506,36 @@ export const ProjectDetailPage: React.FC = () => {
               {/* Edge Domain Card */}
               <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-white mb-2">Domains & Routing</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-base font-bold text-white">Domains & Routing</h3>
+                    <span className="flex items-center space-x-1 text-[11px] font-semibold text-success bg-success/15 border border-success/30 px-2 py-0.5 rounded-full">
+                      <ShieldCheck className="w-3 h-3" />
+                      <span>SSL Active</span>
+                    </span>
+                  </div>
                   <p className="text-xs text-deployText-secondary mb-4">Edge proxy endpoints configured for this app</p>
                   
                   <div className="space-y-2.5">
                     <div className="p-3 rounded-xl bg-surface border border-deployBorder">
-                      <span className="text-[10px] uppercase font-bold text-deployText-muted block">Platform Subdomain</span>
-                      <span className="text-xs font-mono text-white select-all">{project.slug}.{PLATFORM_DOMAIN}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-deployText-muted block">Live Subdomain</span>
+                        <a href={liveUrl} target="_blank" rel="noreferrer" className="text-[11px] text-accent hover:underline flex items-center space-x-0.5">
+                          <span>Visit</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      </div>
+                      <span className="text-xs font-mono text-white select-all break-all">{liveUrl}</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-surface border border-deployBorder">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-deployText-muted block">Direct Edge Path</span>
+                        <a href={directUrl} target="_blank" rel="noreferrer" className="text-[11px] text-deployText-secondary hover:underline flex items-center space-x-0.5">
+                          <span>Visit</span>
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      </div>
+                      <span className="text-xs font-mono text-deployText-secondary select-all break-all">{directUrl}</span>
                     </div>
 
                     {project.customDomain && (
@@ -717,22 +821,130 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
         )}
 
-        {/* TAB 6: CUSTOM DOMAINS */}
+        {/* TAB 6: DOMAINS & ROUTING */}
         {activeTab === 'domains' && (
-          <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm space-y-6">
-            <div>
-              <h3 className="text-base font-bold text-white">Custom Domain Configuration</h3>
-              <p className="text-xs text-deployText-secondary mt-1">
-                Attach your apex or subdomain to this deployment with automated HTTPS certificates.
-              </p>
-            </div>
-
+          <div className="space-y-6">
             {domainSuccessMsg && (
               <div className="p-3 rounded-xl bg-success/15 border border-success/30 text-success text-xs flex items-center space-x-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>{domainSuccessMsg}</span>
               </div>
             )}
+
+            {/* Free Platform Subdomain Assigner */}
+            <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                    <Globe className="w-4 h-4 text-accent" />
+                    <span>Free Platform Subdomain</span>
+                  </h3>
+                  <p className="text-xs text-deployText-secondary mt-1">
+                    Choose from available domains (deployeai, deploye-ai, ml-ai, mooo.com, chickenkiller) and configure your subdomain.
+                  </p>
+                </div>
+                <span className="flex items-center space-x-1 text-[11px] font-semibold text-success bg-success/15 border border-success/30 px-2.5 py-1 rounded-full">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Free Instant Routing</span>
+                </span>
+              </div>
+
+              {/* Current Active Subdomain */}
+              <div className="p-4 rounded-xl bg-surface border border-deployBorder flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-deployText-muted block mb-0.5">Current Active Address</span>
+                  <a href={liveUrl} target="_blank" rel="noreferrer" className="text-sm font-mono text-accent hover:underline flex items-center space-x-1.5 font-bold">
+                    <span>{liveUrl}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <a
+                  href={liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-accent/15 text-accent border border-accent/30 hover:bg-accent/25 text-xs font-semibold flex items-center space-x-1 transition-all"
+                >
+                  <span>Open Preview</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+
+              {/* Form to change / re-assign platform subdomain */}
+              <form onSubmit={handleAssignSubdomain} className="p-4 rounded-xl bg-surface/50 border border-deployBorder space-y-3">
+                <span className="text-xs font-bold text-white block">Switch Domain or Choose a New Subdomain</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] text-deployText-secondary mb-1">Select Domain</label>
+                    <select
+                      value={assignDomainSelect}
+                      onChange={(e) => setAssignDomainSelect(e.target.value)}
+                      className="w-full bg-surface border border-deployBorder rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                    >
+                      <option value="deployeai.duckdns.org">deployeai.duckdns.org (DuckDNS)</option>
+                      <option value="deploye-ai.duckdns.org">deploye-ai.duckdns.org (DuckDNS)</option>
+                      <option value="ml-ai.duckdns.org">ml-ai.duckdns.org (DuckDNS)</option>
+                      <option value="ai-ml.mooo.com">ai-ml.mooo.com (FreeDNS)</option>
+                      <option value="ml-ai.mooo.com">ml-ai.mooo.com (FreeDNS)</option>
+                      <option value="ai-ml.chickenkiller.com">ai-ml.chickenkiller.com (FreeDNS)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] text-deployText-secondary mb-1">New Subdomain</label>
+                    <div className="flex items-center bg-surface border border-deployBorder rounded-lg px-3 py-2">
+                      <input
+                        type="text"
+                        placeholder="new-subdomain"
+                        value={assignSubdomainInput}
+                        onChange={(e) => setAssignSubdomainInput(e.target.value)}
+                        className="flex-1 bg-transparent text-xs text-white font-mono outline-none"
+                      />
+                      <span className="text-[11px] text-accent font-mono shrink-0 pl-1">
+                        .{assignDomainSelect}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-end">
+                    <button
+                      type="submit"
+                      disabled={!assignSubdomainInput.trim() || isAssigningSubdomain}
+                      className="w-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer transition-all"
+                    >
+                      {isAssigningSubdomain ? 'Assigning...' : 'Update & Claim Subdomain'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live Availability Feedback */}
+                {assignSubdomainInput && assignSubdomainInput.length >= 2 && (
+                  <div className="pt-1">
+                    {isCheckingAssignSubdomain ? (
+                      <span className="text-xs text-deployText-secondary">Checking availability...</span>
+                    ) : assignCheckResult?.isAvailable ? (
+                      <span className="text-xs text-success flex items-center space-x-1">
+                        <Check className="w-3.5 h-3.5" />
+                        <span>✓ Subdomain <strong>{assignSubdomainInput}.{assignDomainSelect}</strong> is available to claim!</span>
+                      </span>
+                    ) : assignCheckResult && !assignCheckResult.isAvailable ? (
+                      <span className="text-xs text-error flex items-center space-x-1">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span>✗ {assignCheckResult.message || 'Subdomain already claimed. Please try another.'}</span>
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+              </form>
+            </div>
+
+            {/* Custom Domain Section */}
+            <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-white">Custom Domain Configuration</h3>
+                <p className="text-xs text-deployText-secondary mt-1">
+                  Attach your own custom apex or subdomain (e.g. www.yourcompany.com) with automated routing.
+                </p>
+              </div>
 
             {project.customDomain ? (
               <div className="p-5 rounded-xl bg-surface border border-deployBorder space-y-4">
@@ -783,6 +995,7 @@ export const ProjectDetailPage: React.FC = () => {
                 </button>
               </form>
             )}
+            </div>
           </div>
         )}
 

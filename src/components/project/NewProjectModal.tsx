@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { api } from '../../services/api';
 import { IProject } from '../../types';
 import { 
@@ -11,7 +11,11 @@ import {
   AlertCircle, 
   CheckCircle2, 
   FileArchive,
-  ArrowRight
+  ArrowRight,
+  Globe,
+  ShieldCheck,
+  Check,
+  Loader2
 } from 'lucide-react';
 
 interface NewProjectModalProps {
@@ -23,7 +27,22 @@ interface NewProjectModalProps {
   initialType?: 'STATIC' | 'PHP' | 'REACT' | 'VITE';
 }
 
-const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'deployeai.duckdns.org';
+export interface PlatformDomain {
+  domain: string;
+  label: string;
+  provider: 'SSL' | 'DuckDNS' | 'FreeDNS';
+  isSsl: boolean;
+  isDefault?: boolean;
+}
+
+const DEFAULT_PLATFORM_DOMAINS: PlatformDomain[] = [
+  { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false, isDefault: true },
+  { domain: 'deploye-ai.duckdns.org', label: 'deploye-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
+  { domain: 'ml-ai.duckdns.org', label: 'ml-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
+  { domain: 'ai-ml.mooo.com', label: 'ai-ml.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+  { domain: 'ml-ai.mooo.com', label: 'ml-ai.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+  { domain: 'ai-ml.chickenkiller.com', label: 'ai-ml.chickenkiller.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+];
 
 export const NewProjectModal: React.FC<NewProjectModalProps> = ({ 
   isOpen, 
@@ -34,7 +53,16 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
   initialType = 'STATIC'
 }) => {
   const [name, setName] = useState(initialName);
-  const [slug, setSlug] = useState(initialSlug);
+  const [subdomain, setSubdomain] = useState(initialSlug);
+  const [selectedDomain, setSelectedDomain] = useState<string>('deployeai.duckdns.org');
+  const [availableDomains, setAvailableDomains] = useState<PlatformDomain[]>(DEFAULT_PLATFORM_DOMAINS);
+  const [isCheckingDomain, setIsCheckingDomain] = useState(false);
+  const [domainAvailability, setDomainAvailability] = useState<{
+    isAvailable: boolean;
+    message?: string;
+    checkedFqdn?: string;
+  } | null>(null);
+
   const [type, setType] = useState<'STATIC' | 'PHP' | 'REACT' | 'VITE'>(initialType);
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -42,13 +70,60 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  React.useEffect(() => {
+  // Fetch registered platform domains from backend if available
+  useEffect(() => {
+    if (isOpen) {
+      api.get('/domains/available')
+        .then((res) => {
+          if (res.data?.success && res.data?.data?.domains) {
+            setAvailableDomains(res.data.data.domains);
+          }
+        })
+        .catch(() => {
+          // Fall back gracefully to DEFAULT_PLATFORM_DOMAINS
+        });
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
     if (isOpen) {
       if (initialName) setName(initialName);
-      if (initialSlug) setSlug(initialSlug);
+      if (initialSlug) setSubdomain(initialSlug);
       if (initialType) setType(initialType);
     }
   }, [isOpen, initialName, initialSlug, initialType]);
+
+  // Real-time domain availability check with debouncing
+  useEffect(() => {
+    const cleanSub = subdomain.toLowerCase().replace(/[^a-z0-9-]/g, '').trim();
+    if (!cleanSub || cleanSub.length < 2) {
+      setDomainAvailability(null);
+      return;
+    }
+
+    setIsCheckingDomain(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get(`/subdomains/check?subdomain=${encodeURIComponent(cleanSub)}&domain=${encodeURIComponent(selectedDomain)}`);
+        if (res.data.success) {
+          setDomainAvailability({
+            isAvailable: res.data.data.isAvailable,
+            message: res.data.data.reason || (res.data.data.isAvailable ? 'Available for instant hosting!' : 'Taken'),
+            checkedFqdn: res.data.data.fqdn,
+          });
+        }
+      } catch (e: any) {
+        setDomainAvailability({
+          isAvailable: false,
+          message: e.response?.data?.error || 'Failed to verify availability',
+        });
+      } finally {
+        setIsCheckingDomain(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [subdomain, selectedDomain]);
 
   if (!isOpen) return null;
 
@@ -56,7 +131,12 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
     const val = e.target.value;
     setName(val);
     const autoSlug = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    setSlug(autoSlug);
+    setSubdomain(autoSlug);
+  };
+
+  const handleSubdomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const clean = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setSubdomain(clean);
   };
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -91,14 +171,21 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
       return;
     }
 
+    if (domainAvailability && !domainAvailability.isAvailable) {
+      setError(`The chosen domain '${domainAvailability.checkedFqdn || subdomain}' is already taken or unavailable. Please choose another.`);
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       setUploadProgress(15);
 
-      // 1. Create project
+      // 1. Create project with chosen subdomain and platformDomain
       const createRes = await api.post('/projects', {
         name,
-        slug: slug || undefined,
+        slug: subdomain || undefined,
+        subdomain: subdomain || undefined,
+        platformDomain: selectedDomain,
         type,
       });
 
@@ -179,31 +266,104 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
             </div>
           )}
 
-          {/* Project Name & Auto Slug */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
-                Project Name *
+          {/* Project Name */}
+          <div>
+            <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
+              Project Name *
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={handleNameChange}
+              placeholder="e.g. my-portfolio"
+              required
+              className="w-full bg-card border border-deployBorder focus:border-primary rounded-lg px-3 py-2 text-sm text-white placeholder-deployText-muted outline-none transition-colors"
+            />
+          </div>
+
+          {/* Domain & Subdomain Configuration */}
+          <div className="p-4 rounded-xl bg-card/60 border border-deployBorder space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-white flex items-center space-x-1.5">
+                <Globe className="w-3.5 h-3.5 text-accent" />
+                <span>1. Select Platform Domain & Subdomain</span>
               </label>
-              <input
-                type="text"
-                value={name}
-                onChange={handleNameChange}
-                placeholder="my-portfolio"
-                required
-                className="w-full bg-card border border-deployBorder focus:border-primary rounded-lg px-3 py-2 text-sm text-white placeholder-deployText-muted outline-none transition-colors"
-              />
+              {availableDomains.find(d => d.domain === selectedDomain)?.isSsl && (
+                <span className="flex items-center space-x-1 text-[10px] font-semibold text-success bg-success/15 border border-success/30 px-2 py-0.5 rounded-full">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span>Wildcard SSL Active</span>
+                </span>
+              )}
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
-                URL Subdomain Slug
-              </label>
-              <div className="flex items-center bg-card border border-deployBorder rounded-lg px-3 py-2 text-sm text-deployText-secondary">
-                <span className="text-white font-mono text-xs">{slug || 'project'}</span>
-                <span className="text-xs text-accent font-mono font-medium">.{PLATFORM_DOMAIN}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Domain Dropdown */}
+              <div>
+                <span className="block text-[11px] font-medium text-deployText-secondary mb-1">
+                  Choose Base Domain
+                </span>
+                <select
+                  value={selectedDomain}
+                  onChange={(e) => setSelectedDomain(e.target.value)}
+                  className="w-full bg-surface border border-deployBorder focus:border-primary rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                >
+                  {availableDomains.map((d) => (
+                    <option key={d.domain} value={d.domain} className="bg-surface text-white">
+                      {d.label || d.domain}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Subdomain Input */}
+              <div>
+                <span className="block text-[11px] font-medium text-deployText-secondary mb-1">
+                  Desired Subdomain
+                </span>
+                <div className="flex items-center bg-surface border border-deployBorder focus-within:border-primary rounded-lg px-3 py-2">
+                  <input
+                    type="text"
+                    value={subdomain}
+                    onChange={handleSubdomainChange}
+                    placeholder="my-subdomain"
+                    required
+                    className="flex-1 bg-transparent text-xs text-white font-mono outline-none"
+                  />
+                  <span className="text-[11px] text-accent font-mono shrink-0 pl-1">
+                    .{selectedDomain}
+                  </span>
+                </div>
               </div>
             </div>
+
+            {/* Real-time Subdomain Availability Status Badge */}
+            {subdomain && subdomain.length >= 2 && (
+              <div className="pt-1">
+                {isCheckingDomain ? (
+                  <div className="flex items-center space-x-2 text-xs text-deployText-secondary bg-surface/50 border border-deployBorder rounded-lg px-3 py-2">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                    <span>Checking availability for <code className="text-accent">{subdomain}.{selectedDomain}</code>...</span>
+                  </div>
+                ) : domainAvailability?.isAvailable ? (
+                  <div className="flex items-center justify-between text-xs text-success bg-success/10 border border-success/30 rounded-lg px-3 py-2">
+                    <div className="flex items-center space-x-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-success" />
+                      <span>
+                        <strong>Domain Available!</strong> Your site will be live at: <code className="text-white font-mono">{domainAvailability.checkedFqdn || `${subdomain}.${selectedDomain}`}</code>
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-success/20 px-2 py-0.5 rounded">Ready</span>
+                  </div>
+                ) : domainAvailability && !domainAvailability.isAvailable ? (
+                  <div className="flex items-center space-x-2 text-xs text-error bg-error/10 border border-error/30 rounded-lg px-3 py-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-error" />
+                    <span>
+                      <strong>Unavailable:</strong> {domainAvailability.message || 'This subdomain is already taken under this domain. Please choose another.'}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            )}
           </div>
 
           {/* Deployment Type Selector */}

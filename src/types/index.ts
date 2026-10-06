@@ -24,6 +24,8 @@ export interface IProject {
   customDomain?: string;
   customDomainVerified?: boolean;
   sslEnabled?: boolean;
+  assignedSubdomain?: string;
+  platformDomain?: string;
   createdAt: string;
   updatedAt: string;
 }

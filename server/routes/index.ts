@@ -72,7 +72,8 @@ router.post('/projects/:projectId/domains', authenticateJwt, domainCtrl.addCusto
 router.post('/projects/:projectId/domains/verify', authenticateJwt, domainCtrl.verifyCustomDomain);
 router.delete('/projects/:projectId/domains', authenticateJwt, domainCtrl.removeCustomDomain);
 
-// ================= AUTOMATED SUBDOMAINS & NAMECHEAP =================
+// ================= AUTOMATED SUBDOMAINS & PLATFORM DOMAINS =================
+router.get('/domains/available', domainCtrl.getAvailableDomains);
 router.get('/subdomains/check', subdomainCheckLimiter, domainCtrl.checkSubdomainAvailability);
 router.post('/subdomains/assign', authenticateJwt, subdomainCheckLimiter, domainCtrl.assignSubdomain);
 router.get('/subdomains/verify', subdomainCheckLimiter, domainCtrl.verifySubdomainDns);

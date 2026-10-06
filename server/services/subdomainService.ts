@@ -29,6 +29,7 @@ const RESERVED_SUBDOMAINS = new Set([
 
 export interface ISubdomainCheckResult {
   subdomain: string;
+  baseDomain: string;
   fqdn: string;
   isAvailable: boolean;
   reason?: string;
@@ -38,6 +39,7 @@ export interface ISubdomainCheckResult {
 export interface ISubdomainAssignmentResult {
   success: boolean;
   subdomain: string;
+  baseDomain: string;
   fqdn: string;
   publicIp: string;
   serverNodeId: string;
@@ -64,18 +66,20 @@ class SubdomainService {
   }
 
   /**
-   * Checks if a subdomain is available under pateldeeep.me
+   * Checks if a subdomain is available under a specific base domain
    */
-  public checkAvailability(rawSubdomain: string, excludeProjectId?: string): ISubdomainCheckResult {
+  public checkAvailability(rawSubdomain: string, excludeProjectId?: string, rawBaseDomain?: string): ISubdomainCheckResult {
     const subdomain = this.sanitizeSubdomain(rawSubdomain);
-    const fqdn = namecheapService.getFqdn(subdomain);
+    const baseDomain = (rawBaseDomain || config.platformDomain || 'pateldeeep.me').toLowerCase().trim();
+    const fqdn = `${subdomain}.${baseDomain}`;
 
-    if (!subdomain || subdomain.length < 3) {
+    if (!subdomain || subdomain.length < 2) {
       return {
         subdomain,
+        baseDomain,
         fqdn,
         isAvailable: false,
-        reason: 'Subdomain must be at least 3 characters long',
+        reason: 'Subdomain must be at least 2 characters long',
         suggestions: this.generateSuggestions(subdomain || 'app'),
       };
     }
@@ -83,6 +87,7 @@ class SubdomainService {
     if (subdomain.length > 63) {
       return {
         subdomain,
+        baseDomain,
         fqdn,
         isAvailable: false,
         reason: 'Subdomain cannot exceed 63 characters',
@@ -94,6 +99,7 @@ class SubdomainService {
     if (RESERVED_SUBDOMAINS.has(subdomain)) {
       return {
         subdomain,
+        baseDomain,
         fqdn,
         isAvailable: false,
         reason: `Subdomain '${subdomain}' is reserved by system infrastructure`,
@@ -101,23 +107,28 @@ class SubdomainService {
       };
     }
 
-    // Check existing projects
+    // Check existing projects claiming this subdomain under the same base domain
     const existing = dbStore.projects.find(
-      (p) => (p.slug === subdomain || p.assignedSubdomain === subdomain) && p._id !== excludeProjectId
+      (p) => 
+        (p.slug === subdomain || p.assignedSubdomain === subdomain) &&
+        (!p.platformDomain || p.platformDomain.toLowerCase() === baseDomain) &&
+        p._id !== excludeProjectId
     );
 
     if (existing) {
       return {
         subdomain,
+        baseDomain,
         fqdn,
         isAvailable: false,
-        reason: `Subdomain '${subdomain}' is already claimed by another project`,
+        reason: `Subdomain '${subdomain}.${baseDomain}' is already claimed by another project`,
         suggestions: this.generateSuggestions(subdomain),
       };
     }
 
     return {
       subdomain,
+      baseDomain,
       fqdn,
       isAvailable: true,
       suggestions: [],
@@ -151,7 +162,8 @@ class SubdomainService {
   public async assignSubdomain(
     projectId: string,
     rawSubdomain: string,
-    userId: string
+    userId: string,
+    rawBaseDomain?: string
   ): Promise<ISubdomainAssignmentResult> {
     const subdomain = this.sanitizeSubdomain(rawSubdomain);
     const project = dbStore.projects.find((p) => p._id === projectId && (p.userId === userId || userId === 'ADMIN'));
@@ -161,9 +173,9 @@ class SubdomainService {
     }
 
     // 1. Verify availability
-    const check = this.checkAvailability(subdomain, projectId);
+    const check = this.checkAvailability(subdomain, projectId, rawBaseDomain);
     if (!check.isAvailable) {
-      throw new Error(check.reason || `Subdomain '${subdomain}' is not available`);
+      throw new Error(check.reason || `Subdomain '${subdomain}.${check.baseDomain}' is not available`);
     }
 
     // 2. Select active AWS EC2 server node (or auto-spin up if storage full)
@@ -174,6 +186,7 @@ class SubdomainService {
 
     // 4. Update Project metadata
     project.assignedSubdomain = subdomain;
+    project.platformDomain = check.baseDomain;
     project.assignedServerNodeId = activeNode._id;
     project.namecheapDnsConfigured = dnsResult.success;
     project.updatedAt = new Date().toISOString();
@@ -190,7 +203,8 @@ class SubdomainService {
       details: {
         projectId: project._id,
         subdomain,
-        fqdn: dnsResult.fqdn,
+        baseDomain: check.baseDomain,
+        fqdn: check.fqdn,
         targetIp: activeNode.publicIp,
         nodeName: activeNode.name,
       },
@@ -199,18 +213,19 @@ class SubdomainService {
 
     dbStore.save();
 
-    console.log(`[Subdomain Assigned] ${dnsResult.fqdn} -> EC2 ${activeNode.publicIp} (${activeNode.name})`);
+    console.log(`[Subdomain Assigned] ${check.fqdn} -> EC2 ${activeNode.publicIp} (${activeNode.name})`);
 
     return {
       success: true,
       subdomain,
-      fqdn: dnsResult.fqdn,
+      baseDomain: check.baseDomain,
+      fqdn: check.fqdn,
       publicIp: activeNode.publicIp,
       serverNodeId: activeNode._id,
       serverNodeName: activeNode.name,
       dnsResult,
       project,
-      message: `Subdomain '${dnsResult.fqdn}' successfully assigned and mapped to AWS EC2 instance ${activeNode.name}`,
+      message: `Subdomain '${check.fqdn}' successfully assigned and mapped to AWS EC2 instance ${activeNode.name}`,
     };
   }
 }

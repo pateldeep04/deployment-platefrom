@@ -17,6 +17,8 @@ export const createProjectSchema = z.object({
   slug: z.string().min(2).max(50)
     .regex(/^[a-z0-9-]+$/, 'Slug must only contain lowercase letters, numbers, and hyphens')
     .optional(),
+  subdomain: z.string().min(2).max(63).optional(),
+  platformDomain: z.string().optional(),
   type: z.enum(['STATIC', 'PHP', 'REACT', 'VITE', 'NODE']),
   buildCommand: z.string().optional(),
   outputDirectory: z.string().optional(),
