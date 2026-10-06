@@ -151,7 +151,8 @@ class DataStore {
             p.assignedSubdomain = p.slug;
           }
         });
-        this.deployments = data.deployments || [];
+        // Clean out any default demo developer users
+        this.users = (this.users || []).filter(u => u._id !== 'usr_demo_002' && u.email !== 'developer@deployhub.com');
         // Clean out any default sample/seed websites
         const defaultSlugs = ['alex-portfolio', 'retro-games-api', 'zip-test-website', 'site-zip-test-9141', 'my-website', 'rro'];
         this.projects = this.projects.filter(p => !defaultSlugs.includes(p.slug) && !p._id.startsWith('prj_portfolio_') && !p._id.startsWith('prj_shop_'));
@@ -209,25 +210,7 @@ class DataStore {
       });
     }
 
-    // Seed Demo developer user
-    if (!this.users.some(u => u.email === 'developer@deployhub.com')) {
-      const devPassHash = bcrypt.hashSync('Developer2026!', 10);
-      this.users.push({
-        _id: 'usr_demo_002',
-        name: 'Alex Rivera',
-        email: 'developer@deployhub.com',
-        passwordHash: devPassHash,
-        role: 'USER',
-        plan: 'DEVELOPER',
-        emailVerified: true,
-        storageUsed: 0,
-        bandwidthUsed: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    }
-
-    // Default websites are not seeded - platform starts clean with 0 hosted sites
+    // Default websites and demo users are not seeded - platform starts in clean production mode
 
     // Seed Advertisements for monetization system
     if (this.ads.length === 0) {

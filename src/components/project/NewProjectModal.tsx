@@ -240,13 +240,13 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-xl bg-surface border border-deployBorder rounded-2xl shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
+      <div className="relative w-full max-w-2xl bg-[#0e1626] border border-deployBorder rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
         
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-deployBorder bg-card/60">
+        {/* Header - Pinned at top */}
+        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 border-b border-deployBorder bg-card/70 shrink-0">
           <div>
-            <h3 className="text-lg font-bold text-white">Create New Project</h3>
+            <h3 className="text-base sm:text-lg font-bold text-white">Create New Project</h3>
             <p className="text-xs text-deployText-secondary">Configure your deployment runtime and source archive</p>
           </div>
           <button
@@ -257,208 +257,210 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {error && (
-            <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-error/15 border border-error/30 text-error text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+        {/* Form Body - Scrollable */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
+            {error && (
+              <div className="flex items-center space-x-2.5 p-3 rounded-xl bg-error/15 border border-error/30 text-error text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
-          {/* Project Name */}
-          <div>
-            <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
-              Project Name *
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={handleNameChange}
-              placeholder="e.g. my-portfolio"
-              required
-              className="w-full bg-card border border-deployBorder focus:border-primary rounded-lg px-3 py-2 text-sm text-white placeholder-deployText-muted outline-none transition-colors"
-            />
-          </div>
-
-          {/* Domain & Subdomain Configuration */}
-          <div className="p-4 rounded-xl bg-card/60 border border-deployBorder space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-white flex items-center space-x-1.5">
-                <Globe className="w-3.5 h-3.5 text-accent" />
-                <span>1. Select Platform Domain & Subdomain</span>
+            {/* Project Name */}
+            <div>
+              <label className="block text-xs font-semibold text-deployText-secondary mb-1">
+                Project Name *
               </label>
-              {availableDomains.find(d => d.domain === selectedDomain)?.isSsl && (
-                <span className="flex items-center space-x-1 text-[10px] font-semibold text-success bg-success/15 border border-success/30 px-2 py-0.5 rounded-full">
-                  <ShieldCheck className="w-3 h-3" />
-                  <span>Wildcard SSL Active</span>
-                </span>
+              <input
+                type="text"
+                value={name}
+                onChange={handleNameChange}
+                placeholder="e.g. my-portfolio"
+                required
+                className="w-full bg-card border border-deployBorder focus:border-primary rounded-xl px-3.5 py-2 text-sm text-white placeholder-deployText-muted outline-none transition-colors"
+              />
+            </div>
+
+            {/* Domain & Subdomain Configuration */}
+            <div className="p-3.5 rounded-xl bg-card/60 border border-deployBorder space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-white flex items-center space-x-1.5">
+                  <Globe className="w-3.5 h-3.5 text-accent" />
+                  <span>1. Select Platform Domain & Subdomain</span>
+                </label>
+                {availableDomains.find(d => d.domain === selectedDomain)?.isSsl && (
+                  <span className="flex items-center space-x-1 text-[10px] font-semibold text-success bg-success/15 border border-success/30 px-2 py-0.5 rounded-full">
+                    <ShieldCheck className="w-3 h-3" />
+                    <span>Wildcard SSL Active</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Domain Dropdown */}
+                <div>
+                  <span className="block text-[11px] font-medium text-deployText-secondary mb-1">
+                    Choose Base Domain
+                  </span>
+                  <select
+                    value={selectedDomain}
+                    onChange={(e) => setSelectedDomain(e.target.value)}
+                    className="w-full bg-surface border border-deployBorder focus:border-primary rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                  >
+                    {availableDomains.map((d) => (
+                      <option key={d.domain} value={d.domain} className="bg-surface text-white">
+                        {d.label || d.domain}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Subdomain Input */}
+                <div>
+                  <span className="block text-[11px] font-medium text-deployText-secondary mb-1">
+                    Desired Subdomain
+                  </span>
+                  <div className="flex items-center bg-surface border border-deployBorder focus-within:border-primary focus-within:ring-1 focus-within:ring-primary rounded-xl px-3 py-2 transition-all">
+                    <input
+                      type="text"
+                      value={subdomain}
+                      onChange={handleSubdomainChange}
+                      placeholder="my-subdomain"
+                      required
+                      className="flex-1 min-w-0 bg-transparent text-xs text-white font-mono outline-none"
+                    />
+                    <span className="text-xs text-accent font-mono font-medium shrink-0 pl-2 border-l border-deployBorder/60 ml-2 whitespace-nowrap">
+                      .{selectedDomain}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Real-time Subdomain Availability Status Badge */}
+              {subdomain && subdomain.length >= 2 && (
+                <div className="pt-0.5">
+                  {isCheckingDomain ? (
+                    <div className="flex items-center space-x-2 text-xs text-deployText-secondary bg-surface/50 border border-deployBorder rounded-lg px-2.5 py-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+                      <span>Checking availability for <code className="text-accent">{subdomain}.{selectedDomain}</code>...</span>
+                    </div>
+                  ) : domainAvailability?.isAvailable ? (
+                    <div className="flex items-center justify-between text-xs text-success bg-success/10 border border-success/30 rounded-lg px-2.5 py-1.5">
+                      <div className="flex items-center space-x-2 truncate">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-success" />
+                        <span className="truncate">
+                          <strong>Available!</strong> Live at: <code className="text-white font-mono">{domainAvailability.checkedFqdn || `${subdomain}.${selectedDomain}`}</code>
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-success/20 px-2 py-0.5 rounded shrink-0 ml-2">Ready</span>
+                    </div>
+                  ) : domainAvailability && !domainAvailability.isAvailable ? (
+                    <div className="flex items-center space-x-2 text-xs text-error bg-error/10 border border-error/30 rounded-lg px-2.5 py-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-error" />
+                      <span>
+                        <strong>Unavailable:</strong> {domainAvailability.message || 'This subdomain is already taken under this domain. Please choose another.'}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Domain Dropdown */}
-              <div>
-                <span className="block text-[11px] font-medium text-deployText-secondary mb-1">
-                  Choose Base Domain
-                </span>
-                <select
-                  value={selectedDomain}
-                  onChange={(e) => setSelectedDomain(e.target.value)}
-                  className="w-full bg-surface border border-deployBorder focus:border-primary rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer"
-                >
-                  {availableDomains.map((d) => (
-                    <option key={d.domain} value={d.domain} className="bg-surface text-white">
-                      {d.label || d.domain}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Subdomain Input */}
-              <div>
-                <span className="block text-[11px] font-medium text-deployText-secondary mb-1">
-                  Desired Subdomain
-                </span>
-                <div className="flex items-center bg-surface border border-deployBorder focus-within:border-primary rounded-lg px-3 py-2">
-                  <input
-                    type="text"
-                    value={subdomain}
-                    onChange={handleSubdomainChange}
-                    placeholder="my-subdomain"
-                    required
-                    className="flex-1 bg-transparent text-xs text-white font-mono outline-none"
-                  />
-                  <span className="text-[11px] text-accent font-mono shrink-0 pl-1">
-                    .{selectedDomain}
-                  </span>
-                </div>
+            {/* Deployment Type Selector */}
+            <div>
+              <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
+                Select Deployment Runtime
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                {deploymentTypes.map((dt) => {
+                  const Icon = dt.icon;
+                  const isSelected = type === dt.id;
+                  return (
+                    <div
+                      key={dt.id}
+                      onClick={() => setType(dt.id as any)}
+                      className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-primary bg-primary/10 shadow-glow-primary'
+                          : 'border-deployBorder bg-card/60 hover:border-deployBorder-light'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 mb-0.5">
+                        <Icon className="w-3.5 h-3.5 text-accent" />
+                        <span className="text-xs font-bold text-white">{dt.title}</span>
+                      </div>
+                      <p className="text-[10px] text-deployText-secondary leading-tight">{dt.desc}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Real-time Subdomain Availability Status Badge */}
-            {subdomain && subdomain.length >= 2 && (
-              <div className="pt-1">
-                {isCheckingDomain ? (
-                  <div className="flex items-center space-x-2 text-xs text-deployText-secondary bg-surface/50 border border-deployBorder rounded-lg px-3 py-2">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
-                    <span>Checking availability for <code className="text-accent">{subdomain}.{selectedDomain}</code>...</span>
-                  </div>
-                ) : domainAvailability?.isAvailable ? (
-                  <div className="flex items-center justify-between text-xs text-success bg-success/10 border border-success/30 rounded-lg px-3 py-2">
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle2 className="w-4 h-4 shrink-0 text-success" />
-                      <span>
-                        <strong>Domain Available!</strong> Your site will be live at: <code className="text-white font-mono">{domainAvailability.checkedFqdn || `${subdomain}.${selectedDomain}`}</code>
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-success/20 px-2 py-0.5 rounded">Ready</span>
-                  </div>
-                ) : domainAvailability && !domainAvailability.isAvailable ? (
-                  <div className="flex items-center space-x-2 text-xs text-error bg-error/10 border border-error/30 rounded-lg px-3 py-2">
-                    <AlertCircle className="w-4 h-4 shrink-0 text-error" />
-                    <span>
-                      <strong>Unavailable:</strong> {domainAvailability.message || 'This subdomain is already taken under this domain. Please choose another.'}
+            {/* ZIP or Web Files Upload Dropzone */}
+            <div>
+              <label className="block text-xs font-semibold text-deployText-secondary mb-1">
+                Project Archive or Web Files (.zip, .html, .css, .js, .php)
+              </label>
+              <div
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleFileDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
+                  file
+                    ? 'border-success/50 bg-success/5'
+                    : 'border-deployBorder hover:border-primary/60 bg-card/40 hover:bg-card/70'
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".zip,.html,.htm,.css,.js,.php"
+                  onChange={(e) => e.target.files && validateAndSetFile(e.target.files[0])}
+                  className="hidden"
+                />
+
+                {file ? (
+                  <div className="flex flex-col items-center space-y-1 text-success py-1">
+                    <CheckCircle2 className="w-6 h-6" />
+                    <span className="text-xs font-semibold text-white">{file.name}</span>
+                    <span className="text-[10px] text-deployText-secondary">
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB • Ready to deploy
                     </span>
                   </div>
-                ) : null}
+                ) : (
+                  <div className="flex flex-col items-center space-y-1.5 py-1">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                      <UploadCloud className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-white">Drag & drop your ZIP or web files</span>
+                      <span className="text-[10px] text-deployText-secondary block">Supports .zip archives or individual .html, .css, .js, .php files (Max 100 MB)</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            {isSubmitting && (
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-deployText-secondary">
+                  <span>Deploying to worker pipeline...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full bg-deployBorder h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-primary h-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
               </div>
             )}
           </div>
 
-          {/* Deployment Type Selector */}
-          <div>
-            <label className="block text-xs font-semibold text-deployText-secondary mb-2">
-              Select Deployment Runtime
-            </label>
-            <div className="grid grid-cols-2 gap-2.5">
-              {deploymentTypes.map((dt) => {
-                const Icon = dt.icon;
-                const isSelected = type === dt.id;
-                return (
-                  <div
-                    key={dt.id}
-                    onClick={() => setType(dt.id as any)}
-                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                      isSelected
-                        ? 'border-primary bg-primary/10 shadow-glow-primary'
-                        : 'border-deployBorder bg-card/60 hover:border-deployBorder-light'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2 mb-1">
-                      <Icon className="w-4 h-4 text-accent" />
-                      <span className="text-xs font-bold text-white">{dt.title}</span>
-                    </div>
-                    <p className="text-[11px] text-deployText-secondary leading-tight">{dt.desc}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ZIP or Web Files Upload Dropzone */}
-          <div>
-            <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
-              Project Archive or Web Files (.zip, .html, .css, .js, .php)
-            </label>
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleFileDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${
-                file
-                  ? 'border-success/50 bg-success/5'
-                  : 'border-deployBorder hover:border-primary/60 bg-card/40 hover:bg-card/70'
-              }`}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".zip,.html,.htm,.css,.js,.php"
-                onChange={(e) => e.target.files && validateAndSetFile(e.target.files[0])}
-                className="hidden"
-              />
-
-              {file ? (
-                <div className="flex flex-col items-center space-y-1 text-success">
-                  <CheckCircle2 className="w-8 h-8" />
-                  <span className="text-sm font-semibold text-white">{file.name}</span>
-                  <span className="text-xs text-deployText-secondary">
-                    {(file.size / (1024 * 1024)).toFixed(2)} MB • Ready to deploy
-                  </span>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                    <UploadCloud className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-semibold text-white">Drag & drop your ZIP or web files</span>
-                    <span className="text-xs text-deployText-secondary block">Supports .zip archives or individual .html, .css, .js, .php files (Max 100 MB)</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Progress bar */}
-          {isSubmitting && (
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs text-deployText-secondary">
-                <span>Deploying to worker pipeline...</span>
-                <span>{uploadProgress}%</span>
-              </div>
-              <div className="w-full bg-deployBorder h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-primary h-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex items-center justify-end space-x-3 pt-2">
+          {/* Footer Actions - Pinned at bottom */}
+          <div className="px-5 sm:px-6 py-3 border-t border-deployBorder bg-card/60 flex items-center justify-end space-x-3 shrink-0">
             <button
               type="button"
               onClick={onClose}
@@ -469,7 +471,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center space-x-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-semibold px-5 py-2.5 rounded-lg shadow-glow-primary transition-all cursor-pointer"
+              className="flex items-center space-x-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-glow-primary transition-all cursor-pointer"
             >
               <span>{isSubmitting ? 'Deploying...' : 'Create & Deploy'}</span>
               <ArrowRight className="w-4 h-4" />

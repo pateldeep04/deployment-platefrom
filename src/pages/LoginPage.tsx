@@ -8,10 +8,8 @@ import {
   AlertCircle,
   ArrowRight,
   ShieldCheck,
-  UserCheck,
   Eye,
   EyeOff,
-  Sparkles,
   CheckCircle2,
   Globe
 } from 'lucide-react';
@@ -23,7 +21,6 @@ export const LoginPage: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeDemo, setActiveDemo] = useState<'developer' | 'admin' | null>(null);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -46,31 +43,6 @@ export const LoginPage: React.FC = () => {
       setError(msg);
     } finally {
       setIsLoading(false);
-      setActiveDemo(null);
-    }
-  };
-
-  const handleQuickDemo = async (demoEmail: string, demoPass: string, role: 'developer' | 'admin') => {
-    setEmail(demoEmail);
-    setPassword(demoPass);
-    setError(null);
-    setIsLoading(true);
-    setActiveDemo(role);
-
-    try {
-      await login(demoEmail, demoPass);
-      navigate('/dashboard');
-    } catch (err: any) {
-      const serverError = err.response?.data?.error;
-      const msg =
-        serverError ||
-        (err.response?.status === 500
-          ? 'Server is temporarily initializing. Please retry in a few moments.'
-          : err.message || 'Demo login failed');
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-      setActiveDemo(null);
     }
   };
 
@@ -116,39 +88,6 @@ export const LoginPage: React.FC = () => {
             >
               Create Account
             </Link>
-          </div>
-
-          {/* Quick 1-Click Demo Buttons */}
-          <div className="mb-6 p-3.5 bg-[#070b14]/70 border border-[#1e293b] rounded-xl space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-accent tracking-wider uppercase flex items-center space-x-1.5">
-                <Sparkles className="w-3 h-3 text-accent" />
-                <span>Quick 1-Click Access</span>
-              </span>
-              <span className="text-[10px] text-deployText-muted">Instant Test Credentials</span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('developer@deployhub.com', 'Developer2026!', 'developer')}
-                disabled={isLoading}
-                className="flex items-center justify-center space-x-1.5 bg-primary/10 hover:bg-primary/20 border border-primary/30 hover:border-primary/60 text-white text-xs py-2 px-2.5 rounded-lg transition-all cursor-pointer disabled:opacity-50"
-              >
-                <UserCheck className="w-3.5 h-3.5 text-accent" />
-                <span>{activeDemo === 'developer' ? 'Signing in...' : 'Developer Demo'}</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => handleQuickDemo('admin@deployhub.com', 'AdminDeployHub2026!', 'admin')}
-                disabled={isLoading}
-                className="flex items-center justify-center space-x-1.5 bg-purple-900/20 hover:bg-purple-900/40 border border-purple-700/30 hover:border-purple-600/60 text-purple-200 text-xs py-2 px-2.5 rounded-lg transition-all cursor-pointer disabled:opacity-50"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
-                <span>{activeDemo === 'admin' ? 'Signing in...' : 'Admin Demo'}</span>
-              </button>
-            </div>
           </div>
 
           {/* Error Banner */}
