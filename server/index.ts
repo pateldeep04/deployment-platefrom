@@ -93,7 +93,12 @@ app.use('/api/*', (req, res) => {
 });
 
 // 5. Production Static Frontend Serving
-const distPath = path.resolve(__dirname, '..', 'dist');
+const distCandidates = [
+  path.resolve(process.cwd(), 'dist'),
+  path.resolve(__dirname, '..', 'dist'),
+  path.resolve(__dirname, '..', '..', 'dist')
+];
+const distPath = distCandidates.find(p => fs.existsSync(path.join(p, 'index.html'))) || distCandidates[0];
 if (fs.existsSync(distPath)) {
   app.use(express.static(distPath));
   app.get('*', (req, res, next) => {
