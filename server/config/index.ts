@@ -13,7 +13,7 @@ if (!fs.existsSync(baseStorage)) {
   fs.mkdirSync(baseStorage, { recursive: true });
 }
 
-const rawPlatformDomain = process.env.PLATFORM_DOMAIN || 'pateldeeep.me';
+const rawPlatformDomain = process.env.PLATFORM_DOMAIN || 'deployeai.duckdns.org';
 const domainParts = rawPlatformDomain.split('.');
 const defaultSld = domainParts.length >= 2 ? domainParts[0] : 'pateldeeep';
 const defaultTld = domainParts.length >= 2 ? domainParts.slice(1).join('.') : 'me';

@@ -23,7 +23,7 @@ interface NewProjectModalProps {
   initialType?: 'STATIC' | 'PHP' | 'REACT' | 'VITE';
 }
 
-const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.me';
+const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'deployeai.duckdns.org';
 
 export const NewProjectModal: React.FC<NewProjectModalProps> = ({ 
   isOpen, 

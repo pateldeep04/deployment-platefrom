@@ -24,7 +24,7 @@ export const getLiveProjectUrl = (project?: ProjectUrlLike | null): string => {
       (import.meta.env.VITE_PLATFORM_DOMAIN as string) ||
       (typeof window !== 'undefined'
         ? window.location.hostname.replace(/^(app|api|www)\./, '')
-        : 'pateldeeep.me');
+        : 'deployeai.duckdns.org');
     const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
     return `${protocol}//${project.assignedSubdomain.trim()}.${defaultPlatformDomain}/`;
   }

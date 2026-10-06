@@ -28,7 +28,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 
-const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.me';
+const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'deployeai.duckdns.org';
 
 export const LandingPage: React.FC = () => {
   const { user } = useAuth();
