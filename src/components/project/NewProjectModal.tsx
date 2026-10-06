@@ -23,7 +23,7 @@ interface NewProjectModalProps {
   initialType?: 'STATIC' | 'PHP' | 'REACT' | 'VITE';
 }
 
-const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.in';
+const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.me';
 
 export const NewProjectModal: React.FC<NewProjectModalProps> = ({ 
   isOpen, 

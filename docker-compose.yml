@@ -10,7 +10,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5000
-      - PLATFORM_DOMAIN=pateldeeep.in
+      - PLATFORM_DOMAIN=pateldeeep.me
       - MONGODB_URI=mongodb://mongodb:27017/deployhub
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=deployhub-super-secret-jwt-key-secure-32chars

@@ -28,7 +28,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 
-const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.in';
+const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.me';
 
 export const LandingPage: React.FC = () => {
   const { user } = useAuth();
@@ -428,7 +428,7 @@ export const LandingPage: React.FC = () => {
               <span>[12:00:01] Edge worker initialized for runtime: {activeRuntimeTab}</span>
             </div>
             <div>[12:00:02] Security inspection passed: Path traversal blocked, safe archives verified</div>
-            <div>[12:00:03] Binding reverse proxy routing to *.pateldeeep.in</div>
+            <div>[12:00:03] Binding reverse proxy routing to *.{PLATFORM_DOMAIN}</div>
             <div className="text-success font-semibold flex items-center space-x-1.5">
               <CheckCircle className="w-3.5 h-3.5" />
               <span>[12:00:05] 🎉 Website is LIVE at https://demo.{PLATFORM_DOMAIN}/</span>

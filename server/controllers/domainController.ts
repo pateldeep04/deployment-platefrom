@@ -1,8 +1,10 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { dbStore } from '../database/store';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { customDomainSchema } from '../validators';
 import { config } from '../config';
+import { subdomainService } from '../services/subdomainService';
+import { namecheapService } from '../services/namecheapService';
 
 export const addCustomDomain = (req: AuthenticatedRequest, res: Response): void => {
   const { projectId } = req.params;
@@ -99,3 +101,86 @@ export const removeCustomDomain = (req: AuthenticatedRequest, res: Response): vo
 
   res.json({ success: true, message: 'Custom domain removed successfully' });
 };
+
+/**
+ * GET /api/v1/subdomains/check?subdomain=...
+ * Search & check if a subdomain is available under pateldeeep.me. Returns suggestions if taken.
+ */
+export const checkSubdomainAvailability = (req: Request, res: Response): void => {
+  try {
+    const rawSubdomain = (req.query.subdomain || req.query.query || '') as string;
+    const projectId = req.query.projectId as string | undefined;
+
+    if (!rawSubdomain) {
+      res.status(400).json({ success: false, error: 'Subdomain query parameter is required' });
+      return;
+    }
+
+    const result = subdomainService.checkAvailability(rawSubdomain, projectId);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Subdomain check failed' });
+  }
+};
+
+/**
+ * POST /api/v1/subdomains/assign
+ * Claims an available subdomain, provisions Namecheap DNS host, and routes to active AWS EC2 host.
+ */
+export const assignSubdomain = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { projectId, subdomain } = req.body;
+    const user = req.user!;
+
+    if (!projectId || !subdomain) {
+      res.status(400).json({ success: false, error: 'projectId and subdomain are required' });
+      return;
+    }
+
+    const result = await subdomainService.assignSubdomain(projectId, subdomain, user._id);
+
+    res.json({
+      success: true,
+      message: result.message,
+      data: {
+        subdomain: result.subdomain,
+        fqdn: result.fqdn,
+        publicIp: result.publicIp,
+        serverNodeName: result.serverNodeName,
+        dnsStatus: result.dnsResult,
+        deploymentUrl: `http://${result.fqdn}/`,
+      },
+    });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message || 'Failed to assign subdomain' });
+  }
+};
+
+/**
+ * GET /api/v1/subdomains/verify?subdomain=...
+ * Checks live DNS propagation of a subdomain under pateldeeep.me
+ */
+export const verifySubdomainDns = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const rawSubdomain = req.query.subdomain as string;
+    if (!rawSubdomain) {
+      res.status(400).json({ success: false, error: 'Subdomain query parameter is required' });
+      return;
+    }
+
+    const clean = subdomainService.sanitizeSubdomain(rawSubdomain);
+    const result = await namecheapService.verifyDnsPropagation(clean);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'DNS verification failed' });
+  }
+};
+

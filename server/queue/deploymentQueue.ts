@@ -5,6 +5,7 @@ import fs from 'fs';
 import { config } from '../config';
 import { dbStore, IDeployment } from '../database/store';
 import { SecurityValidator } from '../middleware/securityValidator';
+import { awsFleetService } from '../services/awsFleetService';
 
 export interface DeploymentJobData {
   deploymentId: string;
@@ -219,16 +220,29 @@ class DeploymentEngine {
 
       // 4. Update Deployment & Project Status to LIVE
       deployment.status = 'DEPLOYING';
-      this.addLog(deployment, `Registering DNS routing for ${project.slug}.${config.platformDomain}...`, 'ROUTING', 'info');
+      const targetDomain = project.assignedSubdomain ? `${project.assignedSubdomain}.${config.platformDomain}` : `${project.slug}.${config.platformDomain}`;
+      this.addLog(deployment, `Registering DNS routing for ${targetDomain}...`, 'ROUTING', 'info');
       
+      // Ensure project is mapped to an AWS EC2 Free Tier node
+      if (!project.assignedServerNodeId) {
+        const activeNode = await awsFleetService.getActiveNodeForDeployment();
+        project.assignedServerNodeId = activeNode._id;
+        this.addLog(deployment, `Allocated AWS Free Tier server node: ${activeNode.instanceId} (${activeNode.instanceType}) in ${activeNode.region}`, 'INFRA', 'info');
+      }
+
       deployment.status = 'LIVE';
       deployment.completedAt = new Date().toISOString();
-      deployment.deploymentUrl = `http://localhost:${config.port}/sites/${project.slug}/`;
+      deployment.deploymentUrl = project.assignedSubdomain
+        ? `http://${project.assignedSubdomain}.${config.platformDomain}/`
+        : `http://localhost:${config.port}/sites/${project.slug}/`;
 
       project.status = 'ACTIVE';
       project.currentDeploymentId = deployment._id;
       project.storageUsed += scanResult.totalSize;
       user.storageUsed += scanResult.totalSize;
+
+      // Track storage on the active AWS EC2 node (triggers automatic spinup if threshold exceeded)
+      await awsFleetService.addStorageUsage(project.assignedServerNodeId, scanResult.totalSize);
 
       this.addLog(deployment, `🎉 Deployment LIVE: ${deployment.deploymentUrl}`, 'LIVE', 'success');
       dbStore.save();

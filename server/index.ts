@@ -9,19 +9,20 @@ import { connectDatabase, ensureStorageDirectories } from './database';
 import apiRouter from './routes';
 import { handleSiteRequest } from './router/edgeProxy';
 import { dbStore } from './database/store';
+import { awsFleetService } from './services/awsFleetService';
 
 const app = express();
 
 // Initialize disk storage paths
 ensureStorageDirectories();
 
-// Subdomain Host Router: Intercept *.pateldeeep.in, *.deployhub.local, or custom domains
+// Subdomain Host Router: Intercept *.pateldeeep.me, *.deployhub.local, or custom domains
 app.use((req, res, next) => {
   const host = (req.headers.host || '').split(':')[0].toLowerCase();
   const isApi = req.path.startsWith('/api') || req.path === '/health';
   if (isApi) return next();
 
-  // If host is a subdomain (e.g. my-app.pateldeeep.in or my-app.localhost)
+  // If host is a subdomain (e.g. my-app.pateldeeep.me or my-app.localhost)
   const parts = host.split('.');
   if (parts.length > 2 || (parts.length === 2 && (parts[1] === 'localhost' || parts[1] === 'local'))) {
     const subdomain = parts[0];
@@ -129,10 +130,21 @@ const startServer = async () => {
   📍 Port: ${config.port}
   🌐 API Root: http://localhost:${config.port}/api/v1
   🔗 Edge Sites Router: http://localhost:${config.port}/sites/:slug/
+  ☁️  AWS EC2 Fleet: Free Tier (t2.micro) Auto-Spinup Ready
+  🏷️  Namecheap DNS: ${config.namecheapSld}.${config.namecheapTld}
   🛡️  Security: Rate Limiter + Sandbox Guards + JWT Auth
 ======================================================
     `);
   });
+
+  // Background monitor: Periodically checks storage on active nodes and auto-spins up new AWS Free Tier instances if >= threshold
+  setInterval(async () => {
+    try {
+      await awsFleetService.checkNodeStorageThreshold();
+    } catch (err) {
+      console.error('[AWS Fleet Watcher] Storage check error:', err);
+    }
+  }, 5 * 60 * 1000); // Check every 5 minutes
 };
 
 startServer();

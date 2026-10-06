@@ -31,9 +31,34 @@ export interface IProject {
   customDomain?: string;
   customDomainVerified?: boolean;
   sslEnabled?: boolean;
+  assignedServerNodeId?: string;
+  assignedSubdomain?: string;
+  namecheapDnsConfigured?: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+export interface IServerNode {
+  _id: string;
+  instanceId: string;
+  name: string;
+  publicIp: string;
+  privateIp?: string;
+  instanceType: string; // 't2.micro' (AWS Free Tier)
+  region: string;
+  provider: 'AWS_EC2' | 'LOCAL';
+  status: 'PROVISIONING' | 'RUNNING' | 'STOPPED' | 'DRAINING' | 'TERMINATED';
+  storageTotalBytes: number; // 30 GB AWS Free Tier EBS
+  storageUsedBytes: number;
+  storageUsagePercent: number;
+  maxAllowedStoragePercent: number; // default 85% threshold
+  assignedProjectsCount: number;
+  isPrimaryNode: boolean;
+  isAcceptingTraffic: boolean;
+  createdAt: string;
+  lastHeartbeatAt: string;
+}
+
 
 export interface IDeployment {
   _id: string;
@@ -93,6 +118,7 @@ class DataStore {
   public envVars: IEnvironmentVariable[] = [];
   public ads: IAdvertisement[] = [];
   public auditLogs: IAuditLog[] = [];
+  public serverNodes: IServerNode[] = [];
 
   constructor() {
     this.filePath = path.join(config.storageDir, 'data', 'deployhub_state.json');
@@ -111,6 +137,7 @@ class DataStore {
         this.envVars = data.envVars || [];
         this.ads = data.ads || [];
         this.auditLogs = data.auditLogs || [];
+        this.serverNodes = data.serverNodes || [];
       }
     } catch (e) {
       console.warn('Could not read existing state file, initializing fresh store');
@@ -126,6 +153,7 @@ class DataStore {
         envVars: this.envVars,
         ads: this.ads,
         auditLogs: this.auditLogs,
+        serverNodes: this.serverNodes,
       };
       const dir = path.dirname(this.filePath);
       if (!fs.existsSync(dir)) {
@@ -329,7 +357,32 @@ echo json_encode([
         fs.writeFileSync(path.join(siteDir, 'index.php'), php);
       }
     }
+
+    // Seed initial Primary AWS EC2 Free Tier Node if none exist
+    if (this.serverNodes.length === 0) {
+      this.serverNodes.push({
+        _id: 'node_primary_001',
+        instanceId: 'i-09f182c89012a44b1',
+        name: 'DeployHub EC2 Primary Node (t2.micro Free Tier)',
+        publicIp: config.primaryServerIp,
+        privateIp: '172.31.40.12',
+        instanceType: config.awsEc2InstanceType,
+        region: config.awsRegion,
+        provider: 'AWS_EC2',
+        status: 'RUNNING',
+        storageTotalBytes: 30 * 1024 * 1024 * 1024, // 30 GB AWS Free Tier EBS
+        storageUsedBytes: 4.8 * 1024 * 1024 * 1024,  // Initial system usage
+        storageUsagePercent: 16.0,
+        maxAllowedStoragePercent: config.awsAutoSpinupThresholdPercent, // e.g. 85%
+        assignedProjectsCount: this.projects.length,
+        isPrimaryNode: true,
+        isAcceptingTraffic: true,
+        createdAt: new Date().toISOString(),
+        lastHeartbeatAt: new Date().toISOString(),
+      });
+    }
   }
 }
 
 export const dbStore = new DataStore();
+

@@ -55,7 +55,7 @@ interface IProjectMeta {
   deploymentUrl: string;
 }
 
-const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.in';
+const PLATFORM_DOMAIN = import.meta.env.VITE_PLATFORM_DOMAIN || 'pateldeeep.me';
 
 export const CPanelPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

@@ -72,7 +72,7 @@ deployhub/
 │   ├── database/           # Mongoose models & in-memory store
 │   ├── middleware/         # JWT Auth, Rate Limiter & Security Validators
 │   ├── queue/              # Deployment worker pipeline & ZIP unpacker
-│   ├── router/             # Edge proxy host routing (*.pateldeeep.in)
+│   ├── router/             # Edge proxy host routing (*.pateldeeep.me)
 │   ├── routes/             # Versioned REST API endpoints (/api/v1)
 │   ├── validators/         # Zod schemas
 │   └── index.ts            # Core Server entrypoint
@@ -87,7 +87,7 @@ deployhub/
 │   ├── artifacts/          # Versioned immutable builds
 │   └── sites/              # Live deployed tenant websites
 ├── .dockerignore
-├── .env                    # Environment configuration (pateldeeep.in)
+├── .env                    # Environment configuration (pateldeeep.me)
 ├── .env.example
 ├── DOCKER_DEPLOYMENT.md    # Docker container instructions
 ├── docker-compose.yml      # App, MongoDB, Redis orchestration

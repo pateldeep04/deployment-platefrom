@@ -11,6 +11,7 @@ import * as billingCtrl from '../controllers/billingController';
 import * as adsCtrl from '../controllers/adsController';
 import * as adminCtrl from '../controllers/adminController';
 import * as fileCtrl from '../controllers/fileManagerController';
+import * as fleetCtrl from '../controllers/cloudFleetController';
 
 const router = Router();
 
@@ -60,6 +61,19 @@ router.delete('/projects/:projectId/env/:key', authenticateJwt, envCtrl.deleteEn
 router.post('/projects/:projectId/domains', authenticateJwt, domainCtrl.addCustomDomain);
 router.post('/projects/:projectId/domains/verify', authenticateJwt, domainCtrl.verifyCustomDomain);
 router.delete('/projects/:projectId/domains', authenticateJwt, domainCtrl.removeCustomDomain);
+
+// ================= AUTOMATED SUBDOMAINS & NAMECHEAP =================
+router.get('/subdomains/check', domainCtrl.checkSubdomainAvailability);
+router.post('/subdomains/assign', authenticateJwt, domainCtrl.assignSubdomain);
+router.get('/subdomains/verify', domainCtrl.verifySubdomainDns);
+
+// ================= AWS EC2 FLEET & AUTO-SPINUP =================
+router.get('/fleet/nodes', fleetCtrl.listFleetNodes);
+router.get('/fleet/nodes/:id', fleetCtrl.getNodeDetails);
+router.post('/fleet/spinup', authenticateJwt, fleetCtrl.triggerSpinUpNode);
+router.post('/fleet/check-storage-threshold', fleetCtrl.checkStorageThreshold);
+router.post('/fleet/simulate-storage-full', authenticateJwt, fleetCtrl.simulateStorageFull);
+router.get('/fleet/dns-status', fleetCtrl.getDnsStatus);
 
 // ================= BILLING & PLANS =================
 router.get('/billing/plans', billingCtrl.getPlans);

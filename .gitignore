@@ -26,6 +26,8 @@ storage/uploads/*
 !storage/uploads/.gitkeep
 storage/scratch/*
 !storage/scratch/.gitkeep
+scratch/
+
 
 # Temporary and test archive files
 *.zip
