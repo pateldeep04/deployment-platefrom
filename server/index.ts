@@ -93,26 +93,42 @@ app.use('/api/*', (req, res) => {
 });
 
 // 5. Production Static Frontend Serving
-const distCandidates = [
-  path.resolve(process.cwd(), 'dist'),
-  path.resolve(__dirname, '..', 'dist'),
-  path.resolve(__dirname, '..', '..', 'dist')
-];
-const distPath = distCandidates.find(p => fs.existsSync(path.join(p, 'index.html'))) || distCandidates[0];
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/sites') || req.path.startsWith('/health')) {
-      return next();
-    }
-    const indexFile = path.join(distPath, 'index.html');
-    if (fs.existsSync(indexFile)) {
-      res.sendFile(indexFile);
-    } else {
-      next();
-    }
-  });
-}
+const getDistPath = () => {
+  const candidates = [
+    path.resolve(process.cwd(), 'dist'),
+    path.resolve(__dirname, '..', 'dist'),
+    path.resolve(__dirname, '..', '..', 'dist')
+  ];
+  return candidates.find(p => fs.existsSync(path.join(p, 'index.html'))) || path.resolve(process.cwd(), 'dist');
+};
+
+const distDir = getDistPath();
+app.use(express.static(distDir));
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/sites') || req.path.startsWith('/health')) {
+    return next();
+  }
+  const currentDist = getDistPath();
+  const indexFile = path.join(currentDist, 'index.html');
+  if (fs.existsSync(indexFile)) {
+    return res.sendFile(indexFile);
+  }
+  
+  res.status(503).send(`
+    <!DOCTYPE html>
+    <html>
+      <head><title>DeployHub - Building Frontend</title></head>
+      <body style="margin:0;font-family:system-ui,-apple-system,sans-serif;background:#0b0f19;color:#f8fafc;display:flex;align-items:center;justify-content:center;height:100vh;">
+        <div style="background:#131c2e;border:1px solid #1e293b;border-radius:12px;padding:32px;max-width:520px;text-align:center;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+          <h2 style="margin:0 0 12px;color:#38bdf8;font-size:22px;">DeployHub Frontend Not Built Yet</h2>
+          <p style="color:#94a3b8;font-size:15px;line-height:1.6;margin-bottom:20px;">The backend is running, but the frontend files have not been generated yet. Run the build command on the server:</p>
+          <pre style="background:#090d16;padding:12px;border-radius:8px;color:#34d399;font-size:14px;overflow-x:auto;">npm run build && pm2 restart all</pre>
+        </div>
+      </body>
+    </html>
+  `);
+});
 
 // 6. Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
