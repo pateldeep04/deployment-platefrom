@@ -71,6 +71,14 @@ export const config = {
   awsEc2SecurityGroupId: process.env.AWS_EC2_SECURITY_GROUP_ID || 'sg-deployhub-fleet',
   awsAutoSpinupThresholdPercent: parseInt(process.env.AWS_STORAGE_THRESHOLD_PERCENT || '85', 10),
   primaryServerIp: process.env.PRIMARY_SERVER_IP || '13.233.142.85',
+
+  // Email / SMTP Dispatcher (Gmail, Amazon SES, Brevo, SendGrid, etc.)
+  smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
+  smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
+  smtpSecure: process.env.SMTP_SECURE === 'true',
+  smtpUser: process.env.SMTP_USER || '',
+  smtpPass: process.env.SMTP_PASS || '',
+  smtpFrom: process.env.SMTP_FROM || (process.env.SMTP_USER ? `"DeployHub Cloud" <${process.env.SMTP_USER}>` : '"DeployHub Cloud" <no-reply@deployhub.com>'),
 };
 
 export interface ProjectUrlTarget {
