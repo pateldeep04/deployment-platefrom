@@ -62,7 +62,7 @@ export const createProject = (req: AuthenticatedRequest, res: Response): void =>
   }
 
   const assignedSubdomain = (customSub || slug).toLowerCase().replace(/[^a-z0-9-]/g, '');
-  const platformDomain = chosenDomain || config.platformDomain || 'pateldeeep.me';
+  const platformDomain = chosenDomain || config.platformDomain || 'deployeai.duckdns.org';
 
   const newProject: IProject = {
     _id: `prj_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -132,7 +132,7 @@ export const deleteProject = (req: AuthenticatedRequest, res: Response): void =>
   }
 
   const project = dbStore.projects[index];
-  
+
   // Clean up directory on disk
   try {
     const siteDir = path.join(config.storageDir, 'sites', project.slug);

@@ -9,9 +9,15 @@ import { redisCacheService } from '../services/redisCacheService';
 export const handleSiteRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   let slug: string = (req.params.slug as string) || '';
 
-  // Support host-based routing (e.g. my-project.deployeai.duckdns.org, my-project.pateldeeep.me, or custom domain)
+  // Support host-based routing (e.g. my-project.deployeai.duckdns.org or custom domain)
   const host: string = (req.headers.host || '').split(':')[0].toLowerCase();
   const platformDomain = (config.platformDomain || 'deployeai.duckdns.org').toLowerCase();
+
+  // pateldeeep.me is strictly the main platform, not for project subdomains
+  if (host === 'pateldeeep.me' || host.endsWith('.pateldeeep.me')) {
+    next();
+    return;
+  }
 
   if (!slug) {
     const recognizedDomains = Array.from(new Set([

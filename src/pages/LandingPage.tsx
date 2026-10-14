@@ -230,7 +230,9 @@ export const LandingPage: React.FC = () => {
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
             <a href="#specs" className="hover:text-white transition-colors">Hosting Specs</a>
-            <a href="#compare" className="hover:text-white transition-colors">Compare Plans</a>
+            <Link to="/domain-request" className="text-purple-300 hover:text-white transition-colors font-semibold flex items-center space-x-1">
+              <span>Domain Request & Help</span>
+            </Link>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
 
@@ -729,7 +731,7 @@ export const LandingPage: React.FC = () => {
             <a href="#claim-subdomain" className="hover:text-white transition-colors">Free Subdomains</a>
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#specs" className="hover:text-white transition-colors">Hosting Specs</a>
-            <a href="#compare" className="hover:text-white transition-colors">Compare Plans</a>
+            <Link to="/domain-request" className="hover:text-white transition-colors">Domain Request</Link>
             <Link to="/docs" className="hover:text-white transition-colors">Documentation</Link>
           </div>
 

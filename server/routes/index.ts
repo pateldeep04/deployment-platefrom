@@ -19,14 +19,24 @@ import * as adsCtrl from '../controllers/adsController';
 import * as adminCtrl from '../controllers/adminController';
 import * as fileCtrl from '../controllers/fileManagerController';
 import * as fleetCtrl from '../controllers/cloudFleetController';
+import * as supportCtrl from '../controllers/supportController';
 
 const router = Router();
 
-// ================= AUTHENTICATION =================
+// ================= AUTHENTICATION & EMAIL VERIFICATION =================
 router.post('/auth/register', authLimiter, authCtrl.register);
+router.post('/auth/verify-email', authLimiter, authCtrl.verifyEmail);
+router.post('/auth/resend-verification', authLimiter, authCtrl.resendVerification);
 router.post('/auth/login', authLimiter, authCtrl.login);
+router.post('/auth/send-login-otp', authLimiter, authCtrl.sendLoginOtp);
+router.post('/auth/verify-login-otp', authLimiter, authCtrl.verifyLoginOtp);
 router.post('/auth/refresh', authLimiter, authCtrl.refreshToken);
 router.get('/auth/me', authenticateJwt, authCtrl.getCurrentUser);
+
+// ================= DOMAIN REQUESTS & USER QUERIES =================
+router.post('/support/request', authLimiter, supportCtrl.submitSupportRequest);
+router.get('/support/status/:ticketNumber', supportCtrl.getTicketStatus);
+router.get('/support/requests', authenticateJwt, requireRole('ADMIN'), supportCtrl.listSupportRequests);
 
 // ================= PROJECTS =================
 router.get('/projects', authenticateJwt, projectCtrl.listProjects);

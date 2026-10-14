@@ -7,7 +7,11 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<{ requiresVerification: boolean; email: string }>;
+  verifyEmail: (email: string, code: string) => Promise<void>;
+  resendVerification: (email: string) => Promise<void>;
+  sendLoginOtp: (email: string) => Promise<{ success: boolean; message: string }>;
+  verifyLoginOtp: (email: string, code: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isAdmin: boolean;
@@ -24,6 +28,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return localStorage.getItem('deployhub_access_token');
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const saveAuthSession = (authUser: IUser, tokens: { accessToken: string; refreshToken: string }) => {
+    setUser(authUser);
+    setToken(tokens.accessToken);
+    localStorage.setItem('deployhub_user', JSON.stringify(authUser));
+    localStorage.setItem('deployhub_access_token', tokens.accessToken);
+    localStorage.setItem('deployhub_refresh_token', tokens.refreshToken);
+  };
 
   const refreshUser = async () => {
     try {
@@ -49,27 +61,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res = await api.post('/auth/login', { email, password });
     if (res.data.success) {
       const { user: authUser, tokens } = res.data.data;
-      setUser(authUser);
-      setToken(tokens.accessToken);
-      localStorage.setItem('deployhub_user', JSON.stringify(authUser));
-      localStorage.setItem('deployhub_access_token', tokens.accessToken);
-      localStorage.setItem('deployhub_refresh_token', tokens.refreshToken);
+      saveAuthSession(authUser, tokens);
     } else {
       throw new Error(res.data.error || 'Login failed');
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string): Promise<{ requiresVerification: boolean; email: string }> => {
     const res = await api.post('/auth/register', { name, email, password });
     if (res.data.success) {
-      const { user: authUser, tokens } = res.data.data;
-      setUser(authUser);
-      setToken(tokens.accessToken);
-      localStorage.setItem('deployhub_user', JSON.stringify(authUser));
-      localStorage.setItem('deployhub_access_token', tokens.accessToken);
-      localStorage.setItem('deployhub_refresh_token', tokens.refreshToken);
+      if (res.data.data?.requiresVerification) {
+        return { requiresVerification: true, email: res.data.data.email };
+      }
+      if (res.data.data?.tokens) {
+        const { user: authUser, tokens } = res.data.data;
+        saveAuthSession(authUser, tokens);
+      }
+      return { requiresVerification: false, email };
     } else {
       throw new Error(res.data.error || 'Registration failed');
+    }
+  };
+
+  const verifyEmail = async (email: string, code: string) => {
+    const res = await api.post('/auth/verify-email', { email, code });
+    if (res.data.success) {
+      const { user: authUser, tokens } = res.data.data;
+      saveAuthSession(authUser, tokens);
+    } else {
+      throw new Error(res.data.error || 'Verification failed');
+    }
+  };
+
+  const resendVerification = async (email: string) => {
+    const res = await api.post('/auth/resend-verification', { email });
+    if (!res.data.success) {
+      throw new Error(res.data.error || 'Failed to resend verification code');
+    }
+  };
+
+  const sendLoginOtp = async (email: string) => {
+    const res = await api.post('/auth/send-login-otp', { email });
+    if (res.data.success) {
+      return { success: true, message: res.data.message };
+    } else {
+      throw new Error(res.data.error || 'Failed to send login code');
+    }
+  };
+
+  const verifyLoginOtp = async (email: string, code: string) => {
+    const res = await api.post('/auth/verify-login-otp', { email, code });
+    if (res.data.success) {
+      const { user: authUser, tokens } = res.data.data;
+      saveAuthSession(authUser, tokens);
+    } else {
+      throw new Error(res.data.error || 'Login code verification failed');
     }
   };
 
@@ -90,6 +136,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         register,
+        verifyEmail,
+        resendVerification,
+        sendLoginOtp,
+        verifyLoginOtp,
         logout,
         refreshUser,
         isAdmin: user?.role === 'ADMIN',

@@ -48,3 +48,21 @@ export const createAdSchema = z.object({
 export const customDomainSchema = z.object({
   domain: z.string().min(3).max(100).regex(/^(?!:\/\/)([a-zA-Z0-9-_]+\.)+[a-zA-Z]{2,}$/, 'Invalid domain format'),
 });
+
+export const verifyEmailSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  code: z.string().min(4, 'Code must be at least 4 digits').max(10),
+});
+
+export const requestOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export const supportRequestSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  email: z.string().email('Invalid email address'),
+  type: z.enum(['DOMAIN_REQUEST', 'SUPPORT_QUERY', 'QUOTA_INCREASE', 'BUG_REPORT']),
+  domainName: z.string().max(100).optional(),
+  subject: z.string().min(3, 'Subject must be at least 3 characters').max(150),
+  message: z.string().min(10, 'Message must be at least 10 characters').max(3000),
+});

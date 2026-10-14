@@ -70,7 +70,7 @@ class SubdomainService {
    */
   public checkAvailability(rawSubdomain: string, excludeProjectId?: string, rawBaseDomain?: string): ISubdomainCheckResult {
     const subdomain = this.sanitizeSubdomain(rawSubdomain);
-    const baseDomain = (rawBaseDomain || config.platformDomain || 'pateldeeep.me').toLowerCase().trim();
+    const baseDomain = (rawBaseDomain || config.platformDomain || 'deployeai.duckdns.org').toLowerCase().trim();
     const fqdn = `${subdomain}.${baseDomain}`;
 
     if (!subdomain || subdomain.length < 2) {

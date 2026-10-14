@@ -11,6 +11,7 @@ import { CPanelPage } from './pages/CPanelPage';
 import { BillingPage } from './pages/BillingPage';
 import { AdminPage } from './pages/AdminPage';
 import { DocsPage } from './pages/DocsPage';
+import { SupportRequestPage } from './pages/SupportRequestPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -40,6 +41,9 @@ export const App: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/docs" element={<DocsPage />} />
+          <Route path="/support" element={<SupportRequestPage />} />
+          <Route path="/domain-request" element={<SupportRequestPage />} />
+          <Route path="/contact" element={<SupportRequestPage />} />
 
           {/* Protected Developer Console routes */}
           <Route

@@ -16,7 +16,7 @@ const app = express();
 // Initialize disk storage paths
 ensureStorageDirectories();
 
-// Subdomain Host Router: Intercept *.deployeai.duckdns.org, *.pateldeeep.me, or custom domains
+// Subdomain Host Router: Intercept *.deployeai.duckdns.org or custom domains
 app.use((req, res, next) => {
   const host = (req.headers.host || '').split(':')[0].toLowerCase();
   const isApi = req.path.startsWith('/api') || req.path === '/health';
@@ -28,8 +28,10 @@ app.use((req, res, next) => {
     ...AVAILABLE_PLATFORM_DOMAINS.map(d => d.domain.toLowerCase()),
   ])).filter(Boolean);
 
-  // If host is the root platform domain or localhost, serve main app
+  // pateldeeep.me is the main platform website only (NOT for project subdomains)
   if (
+    host === 'pateldeeep.me' ||
+    host.endsWith('.pateldeeep.me') ||
     recognizedDomains.some(d => host === d || host === `www.${d}`) ||
     host === 'localhost' ||
     host === '127.0.0.1'
@@ -71,14 +73,65 @@ app.use(
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
     crossOriginResourcePolicy: false,
+    xContentTypeOptions: true,
+    hidePoweredBy: true,
   })
 );
 
-// CORS
+// Hardened Dynamic CORS with Strict Origin Validation
+const allowedOrigins = [
+  'https://pateldeeep.me',
+  'https://www.pateldeeep.me',
+  'http://pateldeeep.me',
+  'https://deployeai.duckdns.org',
+  'http://deployeai.duckdns.org',
+  'http://localhost:5000',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5000',
+  'http://127.0.0.1:5173',
+];
+
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      try {
+        const parsedUrl = new URL(origin);
+        const hostname = parsedUrl.hostname.toLowerCase();
+
+        // 1. Check fixed list
+        if (allowedOrigins.includes(origin) || allowedOrigins.includes(`${parsedUrl.protocol}//${hostname}`)) {
+          return callback(null, true);
+        }
+
+        // 2. Check recognized platform domains & subdomains (*.deployeai.duckdns.org, *.pateldeeep.me, etc.)
+        const isPlatformDomain = AVAILABLE_PLATFORM_DOMAINS.some(d => hostname === d.domain || hostname.endsWith('.' + d.domain));
+        if (isPlatformDomain || hostname === 'pateldeeep.me' || hostname.endsWith('.pateldeeep.me') || hostname.endsWith('.duckdns.org')) {
+          return callback(null, true);
+        }
+
+        // 3. Check verified custom domains from database
+        const isCustomDomain = dbStore.projects.some(p => p.customDomain && p.customDomain.toLowerCase() === hostname);
+        if (isCustomDomain) {
+          return callback(null, true);
+        }
+
+        // 4. Localhost / local IP development
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+          return callback(null, true);
+        }
+      } catch (err) {}
+
+      return callback(new Error(`CORS policy: Origin ${origin} is not allowed access.`));
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 86400,
   })
 );
 

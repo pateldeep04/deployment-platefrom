@@ -24,7 +24,7 @@ export const getLiveProjectUrl = (project?: ProjectUrlLike | null): string => {
   // If project has an explicit platformDomain assigned
   if (project.platformDomain && project.platformDomain.trim()) {
     const base = project.platformDomain.trim();
-    const isHttps = base.includes('pateldeeep.me') || (typeof window !== 'undefined' && window.location.protocol === 'https:');
+    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
     const proto = isHttps ? 'https:' : 'http:';
     return `${proto}//${sub}.${base}/`;
   }

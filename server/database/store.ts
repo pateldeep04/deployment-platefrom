@@ -11,8 +11,28 @@ export interface IUser {
   role: 'USER' | 'ADMIN' | 'SUPPORT';
   plan: 'FREE' | 'DEVELOPER' | 'PRO';
   emailVerified: boolean;
+  verificationCode?: string;
+  verificationCodeExpires?: string;
+  loginOtpCode?: string;
+  loginOtpExpires?: string;
   storageUsed: number; // in bytes
   bandwidthUsed: number; // in bytes
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ISupportRequest {
+  _id: string;
+  ticketNumber: string;
+  userId?: string;
+  name: string;
+  email: string;
+  type: 'DOMAIN_REQUEST' | 'SUPPORT_QUERY' | 'QUOTA_INCREASE' | 'BUG_REPORT';
+  domainName?: string;
+  subject: string;
+  message: string;
+  status: 'OPEN' | 'IN_REVIEW' | 'RESOLVED' | 'CLOSED';
+  ip: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -132,6 +152,7 @@ class DataStore {
   public auditLogs: IAuditLog[] = [];
   public serverNodes: IServerNode[] = [];
   public trafficLogs: ITrafficLog[] = [];
+  public supportRequests: ISupportRequest[] = [];
 
   constructor() {
     this.filePath = path.join(config.storageDir, 'data', 'deployhub_state.json');
@@ -163,6 +184,7 @@ class DataStore {
         this.auditLogs = data.auditLogs || [];
         this.serverNodes = data.serverNodes || [];
         this.trafficLogs = (data.trafficLogs || []).filter((l: any) => remainingProjectIds.has(l.projectId));
+        this.supportRequests = data.supportRequests || [];
       }
     } catch (e) {
       console.warn('Could not read existing state file, initializing fresh store');
@@ -180,6 +202,7 @@ class DataStore {
         auditLogs: this.auditLogs,
         serverNodes: this.serverNodes,
         trafficLogs: this.trafficLogs,
+        supportRequests: this.supportRequests,
       };
       const dir = path.dirname(this.filePath);
       if (!fs.existsSync(dir)) {
