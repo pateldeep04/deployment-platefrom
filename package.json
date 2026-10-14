@@ -12,7 +12,8 @@
     "build:server": "tsc -p server/tsconfig.json",
     "start": "node server/dist/index.js",
     "start:dev": "ts-node server/index.ts",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "db:sync": "tsx scripts/migrateToMongo.ts"
   },
   "dependencies": {
     "@aws-sdk/client-ec2": "^3.1146.0",
