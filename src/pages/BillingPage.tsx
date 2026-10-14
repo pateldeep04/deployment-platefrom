@@ -80,7 +80,7 @@ export const BillingPage: React.FC = () => {
     try {
       setIsVerifyingUpi(true);
       const targetPlan = plans.find(p => p.id === selectedUpiPlanId);
-      const amount = targetPlan ? targetPlan.priceINR : (selectedUpiPlanId === 'DEVELOPER' ? 149 : 399);
+      const amount = targetPlan ? targetPlan.priceINR : (selectedUpiPlanId === 'DEVELOPER' ? 30 : 399);
 
       const res = await api.post('/billing/upi-verify', {
         planId: selectedUpiPlanId,
@@ -112,7 +112,7 @@ export const BillingPage: React.FC = () => {
   const activeUpiPlan = plans.find(p => p.id === selectedUpiPlanId) || {
     id: selectedUpiPlanId,
     name: selectedUpiPlanId === 'DEVELOPER' ? 'Developer' : 'Pro Infrastructure',
-    priceINR: selectedUpiPlanId === 'DEVELOPER' ? 149 : 399,
+    priceINR: selectedUpiPlanId === 'DEVELOPER' ? 30 : 399,
   };
 
   const upiPaymentUri = `upi://pay?pa=${OFFICIAL_UPI_ID}&pn=DeployHub%20Cloud&am=${activeUpiPlan.priceINR}&cu=INR&tn=${encodeURIComponent(`DeployHub ${activeUpiPlan.name} Subscription`)}`;
@@ -207,7 +207,9 @@ export const BillingPage: React.FC = () => {
                     </li>
                     <li className="flex items-center space-x-2.5">
                       <Check className="w-4 h-4 text-success" />
-                      <span>{p.adFree ? 'Ad-Free Dashboard' : 'Dashboard Ads'}</span>
+                      <span className={p.adFree ? 'text-emerald-400 font-semibold' : ''}>
+                        {p.adFree ? '✓ Zero Ads (100% Ad-Free Sites)' : 'Ad-Supported (Sponsored Banner)'}
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -297,10 +299,10 @@ export const BillingPage: React.FC = () => {
                 >
                   <div>
                     <div className="font-bold text-white text-sm">Developer Plan</div>
-                    <div className="text-xs text-deployText-secondary mt-0.5">20 Projects • 10 GB Storage • Custom Domains</div>
+                    <div className="text-xs text-deployText-secondary mt-0.5">20 Projects • 10 GB Storage • Custom Domains • Zero Ads</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-black text-accent">₹149</div>
+                    <div className="text-lg font-black text-accent">₹{plans.find(p => p.id === 'DEVELOPER')?.priceINR || 30}</div>
                     <div className="text-[10px] text-deployText-muted">per month</div>
                   </div>
                 </button>

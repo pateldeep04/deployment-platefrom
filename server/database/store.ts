@@ -55,6 +55,12 @@ export interface IProject {
   assignedSubdomain?: string;
   platformDomain?: string;
   namecheapDnsConfigured?: boolean;
+  domainExpiresAt?: string;
+  domainStatus?: 'ACTIVE' | 'EXPIRING_SOON' | 'DEACTIVATED';
+  isDomainExpired?: boolean;
+  deactivationWarningSentAt?: string;
+  deactivationEmailSentAt?: string;
+  reactivatedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -141,6 +147,16 @@ export interface ITrafficLog {
   statusCode: number;
 }
 
+export interface IPlatformSettings {
+  developerPriceINR: number; // default: 30
+  proPriceINR: number; // default: 399
+  freeTierAdsEnabled: boolean; // default: true
+  adBannerTitle?: string;
+  adBannerText?: string;
+  adBannerLink?: string;
+  customAdScript?: string;
+}
+
 // In-memory + persistent JSON store for high performance and zero-dependency local setup
 class DataStore {
   private filePath: string;
@@ -153,6 +169,15 @@ class DataStore {
   public serverNodes: IServerNode[] = [];
   public trafficLogs: ITrafficLog[] = [];
   public supportRequests: ISupportRequest[] = [];
+  public settings: IPlatformSettings = {
+    developerPriceINR: 30,
+    proPriceINR: 399,
+    freeTierAdsEnabled: true,
+    adBannerTitle: 'Hosting Powered by DeployHub Cloud',
+    adBannerText: 'Fast free web hosting with SSL. Upgrade to Developer (₹30/mo) for 100% ad-free sites.',
+    adBannerLink: 'https://deployhub.com',
+    customAdScript: '',
+  };
 
   constructor() {
     this.filePath = path.join(config.storageDir, 'data', 'deployhub_state.json');
@@ -171,6 +196,15 @@ class DataStore {
           if (!p.assignedSubdomain) {
             p.assignedSubdomain = p.slug;
           }
+          if (!p.domainExpiresAt) {
+            const created = p.createdAt ? new Date(p.createdAt).getTime() : Date.now();
+            p.domainExpiresAt = new Date(created + 90 * 24 * 60 * 60 * 1000).toISOString();
+          }
+          if (!p.domainStatus) {
+            const isPast = new Date() > new Date(p.domainExpiresAt);
+            p.domainStatus = isPast ? 'DEACTIVATED' : 'ACTIVE';
+            p.isDomainExpired = isPast;
+          }
         });
         // Clean out any default demo developer users
         this.users = (this.users || []).filter(u => u._id !== 'usr_demo_002' && u.email !== 'developer@deployhub.com');
@@ -183,8 +217,30 @@ class DataStore {
         this.ads = data.ads || [];
         this.auditLogs = data.auditLogs || [];
         this.serverNodes = data.serverNodes || [];
+        const primaryNode = this.serverNodes.find(n => n.isPrimaryNode);
+        if (primaryNode) {
+          primaryNode.instanceId = 'i-089bcd5af2cb5b8f3';
+          primaryNode.name = 'deploye test (EC2 Primary Node)';
+          primaryNode.publicIp = config.primaryServerIp;
+          primaryNode.privateIp = '172.31.11.217';
+          primaryNode.region = 'ap-south-1';
+        }
         this.trafficLogs = (data.trafficLogs || []).filter((l: any) => remainingProjectIds.has(l.projectId));
         this.supportRequests = data.supportRequests || [];
+        this.settings = {
+          developerPriceINR: 30,
+          proPriceINR: 399,
+          freeTierAdsEnabled: true,
+          adBannerTitle: 'Hosting Powered by DeployHub Cloud',
+          adBannerText: 'Fast free web hosting with SSL. Upgrade to Developer (₹30/mo) for 100% ad-free sites.',
+          adBannerLink: 'https://deployhub.com',
+          customAdScript: '',
+          ...(data.settings || {})
+        };
+        // Migrate legacy 149 pricing to 30
+        if (this.settings.developerPriceINR === 149) {
+          this.settings.developerPriceINR = 30;
+        }
       }
     } catch (e) {
       console.warn('Could not read existing state file, initializing fresh store');
@@ -203,6 +259,7 @@ class DataStore {
         serverNodes: this.serverNodes,
         trafficLogs: this.trafficLogs,
         supportRequests: this.supportRequests,
+        settings: this.settings,
       };
       const dir = path.dirname(this.filePath);
       if (!fs.existsSync(dir)) {
@@ -269,12 +326,12 @@ class DataStore {
     if (this.serverNodes.length === 0) {
       this.serverNodes.push({
         _id: 'node_primary_001',
-        instanceId: 'i-09f182c89012a44b1',
-        name: 'DeployHub EC2 Primary Node (t2.micro Free Tier)',
+        instanceId: 'i-089bcd5af2cb5b8f3',
+        name: 'deploye test (EC2 Primary Node)',
         publicIp: config.primaryServerIp,
-        privateIp: '172.31.40.12',
+        privateIp: '172.31.11.217',
         instanceType: config.awsEc2InstanceType,
-        region: config.awsRegion,
+        region: 'ap-south-1',
         provider: 'AWS_EC2',
         status: 'RUNNING',
         storageTotalBytes: 30 * 1024 * 1024 * 1024, // 30 GB AWS Free Tier EBS

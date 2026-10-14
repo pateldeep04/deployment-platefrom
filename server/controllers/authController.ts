@@ -57,7 +57,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const existingUser = dbStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
     if (existingUser) {
-      res.status(400).json({ success: false, error: 'User with this email already exists' });
+      res.status(400).json({
+        success: false,
+        error: 'This email ID is already registered. Each email address can only be used once. Please sign in or use another email.'
+      });
       return;
     }
 
@@ -235,7 +238,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const user = dbStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
 
     if (!user) {
-      res.status(401).json({ success: false, error: 'Invalid email or password' });
+      res.status(404).json({ success: false, error: 'No account found with this email address. Please check your email or register.' });
       return;
     }
 
@@ -300,13 +303,13 @@ export const sendLoginOtp = async (req: Request, res: Response): Promise<void> =
     }
 
     const { email } = parseResult.data;
-    const user = dbStore.users.find(u => u.email.toLowerCase() === email.toLowerCase().trim());
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = dbStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
 
     if (!user) {
-      // Don't leak user existence for anti-enumeration security
-      res.json({
-        success: true,
-        message: 'If an account exists with this email, a 6-digit login code has been sent.',
+      res.status(404).json({
+        success: false,
+        error: 'No account found with this email address. Please create an account first.',
       });
       return;
     }

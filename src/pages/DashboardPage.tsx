@@ -27,7 +27,8 @@ import {
   Terminal,
   ShieldCheck,
   Search,
-  CheckCircle
+  CheckCircle,
+  Clock
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import { getLiveProjectUrl } from '../utils/url';
@@ -47,6 +48,28 @@ export const DashboardPage: React.FC = () => {
   const [quickSubdomain, setQuickSubdomain] = useState('');
   const [modalInitialSlug, setModalInitialSlug] = useState('');
   const [modalInitialType, setModalInitialType] = useState<'STATIC' | 'PHP' | 'REACT' | 'VITE'>('STATIC');
+  const [reactivatingId, setReactivatingId] = useState<string | null>(null);
+
+  const getDaysLeft = (expiresAt?: string) => {
+    if (!expiresAt) return 90;
+    const diff = new Date(expiresAt).getTime() - Date.now();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const handleReactivateDomain = async (projectId: string) => {
+    try {
+      setReactivatingId(projectId);
+      const res = await api.post(`/projects/${projectId}/reactivate-domain`);
+      if (res.data.success) {
+        alert(res.data.message || 'Domain reactivated successfully for free! Valid for another 3 months.');
+        fetchDashboardData();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.error || err.message || 'Failed to reactivate domain');
+    } finally {
+      setReactivatingId(null);
+    }
+  };
 
   // Live Telemetry data for real traffic chart
   const [telemetryData, setTelemetryData] = useState<Array<{ day: string; date?: string; requests: number; bandwidth: number }>>([
@@ -523,6 +546,54 @@ export const DashboardPage: React.FC = () => {
                       <span>•</span>
                       <span>Created: {new Date(project.createdAt).toLocaleDateString()}</span>
                     </div>
+
+                    {/* Domain 3-Month Validity & Expiry Status */}
+                    {(() => {
+                      const daysLeft = getDaysLeft(project.domainExpiresAt);
+                      const isDeactivated = project.isDomainExpired || daysLeft <= 0 || project.domainStatus === 'DEACTIVATED';
+                      const isExpiringSoon = !isDeactivated && (daysLeft <= 30 || project.domainStatus === 'EXPIRING_SOON');
+
+                      return (
+                        <div className={`mt-2.5 p-2.5 rounded-xl border text-xs flex flex-col gap-1.5 ${
+                          isDeactivated
+                            ? 'bg-rose-950/20 border-rose-500/30 text-rose-300'
+                            : isExpiringSoon
+                            ? 'bg-amber-950/20 border-amber-500/30 text-amber-300'
+                            : 'bg-surface/50 border-deployBorder/60 text-deployText-secondary'
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold flex items-center gap-1.5 text-[11px]">
+                              <Clock className="w-3.5 h-3.5 shrink-0" />
+                              <span>Free Domain (3-Mo Cycle)</span>
+                            </span>
+                            <span className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              isDeactivated
+                                ? 'bg-rose-500/20 text-rose-400'
+                                : isExpiringSoon
+                                ? 'bg-amber-500/20 text-amber-400'
+                                : 'bg-emerald-500/20 text-emerald-400'
+                            }`}>
+                              {isDeactivated ? 'DEACTIVATED' : isExpiringSoon ? `${daysLeft}d left (Expiring Soon)` : `${daysLeft}d left`}
+                            </span>
+                          </div>
+
+                          {(isDeactivated || isExpiringSoon) && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleReactivateDomain(project._id);
+                              }}
+                              disabled={reactivatingId === project._id}
+                              className="w-full mt-1 py-1.5 px-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                            >
+                              <RefreshCw className={`w-3 h-3 ${reactivatingId === project._id ? 'animate-spin' : ''}`} />
+                              <span>{reactivatingId === project._id ? 'Reactivating...' : 'Reactivate Domain (100% Free)'}</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Bottom Row Actions */}

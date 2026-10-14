@@ -4,60 +4,68 @@ import { dbStore } from '../database/store';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { config } from '../config';
 
-export const PLANS = [
-  {
-    id: 'FREE',
-    name: 'Free Starter',
-    priceINR: 0,
-    priceLabel: '₹0 / month',
-    projectsLimit: 3,
-    storageMB: 1024, // 1 GB
-    bandwidthGB: 5,
-    customDomains: false,
-    phpHosting: false,
-    priorityBuilds: false,
-    adFree: false,
-    description: 'Perfect for learning, personal experiments, and hosting up to 3 web projects.'
-  },
-  {
-    id: 'DEVELOPER',
-    name: 'Developer',
-    priceINR: 149,
-    priceLabel: '₹149 / month',
-    projectsLimit: 20,
-    storageMB: 10240, // 10 GB
-    bandwidthGB: 100,
-    customDomains: true,
-    phpHosting: false,
-    priorityBuilds: false,
-    adFree: true,
-    description: 'Great for freelance developers and clients shipping modern web projects.'
-  },
-  {
-    id: 'PRO',
-    name: 'Pro Infrastructure',
-    priceINR: 399,
-    priceLabel: '₹399 / month',
-    projectsLimit: 9999,
-    storageMB: 51200, // 50 GB
-    bandwidthGB: 500,
-    customDomains: true,
-    phpHosting: true,
-    priorityBuilds: true,
-    adFree: true,
-    description: 'Uncapped power for full-stack teams, PHP APIs, high bandwidth & fast deployments.'
-  }
-];
+export const getDynamicPlans = () => {
+  const devPrice = dbStore.settings?.developerPriceINR ?? 30;
+  const proPrice = dbStore.settings?.proPriceINR ?? 399;
+
+  return [
+    {
+      id: 'FREE',
+      name: 'Free Starter',
+      priceINR: 0,
+      priceLabel: '₹0 / month',
+      projectsLimit: 3,
+      storageMB: 1024, // 1 GB
+      bandwidthGB: 5,
+      customDomains: false,
+      phpHosting: false,
+      priorityBuilds: false,
+      adFree: false,
+      description: 'Ad-supported free cloud hosting for up to 3 web projects. Displays sponsored banner on hosted sites.'
+    },
+    {
+      id: 'DEVELOPER',
+      name: 'Developer',
+      priceINR: devPrice,
+      priceLabel: `₹${devPrice} / month`,
+      projectsLimit: 20,
+      storageMB: 10240, // 10 GB
+      bandwidthGB: 100,
+      customDomains: true,
+      phpHosting: false,
+      priorityBuilds: false,
+      adFree: true,
+      description: 'Zero ads on hosted sites! Great for freelance developers shipping client web projects.'
+    },
+    {
+      id: 'PRO',
+      name: 'Pro Infrastructure',
+      priceINR: proPrice,
+      priceLabel: `₹${proPrice} / month`,
+      projectsLimit: 9999,
+      storageMB: 51200, // 50 GB
+      bandwidthGB: 500,
+      customDomains: true,
+      phpHosting: true,
+      priorityBuilds: true,
+      adFree: true,
+      description: 'Zero ads, uncapped power for full-stack teams, PHP APIs, high bandwidth & fast deployments.'
+    }
+  ];
+};
+
+export const PLANS = getDynamicPlans();
 
 export const getPlans = (req: Request, res: Response): void => {
-  res.json({ success: true, data: { plans: PLANS } });
+  res.json({ success: true, data: { plans: getDynamicPlans(), settings: dbStore.settings } });
 };
 
 export const createCheckoutOrder = (req: AuthenticatedRequest, res: Response): void => {
   const { planId } = req.body;
   const user = req.user!;
 
-  const targetPlan = PLANS.find(p => p.id === planId);
+  const plans = getDynamicPlans();
+  const targetPlan = plans.find(p => p.id === planId);
   if (!targetPlan || targetPlan.id === 'FREE') {
     res.status(400).json({ success: false, error: 'Invalid plan selected for checkout' });
     return;
@@ -168,7 +176,7 @@ export const verifyUpiPayment = (req: AuthenticatedRequest, res: Response): void
       utrNumber: cleanUtr,
       recipientUpiId: OFFICIAL_UPI_ID,
       senderUpiId: senderUpiId || 'N/A',
-      amount: amount || (planId === 'DEVELOPER' ? 149 : 399),
+      amount: amount || (planId === 'DEVELOPER' ? (dbStore.settings?.developerPriceINR || 30) : (dbStore.settings?.proPriceINR || 399)),
       verifiedAt: new Date().toISOString(),
     },
     createdAt: new Date().toISOString(),

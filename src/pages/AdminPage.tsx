@@ -57,6 +57,24 @@ export const AdminPage: React.FC = () => {
   const [deployments, setDeployments] = useState<any[]>([]);
   const [securityLogs, setSecurityLogs] = useState<any[]>([]);
   const [ads, setAds] = useState<any[]>([]);
+  const [settings, setSettings] = useState<{
+    developerPriceINR: number;
+    proPriceINR: number;
+    freeTierAdsEnabled: boolean;
+    adBannerTitle: string;
+    adBannerText: string;
+    adBannerLink: string;
+    customAdScript: string;
+  }>({
+    developerPriceINR: 30,
+    proPriceINR: 399,
+    freeTierAdsEnabled: true,
+    adBannerTitle: '',
+    adBannerText: '',
+    adBannerLink: '',
+    customAdScript: '',
+  });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // UI / Action states
   const [isLoading, setIsLoading] = useState(true);
@@ -89,13 +107,14 @@ export const AdminPage: React.FC = () => {
 
   const fetchAllData = useCallback(async () => {
     try {
-      const [monRes, projRes, usersRes, depsRes, secRes, adsRes] = await Promise.all([
+      const [monRes, projRes, usersRes, depsRes, secRes, adsRes, setRes] = await Promise.all([
         api.get('/admin/monitoring'),
         api.get('/admin/projects'),
         api.get('/admin/users'),
         api.get('/admin/deployments'),
         api.get('/admin/security-logs'),
         api.get('/admin/ads'),
+        api.get('/admin/settings'),
       ]);
 
       if (monRes.data.success) setMonitoringData(monRes.data.data);
@@ -104,6 +123,7 @@ export const AdminPage: React.FC = () => {
       if (depsRes.data.success) setDeployments(depsRes.data.data.deployments);
       if (secRes.data.success) setSecurityLogs(secRes.data.data.logs);
       if (adsRes.data.success) setAds(adsRes.data.data.ads);
+      if (setRes.data.success && setRes.data.data?.settings) setSettings(setRes.data.data.settings);
     } catch (err: any) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -268,6 +288,26 @@ export const AdminPage: React.FC = () => {
     }
   };
 
+  // Action: Save Platform Settings (Pricing & Monetization)
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSavingSettings(true);
+      const res = await api.patch('/admin/settings', settings);
+      if (res.data.success) {
+        showToast('Plan pricing & ad monetization settings saved successfully!');
+        if (res.data.data?.settings) {
+          setSettings(res.data.data.settings);
+        }
+        fetchAllData();
+      }
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to update plan pricing settings', 'error');
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background text-deployText flex items-center justify-center p-4">
@@ -399,7 +439,7 @@ export const AdminPage: React.FC = () => {
             { id: 'users', label: `User Accounts (${users.length})`, icon: Users },
             { id: 'deployments', label: `Deployments (${deployments.length})`, icon: Rocket },
             { id: 'security', label: `Security Logs (${securityLogs.length})`, icon: ShieldCheck },
-            { id: 'ads', label: `Ad Network (${ads.length})`, icon: Tag },
+            { id: 'ads', label: `Plan Pricing & Ads (${ads.length})`, icon: IndianRupee },
           ].map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTab === tab.id;
@@ -603,11 +643,11 @@ export const AdminPage: React.FC = () => {
                       <span className="font-bold text-white">{summary?.freeUsers}</span>
                     </div>
                     <div className="flex items-center justify-between p-2 rounded-lg bg-[#070b14] border border-[#1e293b]">
-                      <span className="text-blue-400 font-semibold">Developer Tier (₹149):</span>
+                      <span className="text-blue-400 font-semibold">Developer Tier (₹{settings?.developerPriceINR ?? 30}):</span>
                       <span className="font-bold text-white">{summary?.devUsers}</span>
                     </div>
                     <div className="flex items-center justify-between p-2 rounded-lg bg-[#070b14] border border-[#1e293b]">
-                      <span className="text-indigo-400 font-semibold">Pro Tier (₹399):</span>
+                      <span className="text-indigo-400 font-semibold">Pro Tier (₹{settings?.proPriceINR ?? 399}):</span>
                       <span className="font-bold text-white">{summary?.proUsers}</span>
                     </div>
                   </div>
@@ -838,9 +878,9 @@ export const AdminPage: React.FC = () => {
                               : 'bg-[#070b14] border-[#1e293b] text-deployText-secondary'
                           }`}
                         >
-                          <option value="FREE">FREE</option>
-                          <option value="DEVELOPER">DEVELOPER (₹149)</option>
-                          <option value="PRO">PRO (₹399)</option>
+                          <option value="FREE">FREE (Ad-Supported)</option>
+                          <option value="DEVELOPER">DEVELOPER (₹{settings?.developerPriceINR ?? 30})</option>
+                          <option value="PRO">PRO (₹{settings?.proPriceINR ?? 399})</option>
                         </select>
                       </td>
                       <td className="py-3 px-3 font-mono text-white font-bold">
@@ -1049,22 +1089,189 @@ export const AdminPage: React.FC = () => {
         )}
 
         {/* ========================================================= */}
-        {/* TAB 6: INFINITYFREE-STYLE AD NETWORK */}
+        {/* TAB 6: PLAN PRICING & MONETIZATION AD NETWORK */}
         {/* ========================================================= */}
         {activeTab === 'ads' && (
           <div className="space-y-6">
             
-            <div className="flex items-center justify-between">
+            {/* PLAN PRICING & REVENUE CONTROLS (ADMIN CONTROL) */}
+            <div className="bg-[#0c1322] border border-[#1e293b] rounded-2xl p-6 shadow-xl space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-4">
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                    <IndianRupee className="w-5 h-5 text-emerald-400" />
+                    <span>Plan Pricing & Ad Monetization Controls</span>
+                  </h3>
+                  <p className="text-xs text-deployText-secondary mt-0.5">
+                    Configure Developer plan price, Pro plan price, and manage Free tier ad display.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`text-[11px] font-mono px-2.5 py-1 rounded-full border ${
+                    settings.freeTierAdsEnabled 
+                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' 
+                      : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                  }`}>
+                    {settings.freeTierAdsEnabled ? '● Free Tier Ads Active' : '○ Free Tier Ads Paused'}
+                  </span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveSettings} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  
+                  {/* Developer Plan Price */}
+                  <div className="bg-[#070b14] border border-[#1e293b] rounded-xl p-4 space-y-1.5">
+                    <label className="block text-xs font-semibold text-white">
+                      Developer Plan Monthly Price (₹)
+                    </label>
+                    <p className="text-[11px] text-deployText-secondary">
+                      Current price charged to users for Developer subscription (Zero ads, 20 sites).
+                    </p>
+                    <div className="relative mt-2">
+                      <span className="absolute left-3 top-2.5 text-xs text-deployText-secondary font-bold">₹</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        required
+                        value={settings.developerPriceINR}
+                        onChange={(e) => setSettings({ ...settings, developerPriceINR: Number(e.target.value) })}
+                        className="w-full pl-7 pr-3 py-2 rounded-lg bg-[#0c1322] border border-[#1e293b] text-white text-sm font-mono font-bold focus:outline-none focus:border-primary"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pro Plan Price */}
+                  <div className="bg-[#070b14] border border-[#1e293b] rounded-xl p-4 space-y-1.5">
+                    <label className="block text-xs font-semibold text-white">
+                      Pro Cloud Plan Monthly Price (₹)
+                    </label>
+                    <p className="text-[11px] text-deployText-secondary">
+                      Unlimited sites, dedicated PHP runtime pool, and 50 GB SSD storage.
+                    </p>
+                    <div className="relative mt-2">
+                      <span className="absolute left-3 top-2.5 text-xs text-deployText-secondary font-bold">₹</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        required
+                        value={settings.proPriceINR}
+                        onChange={(e) => setSettings({ ...settings, proPriceINR: Number(e.target.value) })}
+                        className="w-full pl-7 pr-3 py-2 rounded-lg bg-[#0c1322] border border-[#1e293b] text-white text-sm font-mono font-bold focus:outline-none focus:border-primary"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Free Tier Ad Monetization Toggle */}
+                  <div className="bg-[#070b14] border border-[#1e293b] rounded-xl p-4 space-y-2 flex flex-col justify-between">
+                    <div>
+                      <label className="block text-xs font-semibold text-white">
+                        Free Tier Visitor Ad Ribbon
+                      </label>
+                      <p className="text-[11px] text-deployText-secondary mt-0.5">
+                        Inject sponsored banner onto visitor sites hosted by Free Tier users. Developer sites remain 100% ad-free.
+                      </p>
+                    </div>
+                    <label className="flex items-center space-x-2.5 cursor-pointer pt-1">
+                      <input
+                        type="checkbox"
+                        checked={settings.freeTierAdsEnabled}
+                        onChange={(e) => setSettings({ ...settings, freeTierAdsEnabled: e.target.checked })}
+                        className="w-4 h-4 rounded text-primary focus:ring-0 cursor-pointer"
+                      />
+                      <span className="text-xs font-semibold text-deployText">
+                        {settings.freeTierAdsEnabled ? 'Enabled (Earning Ad Revenue)' : 'Disabled (No Ads)'}
+                      </span>
+                    </label>
+                  </div>
+
+                </div>
+
+                {/* Banner Customization */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                  <div>
+                    <label className="block text-xs font-semibold text-deployText-secondary mb-1">
+                      Default Sponsored Banner Title
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.adBannerTitle || ''}
+                      placeholder="e.g. Hosting Sponsored by DeployHub"
+                      onChange={(e) => setSettings({ ...settings, adBannerTitle: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#070b14] border border-[#1e293b] text-white text-xs focus:outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-deployText-secondary mb-1">
+                      Sponsor Target Link URL
+                    </label>
+                    <input
+                      type="url"
+                      value={settings.adBannerLink || ''}
+                      placeholder="https://example.com/sponsor"
+                      onChange={(e) => setSettings({ ...settings, adBannerLink: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#070b14] border border-[#1e293b] text-white text-xs focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-deployText-secondary mb-1">
+                    Default Sponsored Banner Description (displayed to visitors on free sites)
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.adBannerText || ''}
+                    placeholder="e.g. Fast free web hosting with SSL. Upgrade to Developer (₹30/mo) for 100% ad-free sites."
+                    onChange={(e) => setSettings({ ...settings, adBannerText: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-[#070b14] border border-[#1e293b] text-white text-xs focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-deployText-secondary mb-1">
+                    Custom Ad Script / Tag (Google AdSense, Adsterra, Popads, or Analytics tag)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={settings.customAdScript || ''}
+                    placeholder="<!-- Paste your Google AdSense code or affiliate script here (optional) -->"
+                    onChange={(e) => setSettings({ ...settings, customAdScript: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-[#070b14] border border-[#1e293b] text-white text-xs font-mono focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end space-x-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={isSavingSettings}
+                    className="flex items-center space-x-1.5 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-glow-primary transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingSettings ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4" />
+                    )}
+                    <span>{isSavingSettings ? 'Saving Settings...' : 'Save Plan Pricing & Ad Settings'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
               <div>
-                <h3 className="text-base font-bold text-white">InfinityFree-Style Ad Network</h3>
+                <h3 className="text-base font-bold text-white">Ad Banners & Placements</h3>
                 <p className="text-xs text-deployText-secondary">
-                  Manage sponsored ads across dashboard, project headers, and public pages.
+                  Manage individual banner campaigns across dashboards and public sites.
                 </p>
               </div>
 
               <button
                 onClick={() => setShowNewAdModal(true)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-glow-primary transition-colors"
+                className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-glow-primary transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Create New Ad Banner</span>

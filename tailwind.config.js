@@ -8,9 +8,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0B1120',
-        surface: '#111827',
-        card: '#172033',
+        background: '#F8FAFC',
+        surface: '#FFFFFF',
+        card: '#FFFFFF',
         primary: {
           DEFAULT: '#2563EB',
           hover: '#1D4ED8',
@@ -18,32 +18,32 @@ export default {
           dark: '#1E40AF',
         },
         accent: {
-          DEFAULT: '#06B6D4',
-          hover: '#0891B2',
-          light: '#22D3EE',
+          DEFAULT: '#0284C7',
+          hover: '#0369A1',
+          light: '#38BDF8',
         },
         deployText: {
-          DEFAULT: '#F8FAFC',
-          secondary: '#94A3B8',
+          DEFAULT: '#0F172A',
+          secondary: '#475569',
           muted: '#64748B',
         },
         deployBorder: {
-          DEFAULT: '#263449',
-          light: '#334155',
-          subtle: '#1E293B',
+          DEFAULT: '#E2E8F0',
+          light: '#CBD5E1',
+          subtle: '#F1F5F9',
         },
-        success: '#22C55E',
-        warning: '#F59E0B',
-        error: '#EF4444',
+        success: '#16A34A',
+        warning: '#D97706',
+        error: '#DC2626',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
       },
       boxShadow: {
-        'glow-primary': '0 0 25px -5px rgba(37, 99, 235, 0.4)',
-        'glow-accent': '0 0 25px -5px rgba(6, 182, 212, 0.4)',
-        'card-dark': '0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.4)',
+        'glow-primary': '0 4px 14px 0 rgba(37, 99, 235, 0.25)',
+        'glow-accent': '0 4px 14px 0 rgba(2, 132, 199, 0.25)',
+        'card-dark': '0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.08)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

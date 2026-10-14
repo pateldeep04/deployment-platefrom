@@ -140,20 +140,23 @@ class SubdomainService {
    */
   public generateSuggestions(base: string): string[] {
     const clean = this.sanitizeSubdomain(base) || 'app';
+    const currentYear = new Date().getFullYear();
     const candidates = [
       `${clean}-app`,
       `${clean}-live`,
       `${clean}-cloud`,
       `${clean}-web`,
-      `${clean}-${new Date().getFullYear()}`,
       `get-${clean}`,
       `try-${clean}`,
+      `${clean}-dev`,
+      `${clean}-hub`,
+      `${clean}-${currentYear}`,
     ];
 
     return candidates
       .filter((candidate) => !RESERVED_SUBDOMAINS.has(candidate))
       .filter((candidate) => !dbStore.projects.some((p) => p.slug === candidate || p.assignedSubdomain === candidate))
-      .slice(0, 4);
+      .slice(0, 5);
   }
 
   /**

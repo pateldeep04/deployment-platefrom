@@ -45,6 +45,8 @@ router.post('/projects', authenticateJwt, projectCtrl.createProject);
 router.get('/projects/:id', authenticateJwt, projectCtrl.getProject);
 router.patch('/projects/:id', authenticateJwt, projectCtrl.updateProject);
 router.delete('/projects/:id', authenticateJwt, projectCtrl.deleteProject);
+router.post('/projects/:id/reactivate-domain', authenticateJwt, projectCtrl.reactivateDomain);
+router.get('/projects/:id/domain-expiry', authenticateJwt, projectCtrl.getDomainExpiryStatus);
 
 // ================= FILE MANAGER / CPANEL =================
 router.get('/projects/:projectId/files', authenticateJwt, fileCtrl.listFiles);
@@ -127,5 +129,7 @@ router.post('/admin/prune-storage', authenticateJwt, requireRole('ADMIN'), admin
 router.get('/admin/deployments', authenticateJwt, requireRole('ADMIN'), adminCtrl.listAllDeployments);
 router.get('/admin/security-logs', authenticateJwt, requireRole('ADMIN'), adminCtrl.getSecurityLogs);
 router.delete('/admin/security-logs', authenticateJwt, requireRole('ADMIN'), adminCtrl.clearSecurityLogs);
+router.get('/admin/settings', authenticateJwt, requireRole('ADMIN'), adminCtrl.getPlatformSettings);
+router.patch('/admin/settings', authenticateJwt, requireRole('ADMIN'), adminCtrl.updatePlatformSettings);
 
 export default router;

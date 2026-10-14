@@ -10,6 +10,7 @@ import apiRouter from './routes';
 import { handleSiteRequest } from './router/edgeProxy';
 import { dbStore } from './database/store';
 import { awsFleetService } from './services/awsFleetService';
+import { domainExpiryService } from './services/domainExpiryService';
 
 const app = express();
 
@@ -244,6 +245,22 @@ const startServer = async () => {
       console.error('[AWS Fleet Watcher] Storage check error:', err);
     }
   }, 5 * 60 * 1000); // Check every 5 minutes
+
+  // Background Domain Expiry Monitor: Scans all projects, sends 1-month warning emails, and sends deactivation notices upon 3-month expiry
+  try {
+    const summary = await domainExpiryService.checkAndProcessDomainExpiries();
+    console.log(`[Domain Expiry Watcher] Initialized: ${summary.warningsSent} advance warning(s) sent, ${summary.deactivationsSent} deactivation notice(s) sent.`);
+  } catch (err) {
+    console.error('[Domain Expiry Watcher] Initial run error:', err);
+  }
+
+  setInterval(async () => {
+    try {
+      await domainExpiryService.checkAndProcessDomainExpiries();
+    } catch (err) {
+      console.error('[Domain Expiry Watcher] Periodic scan error:', err);
+    }
+  }, 30 * 60 * 1000); // Check every 30 minutes
 };
 
 startServer();

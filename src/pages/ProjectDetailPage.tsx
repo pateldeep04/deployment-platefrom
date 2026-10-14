@@ -24,7 +24,9 @@ import {
   Eye, 
   EyeOff, 
   Copy, 
-  Check
+  Check,
+  Clock,
+  Mail
 } from 'lucide-react';
 import { getLiveProjectUrl, getDirectProxyUrl } from '../utils/url';
 
@@ -294,6 +296,24 @@ export const ProjectDetailPage: React.FC = () => {
       alert(err.response?.data?.error || 'Failed to update subdomain');
     } finally {
       setIsAssigningSubdomain(false);
+    }
+  };
+
+  const [isReactivatingDomain, setIsReactivatingDomain] = useState(false);
+
+  const handleReactivateDomain = async () => {
+    if (!project) return;
+    try {
+      setIsReactivatingDomain(true);
+      const res = await api.post(`/projects/${project._id}/reactivate-domain`);
+      if (res.data.success) {
+        setDomainSuccessMsg(res.data.message || 'Domain reactivated successfully for free for another 3 months!');
+        fetchProjectData();
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.error || err.message || 'Failed to reactivate domain');
+    } finally {
+      setIsReactivatingDomain(false);
     }
   };
 
@@ -868,6 +888,80 @@ export const ProjectDetailPage: React.FC = () => {
                   <ExternalLink className="w-3 h-3" />
                 </a>
               </div>
+
+              {/* 3-Month Free Domain Validity & Free Reactivation Panel */}
+              {project && (() => {
+                const expiresAt = project.domainExpiresAt;
+                const daysRemaining = expiresAt
+                  ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                  : 90;
+                const isDeactivated = project.isDomainExpired || daysRemaining <= 0 || project.domainStatus === 'DEACTIVATED';
+                const isExpiringSoon = !isDeactivated && (daysRemaining <= 30 || project.domainStatus === 'EXPIRING_SOON');
+
+                return (
+                  <div className={`p-4 rounded-xl border space-y-3 ${
+                    isDeactivated
+                      ? 'bg-rose-950/20 border-rose-500/40'
+                      : isExpiringSoon
+                      ? 'bg-amber-950/20 border-amber-500/40'
+                      : 'bg-surface border-deployBorder'
+                  }`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Clock className={`w-4 h-4 ${isDeactivated ? 'text-rose-400' : isExpiringSoon ? 'text-amber-400' : 'text-accent'}`} />
+                        <span className="text-sm font-bold text-white">Domain Expiry & Free Reactivation</span>
+                      </div>
+                      <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full inline-flex items-center space-x-1 w-fit ${
+                        isDeactivated
+                          ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                          : isExpiringSoon
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                          : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      }`}>
+                        <span>{isDeactivated ? '🔴 DEACTIVATED (3 Months Ended)' : isExpiringSoon ? `⚠️ Expires in ${daysRemaining} days` : `✅ Active (${daysRemaining} days left)`}</span>
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3 rounded-lg bg-card/60 border border-deployBorder/60 space-y-1">
+                        <span className="text-[10px] uppercase font-bold text-deployText-muted block">Current 3-Month Cycle</span>
+                        <div className="text-white font-medium">
+                          Expires: <span className="font-mono text-accent">{expiresAt ? new Date(expiresAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '90 days from creation'}</span>
+                        </div>
+                        <div className="text-[11px] text-deployText-secondary">
+                          {isDeactivated ? 'Domain validity period concluded.' : `${daysRemaining} days remaining in current cycle.`}
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-lg bg-card/60 border border-deployBorder/60 space-y-1">
+                        <span className="text-[10px] uppercase font-bold text-deployText-muted block">Automated Email Notifications</span>
+                        <div className="text-deployText flex items-center space-x-1.5 text-[11px]">
+                          <Mail className="w-3.5 h-3.5 text-accent shrink-0" />
+                          <span>1-Month advance warning sent before deactivation.</span>
+                        </div>
+                        <div className="text-[11px] text-deployText-secondary">
+                          {project.deactivationWarningSentAt ? `Warning sent on ${new Date(project.deactivationWarningSentAt).toLocaleDateString()}` : 'Scheduled 30 days before expiry.'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-deployBorder/40">
+                      <p className="text-xs text-deployText-secondary">
+                        DeployHub free subdomains can be renewed anytime for <strong>FREE</strong> with 1 click to extend by another 3 months.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleReactivateDomain}
+                        disabled={isReactivatingDomain}
+                        className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-glow-primary transition-all flex items-center justify-center space-x-2 cursor-pointer whitespace-nowrap"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isReactivatingDomain ? 'animate-spin' : ''}`} />
+                        <span>{isReactivatingDomain ? 'Reactivating...' : 'Reactivate Domain (100% Free)'}</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Form to change / re-assign platform subdomain */}
               <form onSubmit={handleAssignSubdomain} className="p-4 rounded-xl bg-surface/50 border border-deployBorder space-y-3">

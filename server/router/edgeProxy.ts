@@ -83,6 +83,48 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
     return;
   }
 
+  // 3. Domain Expiry Guard: Check if 3-month free domain cycle expired / deactivated
+  const isDomainExpired = project.isDomainExpired || (project.domainExpiresAt && new Date() > new Date(project.domainExpiresAt));
+  if (isDomainExpired || project.domainStatus === 'DEACTIVATED') {
+    const domainFqdn = project.customDomain || `${project.assignedSubdomain || project.slug}.${project.platformDomain || config.platformDomain || 'deployeai.duckdns.org'}`;
+    res.status(503).send(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Domain Deactivated | DeployHub</title>
+          <style>
+            body { background: #070b14; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 24px; box-sizing: border-box; }
+            .card { background: #0f172a; border: 1px solid #1e293b; border-radius: 20px; padding: 44px 36px; max-width: 540px; width: 100%; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+            .badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 5px 14px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 22px; }
+            h1 { font-size: 24px; font-weight: 800; color: #ffffff; margin: 0 0 12px; }
+            p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin: 0 0 24px; }
+            .domain-box { background: #020617; border: 1px dashed #334155; border-radius: 12px; padding: 14px; font-family: monospace; font-size: 15px; color: #38bdf8; margin-bottom: 24px; word-break: break-all; font-weight: bold; }
+            .btn { display: inline-block; background: #2563eb; color: #ffffff; font-weight: 700; font-size: 14px; text-decoration: none; padding: 12px 28px; border-radius: 12px; transition: all 0.2s; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4); }
+            .btn:hover { background: #1d4ed8; }
+            .footer-note { font-size: 11px; color: #64748b; margin-top: 26px; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="badge">🔴 3-Month Period Concluded</div>
+            <h1>Domain Deactivated</h1>
+            <div class="domain-box">${escapeHtml(domainFqdn)}</div>
+            <p>
+              The 3-month free domain validity period for this website has ended and the domain is temporarily inactive.
+              <br><br>
+              <strong>Are you the site owner?</strong> You can reactivate this domain immediately for <strong>FREE</strong> with 1 click in your DeployHub dashboard to extend validity for another 3 months.
+            </p>
+            <a href="https://${config.platformDomain || 'deployeai.duckdns.org'}/dashboard" class="btn">Reactivate Domain Free →</a>
+            <div class="footer-note">DeployHub Cloud Edge • Zero-Cost Developer Hosting</div>
+          </div>
+        </body>
+      </html>
+    `);
+    return;
+  }
+
   // Record Real Visitor Traffic & Analytics
   const todayStr = new Date().toISOString().split('T')[0];
   const estimatedBytes = 2048; // baseline HTTP response size
@@ -258,6 +300,14 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
 
   // 3. Static file serving
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    const fileExt = path.extname(filePath).toLowerCase();
+    if (fileExt === '.html' || fileExt === '.htm') {
+      const rawHtml = fs.readFileSync(filePath, 'utf-8');
+      const finalHtml = injectAdIfNeeded(rawHtml, projectOwner, platformDomain);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(finalHtml);
+      return;
+    }
     res.sendFile(filePath);
     return;
   }
@@ -297,7 +347,10 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
   // SPA fallback for HTML client-side routing
   const indexHtml = path.join(siteDir, 'index.html');
   if (fs.existsSync(indexHtml)) {
-    res.sendFile(indexHtml);
+    const rawHtml = fs.readFileSync(indexHtml, 'utf-8');
+    const finalHtml = injectAdIfNeeded(rawHtml, projectOwner, platformDomain);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(finalHtml);
     return;
   }
 
@@ -309,6 +362,57 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
     </html>
   `);
 };
+
+function injectAdIfNeeded(htmlContent: string, projectOwner: any, platformDomain: string): string {
+  // If owner is on DEVELOPER or PRO plan, return clean HTML with ZERO ads!
+  if (projectOwner && (projectOwner.plan === 'DEVELOPER' || projectOwner.plan === 'PRO')) {
+    return htmlContent;
+  }
+
+  // Check if admin has free tier ads enabled
+  if (dbStore.settings?.freeTierAdsEnabled === false) {
+    return htmlContent;
+  }
+
+  // Find active public ad if available, or fall back to system settings
+  const publicAds = (dbStore.ads || []).filter(a => a.status === 'ACTIVE' && (a.placement === 'PUBLIC_WEBSITE' || a.placement === 'DASHBOARD'));
+  const activeAd = publicAds.length > 0 ? publicAds[Math.floor(Math.random() * publicAds.length)] : null;
+
+  if (activeAd) {
+    activeAd.impressions = (activeAd.impressions || 0) + 1;
+    dbStore.save();
+  }
+
+  const devPrice = dbStore.settings?.developerPriceINR ?? 30;
+  const adTitle = escapeHtml(activeAd?.title || dbStore.settings?.adBannerTitle || 'Hosting Sponsored by DeployHub');
+  const adDesc = escapeHtml(activeAd?.description || dbStore.settings?.adBannerText || `Fast free web hosting with SSL. Upgrade to Developer (₹${devPrice}/mo) for zero ads.`);
+  const adTargetUrl = activeAd?.targetUrl || dbStore.settings?.adBannerLink || 'https://deployhub.com';
+  const customScript = dbStore.settings?.customAdScript || '';
+
+  const adBannerHtml = `
+<!-- DeployHub Sponsored Ad Banner for Free Tier Hosting -->
+<div id="deployhub-ad-banner" style="position:fixed;bottom:0;left:0;right:0;z-index:2147483647;background:#0F172A;color:#F8FAFC;border-top:2px solid #2563EB;box-shadow:0 -4px 20px rgba(0,0,0,0.35);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;line-height:1.4;">
+  <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+    <span style="background:#2563EB;color:#FFF;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0;">Ad</span>
+    <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+      <strong style="color:#60A5FA;">${adTitle}</strong>:
+      <span style="color:#CBD5E1;margin-left:4px;">${adDesc}</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+    <a href="${adTargetUrl}" target="_blank" rel="noopener noreferrer" style="background:#2563EB;color:#FFF;padding:5px 12px;border-radius:6px;font-weight:600;text-decoration:none;font-size:11px;transition:background 0.2s;white-space:nowrap;">Visit Sponsor →</a>
+    <a href="https://${platformDomain}/billing" target="_blank" style="color:#94A3B8;text-decoration:none;font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid #334155;white-space:nowrap;" title="Upgrade to Developer for ₹${devPrice}/mo to remove ads">Remove Ads (₹${devPrice}/mo)</a>
+    <button onclick="document.getElementById('deployhub-ad-banner').style.display='none'" style="background:transparent;border:none;color:#94A3B8;font-size:16px;cursor:pointer;padding:0 4px;line-height:1;" title="Dismiss">✕</button>
+  </div>
+</div>
+${customScript}
+`;
+
+  if (htmlContent.includes('</body>')) {
+    return htmlContent.replace('</body>', `${adBannerHtml}\n</body>`);
+  }
+  return htmlContent + adBannerHtml;
+}
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

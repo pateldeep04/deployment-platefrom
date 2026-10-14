@@ -6,6 +6,26 @@ import { dbStore, IProject } from '../database/store';
 import { createProjectSchema, updateProjectSchema } from '../validators';
 import { AuthenticatedRequest } from '../middleware/auth';
 
+import { subdomainService } from '../services/subdomainService';
+import { domainExpiryService } from '../services/domainExpiryService';
+
+// Concurrency mutex lock to prevent simultaneous race conditions when 2 users claim the same domain at the exact same millisecond
+const activeSubdomainLocks = new Map<string, number>();
+
+function acquireSubdomainLock(subdomainKey: string, ttlMs = 6000): boolean {
+  const now = Date.now();
+  const expiresAt = activeSubdomainLocks.get(subdomainKey);
+  if (expiresAt && expiresAt > now) {
+    return false; // locked by concurrent in-flight request!
+  }
+  activeSubdomainLocks.set(subdomainKey, now + ttlMs);
+  return true;
+}
+
+function releaseSubdomainLock(subdomainKey: string): void {
+  activeSubdomainLocks.delete(subdomainKey);
+}
+
 export const listProjects = (req: AuthenticatedRequest, res: Response): void => {
   const userId = req.user!._id;
   const userProjects = dbStore.projects.filter(p => p.userId === userId);
@@ -55,43 +75,78 @@ export const createProject = (req: AuthenticatedRequest, res: Response): void =>
 
   const { name, type, buildCommand, outputDirectory, subdomain: customSub, platformDomain: chosenDomain } = parseResult.data;
   let slug = parseResult.data.slug || customSub || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const assignedSubdomain = (customSub || slug).toLowerCase().replace(/[^a-z0-9-]/g, '');
+  const platformDomain = (chosenDomain || config.platformDomain || 'deployeai.duckdns.org').toLowerCase();
 
-  // Ensure unique slug
-  if (dbStore.projects.some(p => p.slug === slug)) {
-    slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+  // 1. Concurrency Mutex Lock: Prevents two simultaneous requests from claiming the same subdomain at the same millisecond
+  const lockKey = `${assignedSubdomain}@${platformDomain}`;
+  if (!acquireSubdomainLock(lockKey, 6000)) {
+    const suggestions = subdomainService.generateSuggestions(assignedSubdomain);
+    res.status(409).json({
+      success: false,
+      conflict: true,
+      error: `Subdomain '${assignedSubdomain}.${platformDomain}' is currently being claimed by another user at the exact same moment.`,
+      suggestions,
+    });
+    return;
   }
 
-  const assignedSubdomain = (customSub || slug).toLowerCase().replace(/[^a-z0-9-]/g, '');
-  const platformDomain = chosenDomain || config.platformDomain || 'deployeai.duckdns.org';
+  try {
+    // 2. Atomic Verification: Verify availability right now before inserting into store
+    const check = subdomainService.checkAvailability(assignedSubdomain, undefined, platformDomain);
+    if (!check.isAvailable) {
+      const suggestions = check.suggestions && check.suggestions.length > 0
+        ? check.suggestions
+        : subdomainService.generateSuggestions(assignedSubdomain);
 
-  const newProject: IProject = {
-    _id: `prj_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-    userId: user._id,
-    name,
-    slug,
-    assignedSubdomain,
-    platformDomain,
-    type,
-    status: 'INACTIVE',
-    storageUsed: 0,
-    buildCommand: buildCommand || (type === 'VITE' ? 'npm run build' : undefined),
-    outputDirectory: outputDirectory || (type === 'VITE' ? 'dist' : undefined),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+      res.status(409).json({
+        success: false,
+        conflict: true,
+        error: check.reason || `Subdomain '${assignedSubdomain}.${platformDomain}' is already claimed by another project.`,
+        suggestions,
+      });
+      return;
+    }
 
-  dbStore.projects.push(newProject);
-  dbStore.auditLogs.push({
-    _id: `log_${Date.now()}`,
-    userId: user._id,
-    action: 'PROJECT_CREATE',
-    ip: req.ip || '127.0.0.1',
-    details: { projectId: newProject._id, name, slug, type },
-    createdAt: new Date().toISOString(),
-  });
-  dbStore.save();
+    // Ensure unique internal slug
+    if (dbStore.projects.some(p => p.slug === slug)) {
+      slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
 
-  res.status(201).json({ success: true, data: { project: newProject } });
+    const newProject: IProject = {
+      _id: `prj_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: user._id,
+      name,
+      slug,
+      assignedSubdomain,
+      platformDomain,
+      type,
+      status: 'INACTIVE',
+      storageUsed: 0,
+      buildCommand: buildCommand || (type === 'VITE' ? 'npm run build' : undefined),
+      outputDirectory: outputDirectory || (type === 'VITE' ? 'dist' : undefined),
+      domainExpiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+      domainStatus: 'ACTIVE',
+      isDomainExpired: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    dbStore.projects.push(newProject);
+    dbStore.auditLogs.push({
+      _id: `log_${Date.now()}`,
+      userId: user._id,
+      action: 'PROJECT_CREATE',
+      ip: req.ip || '127.0.0.1',
+      details: { projectId: newProject._id, name, slug, assignedSubdomain, platformDomain, type },
+      createdAt: new Date().toISOString(),
+    });
+    dbStore.save();
+
+    res.status(201).json({ success: true, data: { project: newProject } });
+  } finally {
+    releaseSubdomainLock(lockKey);
+  }
 };
 
 export const updateProject = (req: AuthenticatedRequest, res: Response): void => {
@@ -182,4 +237,42 @@ export const getTelemetryAnalytics = (req: AuthenticatedRequest, res: Response):
       totalBandwidthMB: +(userLogs.reduce((sum, l) => sum + (l.bytesSent || 0), 0) / (1024 * 1024)).toFixed(2),
     },
   });
+};
+
+/**
+ * POST /api/v1/projects/:id/reactivate-domain
+ * Free 1-click domain reactivation: extends domain validity for another 3 months
+ */
+export const reactivateDomain = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const user = req.user!;
+    const project = await domainExpiryService.reactivateDomain(id, user._id, user.role === 'ADMIN');
+
+    res.json({
+      success: true,
+      message: `Domain '${project.assignedSubdomain}.${project.platformDomain}' reactivated successfully for FREE! Valid for 3 more months until ${new Date(project.domainExpiresAt!).toLocaleDateString()}.`,
+      data: { project },
+    });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message || 'Failed to reactivate domain' });
+  }
+};
+
+/**
+ * GET /api/v1/projects/:id/domain-expiry
+ * Retrieves live domain expiry countdown and reactivation status
+ */
+export const getDomainExpiryStatus = (req: AuthenticatedRequest, res: Response): void => {
+  const { id } = req.params;
+  const user = req.user!;
+  const project = dbStore.projects.find(p => p._id === id && (p.userId === user._id || user.role === 'ADMIN'));
+
+  if (!project) {
+    res.status(404).json({ success: false, error: 'Project not found' });
+    return;
+  }
+
+  const expiryStatus = domainExpiryService.getProjectExpiryStatus(project);
+  res.json({ success: true, data: expiryStatus });
 };

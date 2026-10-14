@@ -114,7 +114,9 @@ export const getLiveMonitoringData = (req: AuthenticatedRequest, res: Response):
     ).length;
 
     // 7. Estimated Monthly Recurring Revenue (MRR)
-    const monthlyRevenueINR = (devUsers * 149) + (proUsers * 399);
+    const devPrice = dbStore.settings?.developerPriceINR ?? 30;
+    const proPrice = dbStore.settings?.proPriceINR ?? 399;
+    const monthlyRevenueINR = (devUsers * devPrice) + (proUsers * proPrice);
 
     res.json({
       success: true,
@@ -195,7 +197,9 @@ export const getSystemStats = (req: AuthenticatedRequest, res: Response): void =
 
   const developerPlans = dbStore.users.filter(u => u.plan === 'DEVELOPER').length;
   const proPlans = dbStore.users.filter(u => u.plan === 'PRO').length;
-  const monthlyRevenueINR = (developerPlans * 149) + (proPlans * 399);
+  const devPrice = dbStore.settings?.developerPriceINR ?? 30;
+  const proPrice = dbStore.settings?.proPriceINR ?? 399;
+  const monthlyRevenueINR = (developerPlans * devPrice) + (proPlans * proPrice);
 
   res.json({
     success: true,
@@ -533,3 +537,94 @@ export const clearSecurityLogs = (req: AuthenticatedRequest, res: Response): voi
   dbStore.save();
   res.json({ success: true, message: 'Audit logs cleared successfully' });
 };
+
+/**
+ * GET /api/v1/admin/settings
+ * Retrieve platform pricing and monetization settings
+ */
+export const getPlatformSettings = (req: AuthenticatedRequest, res: Response): void => {
+  res.json({
+    success: true,
+    data: {
+      settings: dbStore.settings,
+    },
+  });
+};
+
+/**
+ * PATCH /api/v1/admin/settings
+ * Update plan prices (e.g. Developer tier ₹30) and free tier ad controls
+ */
+export const updatePlatformSettings = (req: AuthenticatedRequest, res: Response): void => {
+  try {
+    const {
+      developerPriceINR,
+      proPriceINR,
+      freeTierAdsEnabled,
+      adBannerTitle,
+      adBannerText,
+      adBannerLink,
+      customAdScript,
+    } = req.body;
+
+    if (developerPriceINR !== undefined) {
+      const devNum = Number(developerPriceINR);
+      if (isNaN(devNum) || devNum < 0) {
+        res.status(400).json({ success: false, error: 'Developer price must be a non-negative number' });
+        return;
+      }
+      dbStore.settings.developerPriceINR = devNum;
+    }
+
+    if (proPriceINR !== undefined) {
+      const proNum = Number(proPriceINR);
+      if (isNaN(proNum) || proNum < 0) {
+        res.status(400).json({ success: false, error: 'Pro price must be a non-negative number' });
+        return;
+      }
+      dbStore.settings.proPriceINR = proNum;
+    }
+
+    if (freeTierAdsEnabled !== undefined) {
+      dbStore.settings.freeTierAdsEnabled = Boolean(freeTierAdsEnabled);
+    }
+
+    if (adBannerTitle !== undefined) {
+      dbStore.settings.adBannerTitle = String(adBannerTitle).trim();
+    }
+
+    if (adBannerText !== undefined) {
+      dbStore.settings.adBannerText = String(adBannerText).trim();
+    }
+
+    if (adBannerLink !== undefined) {
+      dbStore.settings.adBannerLink = String(adBannerLink).trim();
+    }
+
+    if (customAdScript !== undefined) {
+      dbStore.settings.customAdScript = String(customAdScript);
+    }
+
+    dbStore.auditLogs.push({
+      _id: `aud_${Date.now()}`,
+      userId: req.user!._id,
+      action: `ADMIN_UPDATE_SETTINGS: Plan pricing set to Dev: ₹${dbStore.settings.developerPriceINR}, Pro: ₹${dbStore.settings.proPriceINR}, FreeAds: ${dbStore.settings.freeTierAdsEnabled}`,
+      ip: req.ip || '127.0.0.1',
+      createdAt: new Date().toISOString(),
+      details: dbStore.settings,
+    });
+
+    dbStore.save();
+
+    res.json({
+      success: true,
+      message: 'Platform pricing & ad monetization settings updated successfully',
+      data: {
+        settings: dbStore.settings,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to update settings' });
+  }
+};
+

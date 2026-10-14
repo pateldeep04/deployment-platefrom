@@ -61,6 +61,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
     isAvailable: boolean;
     message?: string;
     checkedFqdn?: string;
+    suggestions?: string[];
   } | null>(null);
 
   const [type, setType] = useState<'STATIC' | 'PHP' | 'REACT' | 'VITE'>(initialType);
@@ -110,12 +111,14 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
             isAvailable: res.data.data.isAvailable,
             message: res.data.data.reason || (res.data.data.isAvailable ? 'Available for instant hosting!' : 'Taken'),
             checkedFqdn: res.data.data.fqdn,
+            suggestions: res.data.data.suggestions || [],
           });
         }
       } catch (e: any) {
         setDomainAvailability({
           isAvailable: false,
           message: e.response?.data?.error || 'Failed to verify availability',
+          suggestions: e.response?.data?.suggestions || [],
         });
       } finally {
         setIsCheckingDomain(false);
@@ -216,7 +219,16 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
       onSuccess(createdProject);
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Error creating project');
+      if (err.response?.status === 409 && err.response?.data?.suggestions) {
+        setDomainAvailability({
+          isAvailable: false,
+          message: err.response.data.error || 'Subdomain was claimed by another user.',
+          suggestions: err.response.data.suggestions,
+        });
+        setError('Domain Conflict: Someone claimed this subdomain right at this moment. Please choose one of the available suggestions below.');
+      } else {
+        setError(err.response?.data?.error || err.message || 'Error creating project');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -356,11 +368,31 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       <span className="text-[10px] font-bold uppercase tracking-wider bg-success/20 px-2 py-0.5 rounded shrink-0 ml-2">Ready</span>
                     </div>
                   ) : domainAvailability && !domainAvailability.isAvailable ? (
-                    <div className="flex items-center space-x-2 text-xs text-error bg-error/10 border border-error/30 rounded-lg px-2.5 py-1.5">
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-error" />
-                      <span>
-                        <strong>Unavailable:</strong> {domainAvailability.message || 'This subdomain is already taken under this domain. Please choose another.'}
-                      </span>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                        <span>
+                          <strong>Unavailable:</strong> {domainAvailability.message || 'This subdomain is already taken.'}
+                        </span>
+                      </div>
+                      {domainAvailability.suggestions && domainAvailability.suggestions.length > 0 && (
+                        <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1.5">
+                          <span className="font-semibold text-slate-700 block">Available suggestions (click to use):</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {domainAvailability.suggestions.map((sug) => (
+                              <button
+                                key={sug}
+                                type="button"
+                                onClick={() => setSubdomain(sug)}
+                                className="px-2 py-0.5 rounded border border-blue-200 bg-white hover:bg-blue-50 text-blue-700 hover:border-blue-400 font-mono text-[11px] font-medium transition-colors shadow-xs"
+                                title={`Click to use ${sug}.${selectedDomain}`}
+                              >
+                                + {sug}.{selectedDomain}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : null}
                 </div>

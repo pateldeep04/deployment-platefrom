@@ -26,6 +26,12 @@ export interface IProject {
   sslEnabled?: boolean;
   assignedSubdomain?: string;
   platformDomain?: string;
+  domainExpiresAt?: string;
+  domainStatus?: 'ACTIVE' | 'EXPIRING_SOON' | 'DEACTIVATED';
+  isDomainExpired?: boolean;
+  deactivationWarningSentAt?: string;
+  deactivationEmailSentAt?: string;
+  reactivatedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
