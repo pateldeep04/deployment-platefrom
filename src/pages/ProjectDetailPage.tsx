@@ -350,8 +350,8 @@ export const ProjectDetailPage: React.FC = () => {
         <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-3 mb-1">
-              <h1 className="text-2xl font-extrabold text-white tracking-tight">{project.name}</h1>
-              <span className="text-xs font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-surface border border-deployBorder text-accent">
+              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{project.name}</h1>
+              <span className="text-xs font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-primary">
                 {project.type}
               </span>
               <span
@@ -359,17 +359,17 @@ export const ProjectDetailPage: React.FC = () => {
                   project.status === 'ACTIVE'
                     ? 'bg-success/15 text-success border border-success/30'
                     : project.status === 'BUILDING'
-                    ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                    ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
                     : 'bg-deployBorder text-deployText-secondary'
                 }`}
               >
-                <span className={`w-2 h-2 rounded-full ${project.status === 'ACTIVE' ? 'bg-success' : 'bg-amber-400'}`} />
+                <span className={`w-2 h-2 rounded-full ${project.status === 'ACTIVE' ? 'bg-success' : 'bg-amber-500'}`} />
                 <span>{project.status}</span>
               </span>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-deployText-secondary">
-              <div className="flex items-center space-x-1 font-mono text-deployText">
+              <div className="flex items-center space-x-1 font-mono text-slate-800">
                 <Globe className="w-3.5 h-3.5 text-accent" />
                 <span>{project.slug}.{PLATFORM_DOMAIN}</span>
               </div>
@@ -402,7 +402,7 @@ export const ProjectDetailPage: React.FC = () => {
                 href={liveUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center space-x-1.5 bg-surface hover:bg-deployBorder border border-deployBorder text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+                className="flex items-center space-x-1.5 bg-white hover:bg-slate-100 border border-deployBorder text-slate-800 text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl transition-colors shadow-2xs"
               >
                 <span>Visit Site</span>
                 <ExternalLink className="w-3.5 h-3.5 text-accent" />
@@ -435,8 +435,8 @@ export const ProjectDetailPage: React.FC = () => {
               }}
               className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-primary text-white bg-card/60'
-                  : 'border-transparent text-deployText-secondary hover:text-white hover:bg-card/30'
+                  ? 'border-primary text-primary font-bold bg-white shadow-xs'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
               {tab.label}
@@ -452,7 +452,7 @@ export const ProjectDetailPage: React.FC = () => {
               {/* Latest Deployment Summary */}
               <div className="md:col-span-2 bg-card border border-deployBorder rounded-2xl p-6 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-white">Latest Deployment</h3>
+                  <h3 className="text-base font-bold text-slate-900">Latest Deployment</h3>
                   {selectedDeployment && (
                     <span className="font-mono text-xs text-deployText-secondary">
                       Version {selectedDeployment.version}
@@ -462,10 +462,10 @@ export const ProjectDetailPage: React.FC = () => {
 
                 {selectedDeployment ? (
                   <div className="space-y-4">
-                    <div className="p-4 rounded-xl bg-surface border border-deployBorder flex items-center justify-between">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-deployBorder flex items-center justify-between">
                       <div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm font-bold text-white">
+                          <span className="text-sm font-bold text-slate-900">
                             Deployment #{selectedDeployment._id.substring(4, 10)}
                           </span>
                           <span className="text-xs px-2 py-0.5 rounded-full bg-success/15 text-success border border-success/30 font-semibold">
@@ -492,7 +492,7 @@ export const ProjectDetailPage: React.FC = () => {
                           href={directUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-surface border border-deployBorder text-deployText-secondary hover:text-white transition-all flex items-center space-x-1"
+                          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-white border border-deployBorder text-slate-700 hover:text-slate-900 transition-all flex items-center space-x-1"
                           title="Open via /sites/ edge path"
                         >
                           <span>Direct Path</span>
@@ -511,7 +511,7 @@ export const ProjectDetailPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleRollback(selectedDeployment._id)}
-                        className="text-deployText-secondary hover:text-white flex items-center space-x-1"
+                        className="text-deployText-secondary hover:text-slate-900 flex items-center space-x-1 cursor-pointer"
                       >
                         <RotateCcw className="w-3.5 h-3.5" />
                         <span>Re-publish this version</span>
@@ -527,7 +527,7 @@ export const ProjectDetailPage: React.FC = () => {
               <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-bold text-white">Domains & Routing</h3>
+                    <h3 className="text-base font-bold text-slate-900">Domains & Routing</h3>
                     <span className="flex items-center space-x-1 text-[11px] font-semibold text-success bg-success/15 border border-success/30 px-2 py-0.5 rounded-full">
                       <ShieldCheck className="w-3 h-3" />
                       <span>SSL Active</span>
@@ -536,7 +536,7 @@ export const ProjectDetailPage: React.FC = () => {
                   <p className="text-xs text-deployText-secondary mb-4">Edge proxy endpoints configured for this app</p>
                   
                   <div className="space-y-2.5">
-                    <div className="p-3 rounded-xl bg-surface border border-deployBorder">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-deployBorder">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] uppercase font-bold text-deployText-muted block">Live Subdomain</span>
                         <a href={liveUrl} target="_blank" rel="noreferrer" className="text-[11px] text-accent hover:underline flex items-center space-x-0.5">
@@ -544,10 +544,10 @@ export const ProjectDetailPage: React.FC = () => {
                           <ExternalLink className="w-2.5 h-2.5" />
                         </a>
                       </div>
-                      <span className="text-xs font-mono text-white select-all break-all">{liveUrl}</span>
+                      <span className="text-xs font-mono text-slate-900 font-semibold select-all break-all">{liveUrl}</span>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-surface border border-deployBorder">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-deployBorder">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] uppercase font-bold text-deployText-muted block">Direct Edge Path</span>
                         <a href={directUrl} target="_blank" rel="noreferrer" className="text-[11px] text-deployText-secondary hover:underline flex items-center space-x-0.5">
@@ -555,11 +555,11 @@ export const ProjectDetailPage: React.FC = () => {
                           <ExternalLink className="w-2.5 h-2.5" />
                         </a>
                       </div>
-                      <span className="text-xs font-mono text-deployText-secondary select-all break-all">{directUrl}</span>
+                      <span className="text-xs font-mono text-slate-700 select-all break-all">{directUrl}</span>
                     </div>
 
                     {project.customDomain && (
-                      <div className="p-3 rounded-xl bg-surface border border-deployBorder">
+                      <div className="p-3 rounded-xl bg-slate-50 border border-deployBorder">
                         <span className="text-[10px] uppercase font-bold text-deployText-muted block">Custom Domain</span>
                         <span className="text-xs font-mono text-accent select-all">{project.customDomain}</span>
                       </div>
@@ -569,7 +569,7 @@ export const ProjectDetailPage: React.FC = () => {
 
                 <button
                   onClick={() => setActiveTab('domains')}
-                  className="mt-4 text-xs font-semibold text-primary hover:underline text-left"
+                  className="mt-4 text-xs font-semibold text-primary hover:underline text-left cursor-pointer"
                 >
                   Configure Custom Domains →
                 </button>
@@ -583,7 +583,7 @@ export const ProjectDetailPage: React.FC = () => {
           <div className="bg-card border border-deployBorder rounded-2xl overflow-hidden shadow-sm">
             <div className="px-6 py-4 border-b border-deployBorder flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-white">Deployment Pipeline History</h3>
+                <h3 className="text-base font-bold text-slate-900">Deployment Pipeline History</h3>
                 <p className="text-xs text-deployText-secondary">Every version is immutable and can be rolled back with zero downtime</p>
               </div>
             </div>
@@ -602,7 +602,7 @@ export const ProjectDetailPage: React.FC = () => {
                 <tbody className="divide-y divide-deployBorder">
                   {deployments.map((dep) => (
                     <tr key={dep._id} className="hover:bg-surface/50 transition-colors">
-                      <td className="px-6 py-4 font-mono font-semibold text-white">
+                      <td className="px-6 py-4 font-mono font-semibold text-slate-900">
                         v{dep.version}
                         {project.currentDeploymentId === dep._id && (
                           <span className="ml-2 text-[10px] bg-primary/20 text-accent border border-accent/30 px-1.5 py-0.5 rounded font-bold">
@@ -641,7 +641,7 @@ export const ProjectDetailPage: React.FC = () => {
                         {project.currentDeploymentId !== dep._id && (
                           <button
                             onClick={() => handleRollback(dep._id)}
-                            className="text-deployText hover:text-white font-semibold cursor-pointer"
+                            className="text-deployText hover:text-slate-900 font-semibold cursor-pointer"
                           >
                             Rollback
                           </button>
@@ -659,7 +659,7 @@ export const ProjectDetailPage: React.FC = () => {
         {activeTab === 'upload' && (
           <div className="bg-card border border-deployBorder rounded-2xl p-6 sm:p-8 max-w-2xl mx-auto shadow-sm space-y-6">
             <div>
-              <h3 className="text-lg font-bold text-white">Upload New Project Version</h3>
+              <h3 className="text-lg font-bold text-slate-900">Upload New Project Version</h3>
               <p className="text-xs text-deployText-secondary mt-1">
                 Upload your updated files or project ZIP archive. The isolated worker will validate and deploy.
               </p>
@@ -695,7 +695,7 @@ export const ProjectDetailPage: React.FC = () => {
                 {uploadFile ? (
                   <div className="flex flex-col items-center space-y-2 text-success">
                     <CheckCircle2 className="w-10 h-10" />
-                    <span className="text-sm font-semibold text-white">{uploadFile.name}</span>
+                    <span className="text-sm font-semibold text-slate-900">{uploadFile.name}</span>
                     <span className="text-xs text-deployText-secondary">
                       {(uploadFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to deploy
                     </span>
@@ -706,7 +706,7 @@ export const ProjectDetailPage: React.FC = () => {
                       <UploadCloud className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="text-sm font-semibold text-white block">Drag & drop your new project ZIP</span>
+                      <span className="text-sm font-semibold text-slate-900 block">Drag & drop your new project ZIP</span>
                       <span className="text-xs text-deployText-secondary">or click to browse from computer (Max 100 MB)</span>
                     </div>
                   </div>
@@ -741,7 +741,7 @@ export const ProjectDetailPage: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-white">Terminal Log Stream</h3>
+                <h3 className="text-base font-bold text-slate-900">Terminal Log Stream</h3>
                 <p className="text-xs text-deployText-secondary">
                   Showing logs for {selectedDeployment ? `Version ${selectedDeployment.version}` : 'latest deployment'}
                 </p>
@@ -754,7 +754,7 @@ export const ProjectDetailPage: React.FC = () => {
                     const dep = deployments.find((d) => d._id === e.target.value);
                     if (dep) setSelectedDeployment(dep);
                   }}
-                  className="bg-card border border-deployBorder rounded-lg px-3 py-1.5 text-xs text-white outline-none"
+                  className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 outline-none"
                 >
                   {deployments.map((d) => (
                     <option key={d._id} value={d._id}>
@@ -778,7 +778,7 @@ export const ProjectDetailPage: React.FC = () => {
         {activeTab === 'env' && (
           <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm space-y-6">
             <div>
-              <h3 className="text-base font-bold text-white">Environment Variables</h3>
+              <h3 className="text-base font-bold text-slate-900">Environment Variables</h3>
               <p className="text-xs text-deployText-secondary mt-1">
                 Configure runtime secrets and API keys. Values are masked and encrypted at rest.
               </p>
@@ -792,7 +792,7 @@ export const ProjectDetailPage: React.FC = () => {
                   placeholder="KEY_NAME (e.g. API_URL)"
                   value={newEnvKey}
                   onChange={(e) => setNewEnvKey(e.target.value)}
-                  className="w-full bg-surface border border-deployBorder rounded-lg px-3 py-2 text-xs font-mono text-white outline-none uppercase"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 placeholder-slate-400 outline-none uppercase"
                 />
               </div>
               <div className="sm:col-span-2">
@@ -801,7 +801,7 @@ export const ProjectDetailPage: React.FC = () => {
                   placeholder="Secret value"
                   value={newEnvVal}
                   onChange={(e) => setNewEnvVal(e.target.value)}
-                  className="w-full bg-surface border border-deployBorder rounded-lg px-3 py-2 text-xs font-mono text-white outline-none"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-mono text-slate-900 placeholder-slate-400 outline-none"
                 />
               </div>
               <button
@@ -824,7 +824,7 @@ export const ProjectDetailPage: React.FC = () => {
                   <div key={v._id} className="p-3.5 flex items-center justify-between bg-surface/50 text-xs">
                     <div className="flex items-center space-x-3 font-mono">
                       <Key className="w-3.5 h-3.5 text-accent" />
-                      <span className="font-bold text-white">{v.key}</span>
+                      <span className="font-bold text-slate-900">{v.key}</span>
                       <span className="text-deployText-muted">••••••••••••••••</span>
                     </div>
                     <button
@@ -855,7 +855,7 @@ export const ProjectDetailPage: React.FC = () => {
             <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                  <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
                     <Globe className="w-4 h-4 text-accent" />
                     <span>Free Platform Subdomain</span>
                   </h3>
@@ -909,7 +909,7 @@ export const ProjectDetailPage: React.FC = () => {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center space-x-2">
                         <Clock className={`w-4 h-4 ${isDeactivated ? 'text-rose-400' : isExpiringSoon ? 'text-amber-400' : 'text-accent'}`} />
-                        <span className="text-sm font-bold text-white">Domain Expiry & Free Reactivation</span>
+                        <span className="text-sm font-bold text-slate-900">Domain Expiry & Free Reactivation</span>
                       </div>
                       <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full inline-flex items-center space-x-1 w-fit ${
                         isDeactivated
@@ -925,7 +925,7 @@ export const ProjectDetailPage: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="p-3 rounded-lg bg-card/60 border border-deployBorder/60 space-y-1">
                         <span className="text-[10px] uppercase font-bold text-deployText-muted block">Current 3-Month Cycle</span>
-                        <div className="text-white font-medium">
+                        <div className="text-slate-900 font-medium">
                           Expires: <span className="font-mono text-accent">{expiresAt ? new Date(expiresAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '90 days from creation'}</span>
                         </div>
                         <div className="text-[11px] text-deployText-secondary">
@@ -964,15 +964,15 @@ export const ProjectDetailPage: React.FC = () => {
               })()}
 
               {/* Form to change / re-assign platform subdomain */}
-              <form onSubmit={handleAssignSubdomain} className="p-4 rounded-xl bg-surface/50 border border-deployBorder space-y-3">
-                <span className="text-xs font-bold text-white block">Switch Domain or Choose a New Subdomain</span>
+              <form onSubmit={handleAssignSubdomain} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <span className="text-xs font-bold text-slate-900 block">Switch Domain or Choose a New Subdomain</span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-[11px] text-deployText-secondary mb-1">Select Domain</label>
                     <select
                       value={assignDomainSelect}
                       onChange={(e) => setAssignDomainSelect(e.target.value)}
-                      className="w-full bg-surface border border-deployBorder rounded-lg px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                      className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 outline-none cursor-pointer"
                     >
                       <option value="deployeai.duckdns.org">deployeai.duckdns.org (DuckDNS)</option>
                       <option value="deploye-ai.duckdns.org">deploye-ai.duckdns.org (DuckDNS)</option>
@@ -985,13 +985,13 @@ export const ProjectDetailPage: React.FC = () => {
 
                   <div>
                     <label className="block text-[11px] text-deployText-secondary mb-1">New Subdomain</label>
-                    <div className="flex items-center bg-surface border border-deployBorder rounded-lg px-3 py-2">
+                    <div className="flex items-center bg-white border border-slate-300 rounded-lg px-3 py-2">
                       <input
                         type="text"
                         placeholder="new-subdomain"
                         value={assignSubdomainInput}
                         onChange={(e) => setAssignSubdomainInput(e.target.value)}
-                        className="flex-1 bg-transparent text-xs text-white font-mono outline-none"
+                        className="flex-1 bg-transparent text-xs text-slate-900 placeholder-slate-400 font-mono outline-none"
                       />
                       <span className="text-[11px] text-accent font-mono shrink-0 pl-1">
                         .{assignDomainSelect}
@@ -1034,7 +1034,7 @@ export const ProjectDetailPage: React.FC = () => {
             {/* Custom Domain Section */}
             <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm space-y-4">
               <div>
-                <h3 className="text-base font-bold text-white">Custom Domain Configuration</h3>
+                <h3 className="text-base font-bold text-slate-900">Custom Domain Configuration</h3>
                 <p className="text-xs text-deployText-secondary mt-1">
                   Attach your own custom apex or subdomain (e.g. www.yourcompany.com) with automated routing.
                 </p>
@@ -1045,7 +1045,7 @@ export const ProjectDetailPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-bold text-white">{project.customDomain}</span>
+                      <span className="text-sm font-bold text-slate-900">{project.customDomain}</span>
                       {project.customDomainVerified ? (
                         <span className="text-xs bg-success/15 text-success border border-success/30 px-2 py-0.5 rounded-full font-semibold flex items-center space-x-1">
                           <Check className="w-3 h-3" />
@@ -1079,7 +1079,7 @@ export const ProjectDetailPage: React.FC = () => {
                   placeholder="www.myportfolio.com"
                   value={customDomainInput}
                   onChange={(e) => setCustomDomainInput(e.target.value)}
-                  className="flex-1 bg-surface border border-deployBorder rounded-lg px-3 py-2 text-xs text-white outline-none"
+                  className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 placeholder-slate-400 outline-none"
                 />
                 <button
                   type="submit"
@@ -1097,16 +1097,16 @@ export const ProjectDetailPage: React.FC = () => {
         {activeTab === 'analytics' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm">
-              <h3 className="text-base font-bold text-white mb-1">Storage Allocation</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Storage Allocation</h3>
               <p className="text-xs text-deployText-secondary mb-4">Disk footprint across immutable artifact releases</p>
-              <div className="text-3xl font-extrabold text-white">
+              <div className="text-3xl font-extrabold text-slate-900">
                 {((project.storageUsed || 0) / 1024 / 1024).toFixed(2)} MB
               </div>
               <span className="text-xs text-deployText-muted mt-1 block">Live sandboxed artifact</span>
             </div>
 
             <div className="bg-card border border-deployBorder rounded-2xl p-6 shadow-sm">
-              <h3 className="text-base font-bold text-white mb-1">Subdomain Health</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Subdomain Health</h3>
               <p className="text-xs text-deployText-secondary mb-4">Edge routing availability</p>
               <div className="text-3xl font-extrabold text-success">99.98%</div>
               <span className="text-xs text-deployText-muted mt-1 block">Zero downtime proxy</span>

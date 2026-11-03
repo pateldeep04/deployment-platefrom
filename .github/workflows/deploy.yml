@@ -1,4 +1,4 @@
-name: CI & Build Test
+name: Deploy to AWS EC2
 
 on:
   push:
@@ -7,14 +7,74 @@ on:
     branches: [ main, master ]
 
 jobs:
-  build:
+  build-and-test:
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-      - run: npm install
-      - run: npm run build
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Build Frontend and Backend
+        run: npm run build
+
+  deploy:
+    name: Deploy to AWS Live Server
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    steps:
+      - name: Deploy to AWS EC2 via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script_stop: true
+          script: |
+            echo "🚀 Starting automated deployment on AWS EC2..."
+            
+            # 1. Navigate to deployment directory (default: ~/deployhub)
+            APP_DIR="${{ secrets.PROJECT_PATH }}"
+            if [ -z "$APP_DIR" ]; then
+              APP_DIR="$HOME/deployhub"
+            fi
+            
+            if [ ! -d "$APP_DIR" ]; then
+              echo "Error: Directory $APP_DIR does not exist on the server."
+              exit 1
+            fi
+            
+            cd "$APP_DIR"
+            
+            # 2. Pull latest code from GitHub
+            echo "📥 Pulling latest code from GitHub..."
+            git fetch origin
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            git pull origin "$CURRENT_BRANCH"
+            
+            # 3. Install packages & build
+            echo "📦 Installing dependencies & building..."
+            npm install
+            npm run build
+            
+            # 4. Restart or reload PM2 process
+            echo "♻️ Restarting application via PM2..."
+            if command -v pm2 > /dev/null; then
+              pm2 reload ecosystem.config.cjs || pm2 restart ecosystem.config.cjs || pm2 start ecosystem.config.cjs
+              pm2 save
+            else
+              npx pm2 reload ecosystem.config.cjs || npx pm2 restart ecosystem.config.cjs || npx pm2 start ecosystem.config.cjs
+            fi
+            
+            echo "✅ Live deployment completed successfully!"
+

@@ -218,67 +218,67 @@ export const DashboardPage: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <button
             onClick={() => handleLaunchModal()}
-            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-primary/50 text-left transition-all group cursor-pointer"
+            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-primary/50 text-left transition-all group cursor-pointer shadow-xs hover:shadow-sm"
           >
             <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-primary flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
               <UploadCloud className="w-4 h-4" />
             </div>
-            <div className="text-xs font-bold text-white">Online Uploader</div>
+            <div className="text-xs font-bold text-slate-900">Online Uploader</div>
             <div className="text-[11px] text-deployText-secondary mt-0.5">Drag & Drop ZIP</div>
           </button>
 
           <button
             onClick={() => handleLaunchModal(undefined, 'PHP')}
-            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-purple-500/50 text-left transition-all group cursor-pointer"
+            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-purple-500/50 text-left transition-all group cursor-pointer shadow-xs hover:shadow-sm"
           >
-            <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
               <FileCode className="w-4 h-4" />
             </div>
-            <div className="text-xs font-bold text-white">PHP 8.4 Sandbox</div>
+            <div className="text-xs font-bold text-slate-900">PHP 8.4 Sandbox</div>
             <div className="text-[11px] text-deployText-secondary mt-0.5">Isolated FPM</div>
           </button>
 
           <Link
             to="/docs"
-            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-accent/50 text-left transition-all group"
+            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-accent/50 text-left transition-all group shadow-xs hover:shadow-sm"
           >
             <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
               <Globe className="w-4 h-4" />
             </div>
-            <div className="text-xs font-bold text-white">Subdomains</div>
+            <div className="text-xs font-bold text-slate-900">Subdomains</div>
             <div className="text-[11px] text-deployText-secondary mt-0.5">*.{PLATFORM_DOMAIN}</div>
           </Link>
 
           <Link
             to="/docs"
-            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-emerald-500/50 text-left transition-all group"
+            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-emerald-500/50 text-left transition-all group shadow-xs hover:shadow-sm"
           >
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
               <Lock className="w-4 h-4" />
             </div>
-            <div className="text-xs font-bold text-white">SSL Certificates</div>
+            <div className="text-xs font-bold text-slate-900">SSL Certificates</div>
             <div className="text-[11px] text-deployText-secondary mt-0.5">Free HTTPS</div>
           </Link>
 
           <Link
             to="/billing"
-            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-amber-500/50 text-left transition-all group"
+            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-amber-500/50 text-left transition-all group shadow-xs hover:shadow-sm"
           >
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
               <HardDrive className="w-4 h-4" />
             </div>
-            <div className="text-xs font-bold text-white">Disk & Bandwidth</div>
+            <div className="text-xs font-bold text-slate-900">Disk & Bandwidth</div>
             <div className="text-[11px] text-deployText-secondary mt-0.5">1 GB Quota</div>
           </Link>
 
           <button
             onClick={() => handleLaunchModal(undefined, 'VITE')}
-            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-cyan-500/50 text-left transition-all group cursor-pointer"
+            className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-cyan-500/50 text-left transition-all group cursor-pointer shadow-xs hover:shadow-sm"
           >
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
               <Layers className="w-4 h-4" />
             </div>
-            <div className="text-xs font-bold text-white">React & Vite</div>
+            <div className="text-xs font-bold text-slate-900">React & Vite</div>
             <div className="text-[11px] text-deployText-secondary mt-0.5">SPA Engine</div>
           </button>
         </div>
@@ -295,7 +295,7 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="mt-3 flex items-baseline space-x-2">
-              <span className="text-3xl font-extrabold text-white">{projects.length}</span>
+              <span className="text-3xl font-extrabold text-slate-900">{projects.length}</span>
               <span className="text-xs text-deployText-muted">/ 3 allowed</span>
             </div>
             <div className="mt-3 w-full bg-deployBorder h-1.5 rounded-full overflow-hidden">
@@ -310,12 +310,12 @@ export const DashboardPage: React.FC = () => {
           <div className="bg-card border border-deployBorder rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-deployText-secondary">SSD Storage Used</span>
-              <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
+              <div className="p-2 rounded-lg bg-purple-500/10 text-purple-600">
                 <HardDrive className="w-4 h-4" />
               </div>
             </div>
             <div className="mt-3 flex items-baseline space-x-2">
-              <span className="text-3xl font-extrabold text-white">{usedStorageMB}</span>
+              <span className="text-3xl font-extrabold text-slate-900">{usedStorageMB}</span>
               <span className="text-xs text-deployText-muted">MB of 1 GB</span>
             </div>
             <div className="mt-3 w-full bg-deployBorder h-1.5 rounded-full overflow-hidden">
@@ -330,17 +330,17 @@ export const DashboardPage: React.FC = () => {
           <div className="bg-card border border-deployBorder rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-deployText-secondary">Monthly Bandwidth</span>
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
                 <Activity className="w-4 h-4" />
               </div>
             </div>
             <div className="mt-3 flex items-baseline space-x-2">
-              <span className="text-3xl font-extrabold text-white">
+              <span className="text-3xl font-extrabold text-slate-900">
                 {((user?.bandwidthUsed || 0) / (1024 * 1024 * 1024)).toFixed(2)}
               </span>
               <span className="text-xs text-deployText-muted">GB / Unlimited</span>
             </div>
-            <span className="text-[11px] text-emerald-400 mt-2 block font-medium">
+            <span className="text-[11px] text-emerald-600 mt-2 block font-medium">
               ↑ Edge Cache Active
             </span>
           </div>
@@ -349,12 +349,12 @@ export const DashboardPage: React.FC = () => {
           <div className="bg-card border border-deployBorder rounded-2xl p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-deployText-secondary">Live Websites</span>
-              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
+              <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
                 <Rocket className="w-4 h-4" />
               </div>
             </div>
             <div className="mt-3 flex items-baseline space-x-2">
-              <span className="text-3xl font-extrabold text-white">
+              <span className="text-3xl font-extrabold text-slate-900">
                 {projects.filter(p => p.status === 'ACTIVE').length}
               </span>
               <span className="text-xs text-deployText-muted">Active with SSL</span>
@@ -373,11 +373,11 @@ export const DashboardPage: React.FC = () => {
           <div className="lg:col-span-2 bg-card border border-deployBorder rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-base font-bold text-white">Visitor Traffic & Requests</h3>
+                <h3 className="text-base font-bold text-slate-900">Visitor Traffic & Requests</h3>
                 <p className="text-xs text-deployText-secondary">Analytics across your deployed websites</p>
               </div>
-              <span className="text-xs font-mono text-accent bg-accent/10 px-2.5 py-1 rounded-md flex items-center space-x-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-mono text-accent bg-accent/10 px-2.5 py-1 rounded-md flex items-center space-x-1.5 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>Live Analytics ({totalTrafficRequests} Hits)</span>
               </span>
             </div>
@@ -386,21 +386,21 @@ export const DashboardPage: React.FC = () => {
                 <AreaChart data={telemetryData}>
                   <defs>
                     <linearGradient id="colorRequests" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.4}/>
+                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3}/>
                       <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="day" stroke="#64748B" fontSize={11} />
                   <YAxis stroke="#64748B" fontSize={11} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#172033', borderColor: '#263449', borderRadius: '8px', color: '#fff' }}
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', color: '#f8fafc' }}
                   />
                   <Area type="monotone" dataKey="requests" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#colorRequests)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
             {totalTrafficRequests === 0 && (
-              <div className="mt-2 text-center py-2 px-3 rounded-lg bg-surface/50 border border-deployBorder text-[11px] text-deployText-muted">
+              <div className="mt-2 text-center py-2 px-3 rounded-lg bg-slate-50 border border-deployBorder text-[11px] text-deployText-muted">
                 Active real-time analytics monitoring. Traffic charts update automatically as visitors browse your deployed websites.
               </div>
             )}
@@ -409,47 +409,47 @@ export const DashboardPage: React.FC = () => {
           {/* Quick System Environment Summary */}
           <div className="bg-card border border-deployBorder rounded-2xl p-6 flex flex-col justify-between shadow-sm">
             <div>
-              <h3 className="text-base font-bold text-white mb-1">Hosting Environment</h3>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Hosting Environment</h3>
               <p className="text-xs text-deployText-secondary mb-4">Edge server configuration</p>
               
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface border border-deployBorder text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-deployBorder text-xs">
                   <div className="flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-success" />
-                    <span className="text-white font-medium">Domain Resolver</span>
+                    <span className="text-slate-800 font-medium">Domain Resolver</span>
                   </div>
                   <span className="font-mono text-accent font-semibold">*.{PLATFORM_DOMAIN}</span>
                 </div>
 
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface border border-deployBorder text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-deployBorder text-xs">
                   <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                    <span className="text-white font-medium">PHP Runtime</span>
+                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <span className="text-slate-800 font-medium">PHP Runtime</span>
                   </div>
-                  <span className="font-mono text-deployText-muted">PHP 8.4-FPM</span>
+                  <span className="font-mono text-deployText-secondary font-medium">PHP 8.4-FPM</span>
                 </div>
 
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface border border-deployBorder text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-deployBorder text-xs">
                   <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                    <span className="text-white font-medium">SSL Provisioner</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-slate-800 font-medium">SSL Provisioner</span>
                   </div>
-                  <span className="font-mono text-deployText-muted">Let's Encrypt / ACME</span>
+                  <span className="font-mono text-deployText-secondary font-medium">Let's Encrypt / ACME</span>
                 </div>
 
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface border border-deployBorder text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-deployBorder text-xs">
                   <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                    <span className="text-white font-medium">Static Engine</span>
+                    <span className="w-2 h-2 rounded-full bg-cyan-500" />
+                    <span className="text-slate-800 font-medium">Static Engine</span>
                   </div>
-                  <span className="font-mono text-deployText-muted">Nginx Edge / Gzip</span>
+                  <span className="font-mono text-deployText-secondary font-medium">Nginx Edge / Gzip</span>
                 </div>
               </div>
             </div>
 
             <Link
               to="/docs"
-              className="mt-6 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-lg bg-surface hover:bg-deployBorder text-xs font-semibold text-deployText transition-colors"
+              className="mt-6 flex items-center justify-center space-x-1.5 py-2 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-800 transition-colors"
             >
               <span>View Technical Documentation</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -461,13 +461,13 @@ export const DashboardPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-white">Your Hosted Websites ({projects.length})</h2>
+              <h2 className="text-lg font-bold text-slate-900">Your Hosted Websites ({projects.length})</h2>
               <p className="text-xs text-deployText-secondary">Manage your active subdomains and deployed websites</p>
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={fetchDashboardData}
-                className="p-1.5 text-deployText-secondary hover:text-white rounded-lg hover:bg-card transition-colors cursor-pointer"
+                className="p-1.5 text-deployText-secondary hover:text-slate-900 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
                 title="Refresh projects"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -483,9 +483,9 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {projects.length === 0 ? (
-            <div className="text-center py-16 bg-card/60 border border-deployBorder rounded-2xl p-6">
-              <FolderKanban className="w-12 h-12 text-deployText-muted mx-auto mb-3" />
-              <h3 className="text-base font-bold text-white">No websites deployed yet</h3>
+            <div className="text-center py-16 bg-card border border-deployBorder rounded-2xl p-6 shadow-sm">
+              <FolderKanban className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+              <h3 className="text-base font-bold text-slate-900">No websites deployed yet</h3>
               <p className="text-xs text-deployText-secondary max-w-sm mx-auto mt-1 mb-6">
                 Create your first project and upload your HTML, CSS, JS or PHP files to get a live URL on {PLATFORM_DOMAIN} in seconds.
               </p>
@@ -501,12 +501,12 @@ export const DashboardPage: React.FC = () => {
               {projects.map((project) => (
                 <div
                   key={project._id}
-                  className="group bg-card hover:bg-card/90 border border-deployBorder hover:border-primary/50 rounded-2xl p-5 transition-all duration-200 shadow-sm flex flex-col justify-between"
+                  className="group bg-card hover:bg-slate-50/70 border border-deployBorder hover:border-primary/50 rounded-2xl p-5 transition-all duration-200 shadow-sm flex flex-col justify-between"
                 >
                   <div>
                     {/* Top Row: Type & Status */}
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[11px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-surface border border-deployBorder text-accent">
+                      <span className="text-[11px] font-mono uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-primary">
                         {project.type}
                       </span>
                       <span
@@ -514,25 +514,25 @@ export const DashboardPage: React.FC = () => {
                           project.status === 'ACTIVE'
                             ? 'bg-success/15 text-success border border-success/30'
                             : project.status === 'BUILDING'
-                            ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                            ? 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
                             : 'bg-deployBorder text-deployText-secondary'
                         }`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${project.status === 'ACTIVE' ? 'bg-success' : 'bg-amber-400'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${project.status === 'ACTIVE' ? 'bg-success' : 'bg-amber-500'}`} />
                         <span>{project.status}</span>
                       </span>
                     </div>
 
                     {/* Title & Slug */}
-                    <h3 className="text-base font-bold text-white group-hover:text-primary-light transition-colors">
+                    <h3 className="text-base font-bold text-slate-900 group-hover:text-primary transition-colors">
                       {project.name}
                     </h3>
                     
                     {/* Subdomain Display */}
-                    <div className="mt-2 p-2 rounded-xl bg-surface border border-deployBorder/60 flex items-center justify-between text-xs">
+                    <div className="mt-2 p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
                       <div className="flex items-center space-x-1.5 truncate">
                         <Globe className="w-3.5 h-3.5 text-accent shrink-0" />
-                        <span className="font-mono text-deployText truncate">
+                        <span className="font-mono text-slate-800 truncate">
                           {project.slug}.{PLATFORM_DOMAIN}
                         </span>
                       </div>

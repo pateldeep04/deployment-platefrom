@@ -49,39 +49,103 @@ class EmailAuthService {
   }
 
   /**
-   * Dispatches verification code via SMTP email or logs to console
+   * Dispatches verification code via SMTP email matching the DeployHub UI aesthetic
    */
   public async sendVerificationCode(email: string, code: string, type: 'REGISTER' | 'LOGIN' | 'PASSWORD_RESET'): Promise<boolean> {
     const actionText = type === 'REGISTER'
       ? 'verify your email address'
-      : (type === 'LOGIN' ? 'complete your secure login' : 'reset your password');
+      : (type === 'LOGIN' ? 'securely sign in to your dashboard' : 'reset your account password');
 
     const subject = type === 'REGISTER'
       ? `DeployHub Verification Code: ${code}`
       : (type === 'LOGIN' ? `DeployHub Login Code: ${code}` : `DeployHub Security Code: ${code}`);
 
     const html = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f17; color: #f8fafc; padding: 40px 20px; max-width: 600px; margin: 0 auto; border-radius: 12px; border: 1px solid #1e293b;">
-        <div style="text-align: center; margin-bottom: 24px;">
-          <h1 style="color: #3b82f6; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">DeployHub Cloud</h1>
-          <p style="color: #94a3b8; font-size: 14px; margin-top: 4px;">Instant Web Hosting & Cloud Edge Platform</p>
-        </div>
-        
-        <div style="background-color: #131b2e; border: 1px solid #1e293b; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
-          <p style="color: #cbd5e1; font-size: 15px; margin-top: 0;">Use the 6-digit one-time code below to ${actionText}:</p>
-          
-          <div style="font-family: 'JetBrains Mono', monospace, Courier; font-size: 36px; font-weight: 700; color: #60a5fa; letter-spacing: 8px; padding: 16px 24px; background-color: #0b0f17; border-radius: 6px; display: inline-block; margin: 12px 0 16px 0; border: 1px dashed #3b82f6;">
-            ${code}
-          </div>
-          
-          <p style="color: #94a3b8; font-size: 13px; margin-bottom: 0;">⏳ This code is valid for <strong>15 minutes</strong>. Do not share this code with anyone.</p>
-        </div>
-        
-        <div style="color: #64748b; font-size: 12px; line-height: 1.5; border-top: 1px solid #1e293b; padding-top: 16px; text-align: center;">
-          <p style="margin: 0;">If you did not request this security code, please ignore this email or contact support.</p>
-          <p style="margin: 4px 0 0 0;">© ${new Date().getFullYear()} DeployHub Cloud. All rights reserved.</p>
-        </div>
-      </div>
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 16px;">
+          <tr>
+            <td align="center">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
+                
+                <!-- Brand Header -->
+                <tr>
+                  <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                    <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: linear-gradient(135deg, #2563eb, #0284c7); border-radius: 12px; margin-bottom: 12px; text-align: center; color: #ffffff; font-size: 22px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+                      🚀
+                    </div>
+                    <div style="font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">
+                      Deploy<span style="color: #2563eb;">Hub</span>
+                    </div>
+                    <div style="font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;">
+                      Deploy. Host. Scale.
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Content Body -->
+                <tr>
+                  <td style="padding: 32px 32px 24px 32px;">
+                    <h2 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 700; color: #0f172a; text-align: center;">
+                      Your One-Time Security Code
+                    </h2>
+                    
+                    <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #475569; text-align: center;">
+                      Use the 6-digit verification code below to ${actionText}:
+                    </p>
+
+                    <!-- Code Box -->
+                    <div style="background-color: #f0f7ff; border: 1.5px dashed #93c5fd; border-radius: 12px; padding: 20px; text-align: center; margin: 0 0 24px 0;">
+                      <div style="font-family: 'JetBrains Mono', Consolas, Monaco, monospace; font-size: 38px; font-weight: 800; color: #1e40af; letter-spacing: 10px; margin-left: 10px;">
+                        ${code}
+                      </div>
+                      <div style="font-size: 12px; font-weight: 600; color: #3b82f6; margin-top: 8px;">
+                        ⏱️ Valid for 15 minutes
+                      </div>
+                    </div>
+
+                    <!-- Security Alert -->
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin: 0 0 20px 0;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td width="24" valign="top" style="font-size: 16px; line-height: 1.4;">🔒</td>
+                          <td style="font-size: 12px; line-height: 1.5; color: #64748b; padding-left: 8px;">
+                            <strong>Security Notice:</strong> Never share this code with anyone. DeployHub support will never ask for your verification code.
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #94a3b8; text-align: center;">
+                      If you didn't request this code, you can safely disregard this email.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                    <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b; font-weight: 500;">
+                      DeployHub Cloud — Free Cloud Hosting & Instant Web Deployment
+                    </p>
+                    <p style="margin: 0; font-size: 11px; color: #94a3b8;">
+                      © ${new Date().getFullYear()} DeployHub Cloud. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
     `;
 
     const transporter = this.getTransporter();
@@ -135,19 +199,79 @@ class EmailAuthService {
     const subject = `⚠️ Notice: Your domain [${domainName}] expires in ${daysRemaining} days`;
 
     const html = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f17; color: #f8fafc; padding: 40px 20px; max-width: 600px; margin: 0 auto; border-radius: 12px; border: 1px solid #1e293b;">
-        <h2 style="color: #f59e0b; margin-top: 0;">⚠️ Domain Expiry Notice</h2>
-        <p style="color: #cbd5e1; font-size: 15px;">Your domain <strong>${domainName}</strong> is scheduled to expire and deactivate on <strong>${formattedDate}</strong> (${daysRemaining} days remaining).</p>
-        
-        <div style="background-color: #131b2e; border: 1px solid #1e293b; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <h4 style="color: #60a5fa; margin-top: 0;">✨ Free Reactivation Available</h4>
-          <p style="color: #94a3b8; font-size: 14px; margin-bottom: 0;">You can extend your domain for another 3 months for <strong>100% FREE</strong> at any time. Just visit your DeployHub dashboard and click <em>"Reactivate Domain (Free)"</em>.</p>
-        </div>
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 16px;">
+          <tr>
+            <td align="center">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
+                
+                <!-- Brand Header -->
+                <tr>
+                  <td style="padding: 32px 32px 20px 32px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                    <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: linear-gradient(135deg, #2563eb, #0284c7); border-radius: 12px; margin-bottom: 10px; color: #ffffff; font-size: 22px;">
+                      🚀
+                    </div>
+                    <div style="font-size: 24px; font-weight: 800; color: #0f172a;">
+                      Deploy<span style="color: #2563eb;">Hub</span>
+                    </div>
+                  </td>
+                </tr>
 
-        <p style="text-align: center; margin-top: 24px;">
-          <a href="${config.apiUrl}/dashboard" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Go to DeployHub Dashboard</a>
-        </p>
-      </div>
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 32px;">
+                    <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td width="28" valign="top" style="font-size: 20px;">⚠️</td>
+                          <td style="padding-left: 10px;">
+                            <div style="font-size: 14px; font-weight: 700; color: #92400e;">
+                              Domain Validity Reminder
+                            </div>
+                            <div style="font-size: 13px; color: #b45309; margin-top: 2px;">
+                              Your domain <strong>${domainName}</strong> will expire on <strong>${formattedDate}</strong> (${daysRemaining} days left).
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <h3 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 700; color: #0f172a;">
+                      ✨ Free 3-Month Reactivation
+                    </h3>
+                    <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                      DeployHub domains can be renewed for <strong>100% free</strong> with one click to keep your site online for another 3-month cycle.
+                    </p>
+
+                    <div style="text-align: center; margin: 28px 0;">
+                      <a href="${config.apiUrl}/dashboard" style="background-color: #2563eb; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 28px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);">
+                        Reactivate Domain Free →
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                    <p style="margin: 0; font-size: 11px; color: #94a3b8;">
+                      © ${new Date().getFullYear()} DeployHub Cloud. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
     `;
 
     const transporter = this.getTransporter();
@@ -181,16 +305,79 @@ class EmailAuthService {
     const subject = `🔴 Action Required: Your domain [${domainName}] has been deactivated`;
 
     const html = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f17; color: #f8fafc; padding: 40px 20px; max-width: 600px; margin: 0 auto; border-radius: 12px; border: 1px solid #1e293b;">
-        <h2 style="color: #ef4444; margin-top: 0;">🔴 Domain Deactivated</h2>
-        <p style="color: #cbd5e1; font-size: 15px;">The 3-month free validity period for domain <strong>${domainName}</strong> has completed, and it has been deactivated.</p>
-        
-        <div style="background-color: #131b2e; border: 1px solid #1e293b; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <h4 style="color: #10b981; margin-top: 0;">✨ Reactivate Instantly for FREE</h4>
-          <p style="color: #94a3b8; font-size: 14px; margin-bottom: 16px;">All your site files and configurations are safe! Click below to reactivate this domain immediately for another 3 months at zero cost.</p>
-          <a href="${reactivateUrl}" style="background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Reactivate Domain Free</a>
-        </div>
-      </div>
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>${subject}</title>
+      </head>
+      <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 16px;">
+          <tr>
+            <td align="center">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
+                
+                <!-- Brand Header -->
+                <tr>
+                  <td style="padding: 32px 32px 20px 32px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                    <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: linear-gradient(135deg, #2563eb, #0284c7); border-radius: 12px; margin-bottom: 10px; color: #ffffff; font-size: 22px;">
+                      🚀
+                    </div>
+                    <div style="font-size: 24px; font-weight: 800; color: #0f172a;">
+                      Deploy<span style="color: #2563eb;">Hub</span>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 32px;">
+                    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                      <table cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                          <td width="28" valign="top" style="font-size: 20px;">🔴</td>
+                          <td style="padding-left: 10px;">
+                            <div style="font-size: 14px; font-weight: 700; color: #991b1b;">
+                              Domain Deactivated
+                            </div>
+                            <div style="font-size: 13px; color: #b91c1c; margin-top: 2px;">
+                              The 3-month free validity period for <strong>${domainName}</strong> has ended.
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <h3 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 700; color: #0f172a;">
+                      All Your Files & Configs Are Safe!
+                    </h3>
+                    <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                      Click below to reactivate your domain instantly for another 3 months for <strong>100% free</strong>.
+                    </p>
+
+                    <div style="text-align: center; margin: 28px 0;">
+                      <a href="${reactivateUrl}" style="background-color: #16a34a; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 28px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);">
+                        Restore & Reactivate Free →
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                    <p style="margin: 0; font-size: 11px; color: #94a3b8;">
+                      © ${new Date().getFullYear()} DeployHub Cloud. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
     `;
 
     const transporter = this.getTransporter();

@@ -130,9 +130,9 @@ export const BillingPage: React.FC = () => {
             <Sparkles className="w-3.5 h-3.5" />
             <span>DeployHub Subscriptions & Instant UPI Payments</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white">Upgrade Your Deployment Power</h1>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">Upgrade Your Deployment Power</h1>
           <p className="text-xs sm:text-sm text-deployText-secondary">
-            Current Active Plan: <strong className="text-white uppercase font-bold">{user?.plan} PLAN</strong>
+            Current Active Plan: <strong className="text-slate-900 uppercase font-bold">{user?.plan} PLAN</strong>
           </p>
         </div>
 
@@ -169,7 +169,7 @@ export const BillingPage: React.FC = () => {
 
                 <div>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white">{p.name}</h3>
+                    <h3 className="text-lg font-bold text-slate-900">{p.name}</h3>
                     {isCurrent && (
                       <span className="text-[10px] uppercase font-bold bg-accent/20 text-accent border border-accent/30 px-2 py-0.5 rounded">
                         Active
@@ -178,7 +178,7 @@ export const BillingPage: React.FC = () => {
                   </div>
 
                   <div className="my-5">
-                    <span className="text-3xl font-extrabold text-white">{p.priceLabel.split(' ')[0]}</span>
+                    <span className="text-3xl font-extrabold text-slate-900">{p.priceLabel.split(' ')[0]}</span>
                     <span className="text-xs text-deployText-secondary"> / month</span>
                   </div>
 
@@ -264,7 +264,7 @@ export const BillingPage: React.FC = () => {
                   <Smartphone className="w-4 h-4 text-emerald-400" />
                   <span>Instant UPI Checkout & QR Verification</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
                   Pay via UPI (GPay / PhonePe / Paytm / BHIM)
                 </h2>
                 <p className="text-xs sm:text-sm text-deployText-secondary mt-1">
@@ -274,17 +274,17 @@ export const BillingPage: React.FC = () => {
 
               {/* Supported UPI Apps Pills */}
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="px-2.5 py-1 rounded-lg bg-surface border border-deployBorder text-[11px] font-semibold text-white">Google Pay</span>
-                <span className="px-2.5 py-1 rounded-lg bg-surface border border-deployBorder text-[11px] font-semibold text-white">PhonePe</span>
-                <span className="px-2.5 py-1 rounded-lg bg-surface border border-deployBorder text-[11px] font-semibold text-white">Paytm</span>
-                <span className="px-2.5 py-1 rounded-lg bg-surface border border-deployBorder text-[11px] font-semibold text-white">BHIM</span>
-                <span className="px-2.5 py-1 rounded-lg bg-surface border border-deployBorder text-[11px] font-semibold text-white">Cred</span>
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700">Google Pay</span>
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700">PhonePe</span>
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700">Paytm</span>
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700">BHIM</span>
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700">Cred</span>
               </div>
             </div>
 
             {/* Plan Selector Radio Buttons */}
             <div>
-              <label className="text-xs font-bold text-white block mb-3 uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-900 block mb-3 uppercase tracking-wider">
                 1. Select Subscription Tier
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -293,12 +293,12 @@ export const BillingPage: React.FC = () => {
                   onClick={() => setSelectedUpiPlanId('DEVELOPER')}
                   className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                     selectedUpiPlanId === 'DEVELOPER'
-                      ? 'bg-primary/15 border-primary shadow-glow-primary'
-                      : 'bg-surface border-deployBorder hover:border-deployBorder-hover'
+                      ? 'bg-primary/10 border-primary shadow-sm'
+                      : 'bg-white border-slate-200 hover:border-primary/50'
                   }`}
                 >
                   <div>
-                    <div className="font-bold text-white text-sm">Developer Plan</div>
+                    <div className="font-bold text-slate-900 text-sm">Developer Plan</div>
                     <div className="text-xs text-deployText-secondary mt-0.5">20 Projects • 10 GB Storage • Custom Domains • Zero Ads</div>
                   </div>
                   <div className="text-right">
@@ -312,12 +312,12 @@ export const BillingPage: React.FC = () => {
                   onClick={() => setSelectedUpiPlanId('PRO')}
                   className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                     selectedUpiPlanId === 'PRO'
-                      ? 'bg-primary/15 border-primary shadow-glow-primary'
-                      : 'bg-surface border-deployBorder hover:border-deployBorder-hover'
+                      ? 'bg-primary/10 border-primary shadow-sm'
+                      : 'bg-white border-slate-200 hover:border-primary/50'
                   }`}
                 >
                   <div>
-                    <div className="font-bold text-white text-sm">Pro Infrastructure Plan</div>
+                    <div className="font-bold text-slate-900 text-sm">Pro Infrastructure Plan</div>
                     <div className="text-xs text-deployText-secondary mt-0.5">Unlimited Projects • 50 GB Storage • PHP 8.4 Isolated</div>
                   </div>
                   <div className="text-right">
@@ -332,14 +332,14 @@ export const BillingPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-2">
               
               {/* Left Column: QR Code Container */}
-              <div className="lg:col-span-5 bg-surface border border-deployBorder rounded-2xl p-6 flex flex-col items-center text-center space-y-4 shadow-inner">
-                <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
+              <div className="lg:col-span-5 bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center text-center space-y-4 shadow-sm">
+                <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-semibold">
                   <QrCode className="w-3.5 h-3.5" />
                   <span>Scan to Pay ₹{activeUpiPlan.priceINR}</span>
                 </div>
 
                 {/* White Background Container for QR Image */}
-                <div className="bg-white p-3 rounded-2xl shadow-xl flex items-center justify-center border-4 border-emerald-400/30">
+                <div className="bg-white p-3 rounded-2xl shadow-md flex items-center justify-center border-4 border-emerald-400/30">
                   <img 
                     src={qrCodeUrl} 
                     alt={`UPI QR Code for ${OFFICIAL_UPI_ID}`} 
@@ -354,7 +354,7 @@ export const BillingPage: React.FC = () => {
                 {/* Direct Mobile Deep Link Button */}
                 <a
                   href={upiPaymentUri}
-                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all flex items-center justify-center space-x-2 shadow-lg cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all flex items-center justify-center space-x-2 shadow-sm cursor-pointer"
                 >
                   <Smartphone className="w-4 h-4" />
                   <span>Tap to Open in Installed UPI App</span>
@@ -366,18 +366,18 @@ export const BillingPage: React.FC = () => {
               <div className="lg:col-span-7 space-y-6">
                 
                 {/* 2. Official UPI ID Copy Box */}
-                <div className="bg-surface border border-deployBorder rounded-2xl p-5 space-y-3">
-                  <div className="text-xs font-bold text-deployText-secondary uppercase tracking-wider">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-3">
+                  <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                     2. Official Merchant UPI ID
                   </div>
                   
-                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-card border border-deployBorder">
+                  <div className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm">
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center font-bold text-xs">
                         UPI
                       </div>
                       <div>
-                        <div className="font-mono text-base font-bold text-white tracking-wide">
+                        <div className="font-mono text-base font-bold text-slate-900 tracking-wide">
                           {OFFICIAL_UPI_ID}
                         </div>
                         <div className="text-[11px] text-deployText-secondary">
@@ -407,8 +407,8 @@ export const BillingPage: React.FC = () => {
                 </div>
 
                 {/* 3. UTR Reference Submission Form */}
-                <form onSubmit={handleVerifyUpiPayment} className="bg-surface border border-deployBorder rounded-2xl p-5 space-y-4">
-                  <div className="text-xs font-bold text-deployText-secondary uppercase tracking-wider">
+                <form onSubmit={handleVerifyUpiPayment} className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
+                  <div className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                     3. Submit Transaction Reference (UTR) for Instant Activation
                   </div>
 
@@ -420,7 +420,7 @@ export const BillingPage: React.FC = () => {
                   )}
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-white flex items-center justify-between">
+                    <label className="text-xs font-medium text-slate-800 flex items-center justify-between">
                       <span>12-Digit UPI Reference Number / UTR</span>
                       <span className="text-[11px] text-accent font-normal">Found in your payment receipt</span>
                     </label>
@@ -430,21 +430,21 @@ export const BillingPage: React.FC = () => {
                       value={utrNumber}
                       onChange={(e) => setUtrNumber(e.target.value)}
                       maxLength={24}
-                      className="w-full bg-card border border-deployBorder rounded-xl px-4 py-2.5 text-xs text-white placeholder-deployText-muted font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                      className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm"
                       required
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-deployText-secondary">
-                      Your Sender UPI ID <span className="text-deployText-muted">(Optional, for cross-matching)</span>
+                    <label className="text-xs font-medium text-slate-700">
+                      Your Sender UPI ID <span className="text-slate-500">(Optional, for cross-matching)</span>
                     </label>
                     <input
                       type="text"
                       placeholder="e.g. yourname@oksbi or 9876543210@paytm"
                       value={senderUpiId}
                       onChange={(e) => setSenderUpiId(e.target.value)}
-                      className="w-full bg-card border border-deployBorder rounded-xl px-4 py-2.5 text-xs text-white placeholder-deployText-muted font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                      className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-sm"
                     />
                   </div>
 
@@ -482,7 +482,7 @@ export const BillingPage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <ShieldCheck className="w-5 h-5 text-accent shrink-0" />
             <span>
-              All transactions are encrypted with 256-bit SSL. Merchant VPA: <code className="text-white font-mono">{OFFICIAL_UPI_ID}</code>.
+              All transactions are encrypted with 256-bit SSL. Merchant VPA: <code className="text-slate-900 font-mono font-semibold">{OFFICIAL_UPI_ID}</code>.
             </span>
           </div>
           <span className="hidden sm:inline font-mono text-[11px] text-emerald-400 font-semibold">

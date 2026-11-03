@@ -578,7 +578,7 @@ export const CPanelPage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Link
               to={`/projects/${id}`}
-              className="p-1.5 rounded-lg bg-surface hover:bg-deployBorder text-deployText-secondary hover:text-white transition-colors"
+              className="p-1.5 rounded-lg bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-300 hover:text-white transition-colors"
               title="Back to Project Overview"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -604,7 +604,7 @@ export const CPanelPage: React.FC = () => {
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                 showPreview
                   ? 'bg-primary text-white border-primary shadow-glow-primary'
-                  : 'bg-surface hover:bg-deployBorder border-deployBorder text-deployText'
+                  : 'bg-[#1e293b] hover:bg-[#334155] border-[#334155] text-slate-200'
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
@@ -642,7 +642,7 @@ export const CPanelPage: React.FC = () => {
 
             <button
               onClick={() => setShowNewFolderModal(true)}
-              className="flex items-center space-x-1.5 bg-surface hover:bg-deployBorder border border-deployBorder text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center space-x-1.5 bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
               <FolderPlus className="w-3.5 h-3.5 text-amber-400" />
               <span>New Folder</span>
@@ -650,7 +650,7 @@ export const CPanelPage: React.FC = () => {
 
             <button
               onClick={() => uploadInputRef.current?.click()}
-              className="flex items-center space-x-1.5 bg-surface hover:bg-deployBorder border border-deployBorder text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center space-x-1.5 bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
               <UploadCloud className="w-3.5 h-3.5 text-accent" />
               <span>Upload Files</span>
@@ -687,7 +687,7 @@ export const CPanelPage: React.FC = () => {
             <button
               onClick={handleCompressFolder}
               disabled={isCompressing}
-              className="flex items-center space-x-1.5 bg-surface hover:bg-deployBorder border border-deployBorder text-amber-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center space-x-1.5 bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-amber-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
               title="Compress this current folder into a downloadable .zip archive"
             >
               {isCompressing ? (
@@ -700,22 +700,22 @@ export const CPanelPage: React.FC = () => {
             {/* Template drop */}
             <div className="relative group inline-block">
               <button
-                className="flex items-center space-x-1.5 bg-surface hover:bg-deployBorder border border-deployBorder text-deployText-secondary hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                className="flex items-center space-x-1.5 bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-200 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Templates</span>
               </button>
-              <div className="absolute left-0 mt-1 w-52 bg-surface border border-deployBorder rounded-xl shadow-2xl p-1.5 hidden group-hover:block z-30">
+              <div className="absolute left-0 mt-1 w-52 bg-[#0f172a] border border-[#1e293b] rounded-xl shadow-2xl p-1.5 hidden group-hover:block z-30">
                 <button
                   onClick={() => handleInitTemplate('STATIC')}
-                  className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-card text-deployText hover:text-white flex items-center space-x-2"
+                  className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-[#1e293b] text-slate-200 hover:text-white flex items-center space-x-2"
                 >
                   <FileCode className="w-3.5 h-3.5 text-blue-400" />
                   <span>Static (HTML, CSS, JS)</span>
                 </button>
                 <button
                   onClick={() => handleInitTemplate('PHP')}
-                  className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-card text-deployText hover:text-white flex items-center space-x-2"
+                  className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-[#1e293b] text-slate-200 hover:text-white flex items-center space-x-2"
                 >
                   <Server className="w-3.5 h-3.5 text-indigo-400" />
                   <span>PHP (PHP, HTML, CSS, JS)</span>
@@ -725,7 +725,7 @@ export const CPanelPage: React.FC = () => {
 
             <button
               onClick={() => fetchFiles(currentDir)}
-              className="p-1.5 rounded-lg bg-surface hover:bg-deployBorder text-deployText-secondary hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Refresh file tree"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoadingFiles ? 'animate-spin' : ''}`} />
@@ -1267,21 +1267,21 @@ export const CPanelPage: React.FC = () => {
                     </button>
                     <button
                       onClick={() => setShowNewFileModal(true)}
-                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-surface hover:bg-deployBorder border border-deployBorder text-xs text-white transition-colors cursor-pointer"
+                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5 text-accent" />
                       <span>Create index.html</span>
                     </button>
                     <button
                       onClick={() => handleInitTemplate('STATIC')}
-                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-surface hover:bg-deployBorder border border-deployBorder text-xs text-white transition-colors cursor-pointer"
+                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 transition-colors cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-blue-400" />
                       <span>Static Starter</span>
                     </button>
                     <button
                       onClick={() => handleInitTemplate('PHP')}
-                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-surface hover:bg-deployBorder border border-deployBorder text-xs text-white transition-colors cursor-pointer"
+                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 transition-colors cursor-pointer"
                     >
                       <Server className="w-3.5 h-3.5 text-indigo-400" />
                       <span>PHP Starter</span>
@@ -1376,7 +1376,7 @@ export const CPanelPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowNewFileModal(false)}
-                  className="px-4 py-2 rounded-xl bg-surface hover:bg-deployBorder text-xs text-deployText"
+                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1429,7 +1429,7 @@ export const CPanelPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowNewFolderModal(false)}
-                  className="px-4 py-2 rounded-xl bg-surface hover:bg-deployBorder text-xs text-deployText"
+                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1481,7 +1481,7 @@ export const CPanelPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setItemToRename(null)}
-                  className="px-4 py-2 rounded-xl bg-surface hover:bg-deployBorder text-xs text-deployText"
+                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1581,7 +1581,7 @@ export const CPanelPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowExtractModal(false)}
-                  className="px-4 py-2 rounded-xl bg-surface hover:bg-deployBorder text-xs text-deployText cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 cursor-pointer"
                 >
                   Cancel
                 </button>
