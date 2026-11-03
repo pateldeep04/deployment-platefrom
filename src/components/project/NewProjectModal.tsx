@@ -252,18 +252,18 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-2xl bg-[#0f172a] border border-slate-700/60 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+      <div className="relative w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-slate-900">
         
         {/* Header - Pinned at top */}
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-800 bg-[#0b1120] shrink-0">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-200 bg-slate-50/80 shrink-0">
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-white">Create New Project</h3>
-            <p className="text-xs text-slate-400">Configure your deployment runtime and source archive</p>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900">Create New Project</h3>
+            <p className="text-xs text-slate-500">Configure your deployment runtime and source archive</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -281,7 +281,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
             {/* Project Name */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Project Name *
               </label>
               <input
@@ -290,19 +290,19 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 onChange={handleNameChange}
                 placeholder="e.g. my-portfolio"
                 required
-                className="w-full bg-[#1e293b] border border-slate-700 focus:border-blue-500 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-400 outline-none transition-colors"
+                className="w-full bg-white border border-slate-300 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 outline-none transition-colors"
               />
             </div>
 
             {/* Domain & Subdomain Configuration */}
-            <div className="p-3.5 rounded-xl bg-[#162032] border border-slate-700/70 space-y-2.5">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-200 flex items-center space-x-1.5">
-                  <Globe className="w-3.5 h-3.5 text-blue-400" />
+                <label className="block text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                  <Globe className="w-3.5 h-3.5 text-blue-600" />
                   <span>1. Select Platform Domain & Subdomain</span>
                 </label>
                 {availableDomains.find(d => d.domain === selectedDomain)?.isSsl && (
-                  <span className="flex items-center space-x-1 text-[10px] font-semibold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  <span className="flex items-center space-x-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                     <ShieldCheck className="w-3 h-3" />
                     <span>Wildcard SSL Active</span>
                   </span>
@@ -312,16 +312,16 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Domain Dropdown */}
                 <div>
-                  <span className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <span className="block text-[11px] font-medium text-slate-600 mb-1">
                     Choose Base Domain
                   </span>
                   <select
                     value={selectedDomain}
                     onChange={(e) => setSelectedDomain(e.target.value)}
-                    className="w-full bg-[#1e293b] border border-slate-700 focus:border-blue-500 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer"
+                    className="w-full bg-white border border-slate-300 focus:border-blue-600 rounded-xl px-3 py-2 text-xs text-slate-900 outline-none cursor-pointer"
                   >
                     {availableDomains.map((d) => (
-                      <option key={d.domain} value={d.domain} className="bg-[#1e293b] text-white">
+                      <option key={d.domain} value={d.domain} className="bg-white text-slate-900">
                         {d.label || d.domain}
                       </option>
                     ))}
@@ -330,19 +330,19 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
                 {/* Subdomain Input */}
                 <div>
-                  <span className="block text-[11px] font-medium text-slate-300 mb-1">
+                  <span className="block text-[11px] font-medium text-slate-600 mb-1">
                     Desired Subdomain
                   </span>
-                  <div className="flex items-center bg-[#1e293b] border border-slate-700 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 rounded-xl px-3 py-2 transition-all">
+                  <div className="flex items-center bg-white border border-slate-300 focus-within:border-blue-600 focus-within:ring-1 focus-within:ring-blue-600 rounded-xl px-3 py-2 transition-all">
                     <input
                       type="text"
                       value={subdomain}
                       onChange={handleSubdomainChange}
                       placeholder="my-subdomain"
                       required
-                      className="flex-1 min-w-0 bg-transparent text-xs text-white font-mono outline-none placeholder-slate-400"
+                      className="flex-1 min-w-0 bg-transparent text-xs text-slate-900 font-mono outline-none placeholder-slate-400"
                     />
-                    <span className="text-xs text-blue-400 font-mono font-medium shrink-0 pl-2 border-l border-slate-700 ml-2 whitespace-nowrap">
+                    <span className="text-xs text-blue-600 font-mono font-medium shrink-0 pl-2 border-l border-slate-200 ml-2 whitespace-nowrap">
                       .{selectedDomain}
                     </span>
                   </div>
@@ -353,38 +353,38 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
               {subdomain && subdomain.length >= 2 && (
                 <div className="pt-0.5">
                   {isCheckingDomain ? (
-                    <div className="flex items-center space-x-2 text-xs text-slate-300 bg-slate-800/80 border border-slate-700 rounded-lg px-2.5 py-1.5">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
-                      <span>Checking availability for <code className="text-blue-300">{subdomain}.{selectedDomain}</code>...</span>
+                    <div className="flex items-center space-x-2 text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                      <span>Checking availability for <code className="text-blue-700">{subdomain}.{selectedDomain}</code>...</span>
                     </div>
                   ) : domainAvailability?.isAvailable ? (
-                    <div className="flex items-center justify-between text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 rounded-lg px-2.5 py-1.5">
+                    <div className="flex items-center justify-between text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5">
                       <div className="flex items-center space-x-2 truncate">
-                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
                         <span className="truncate">
-                          <strong>Available!</strong> Live at: <code className="text-white font-mono">{domainAvailability.checkedFqdn || `${subdomain}.${selectedDomain}`}</code>
+                          <strong>Available!</strong> Live at: <code className="text-slate-900 font-mono font-semibold">{domainAvailability.checkedFqdn || `${subdomain}.${selectedDomain}`}</code>
                         </span>
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded shrink-0 ml-2">Ready</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded shrink-0 ml-2">Ready</span>
                     </div>
                   ) : domainAvailability && !domainAvailability.isAvailable ? (
                     <div className="space-y-2">
-                      <div className="flex items-center space-x-2 text-xs text-amber-300 bg-amber-950/40 border border-amber-500/30 rounded-lg px-2.5 py-1.5">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                      <div className="flex items-center space-x-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
                         <span>
                           <strong>Unavailable:</strong> {domainAvailability.message || 'This subdomain is already taken.'}
                         </span>
                       </div>
                       {domainAvailability.suggestions && domainAvailability.suggestions.length > 0 && (
-                        <div className="p-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-xs space-y-1.5">
-                          <span className="font-semibold text-slate-300 block">Available suggestions (click to use):</span>
+                        <div className="p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-xs space-y-1.5">
+                          <span className="font-semibold text-slate-700 block">Available suggestions (click to use):</span>
                           <div className="flex flex-wrap gap-1.5">
                             {domainAvailability.suggestions.map((sug) => (
                               <button
                                 key={sug}
                                 type="button"
                                 onClick={() => setSubdomain(sug)}
-                                className="px-2 py-0.5 rounded border border-blue-500/40 bg-blue-950/40 hover:bg-blue-900/60 text-blue-300 font-mono text-[11px] font-medium transition-colors cursor-pointer"
+                                className="px-2 py-0.5 rounded border border-blue-200 bg-white hover:bg-blue-50 text-blue-700 font-mono text-[11px] font-medium transition-colors cursor-pointer"
                                 title={`Click to use ${sug}.${selectedDomain}`}
                               >
                                 + {sug}.{selectedDomain}
@@ -401,7 +401,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
             {/* Deployment Type Selector */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Select Deployment Runtime
               </label>
               <div className="grid grid-cols-2 gap-2.5">
@@ -414,15 +414,15 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                       onClick={() => setType(dt.id as any)}
                       className={`p-3 rounded-xl border cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-blue-500 bg-blue-600/15 shadow-glow-primary ring-1 ring-blue-500'
-                          : 'border-slate-700/80 bg-[#162032] hover:border-slate-600 hover:bg-[#1a263c]'
+                          ? 'border-blue-600 bg-blue-50/70 shadow-sm ring-1 ring-blue-600 text-blue-950'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-800'
                       }`}
                     >
                       <div className="flex items-center space-x-2 mb-1">
-                        <Icon className="w-4 h-4 text-blue-400" />
-                        <span className="text-xs font-bold text-white">{dt.title}</span>
+                        <Icon className="w-4 h-4 text-blue-600" />
+                        <span className="text-xs font-bold text-slate-900">{dt.title}</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 leading-tight">{dt.desc}</p>
+                      <p className="text-[11px] text-slate-500 leading-tight">{dt.desc}</p>
                     </div>
                   );
                 })}
@@ -431,7 +431,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
 
             {/* ZIP or Web Files Upload Dropzone */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Project Archive or Web Files (.zip, .html, .css, .js, .php)
               </label>
               <div
@@ -440,8 +440,8 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 onClick={() => fileInputRef.current?.click()}
                 className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-colors ${
                   file
-                    ? 'border-emerald-500/60 bg-emerald-950/20'
-                    : 'border-slate-700 hover:border-blue-500/70 bg-[#162032]/80 hover:bg-[#162032]'
+                    ? 'border-emerald-500 bg-emerald-50/50'
+                    : 'border-slate-300 hover:border-blue-500 bg-slate-50/70 hover:bg-slate-100/60'
                 }`}
               >
                 <input
@@ -453,21 +453,21 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 />
 
                 {file ? (
-                  <div className="flex flex-col items-center space-y-1 text-emerald-400 py-1">
+                  <div className="flex flex-col items-center space-y-1 text-emerald-600 py-1">
                     <CheckCircle2 className="w-6 h-6" />
-                    <span className="text-xs font-semibold text-white">{file.name}</span>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-xs font-semibold text-slate-900">{file.name}</span>
+                    <span className="text-[10px] text-slate-500">
                       {(file.size / (1024 * 1024)).toFixed(2)} MB • Ready to deploy
                     </span>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center space-y-1.5 py-1">
-                    <div className="w-9 h-9 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                    <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
                       <UploadCloud className="w-5 h-5" />
                     </div>
                     <div>
-                      <span className="text-xs font-semibold text-slate-200">Drag & drop your ZIP or web files</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">Supports .zip archives or individual .html, .css, .js, .php files (Max 100 MB)</span>
+                      <span className="text-xs font-semibold text-slate-800">Drag & drop your ZIP or web files</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">Supports .zip archives or individual .html, .css, .js, .php files (Max 100 MB)</span>
                     </div>
                   </div>
                 )}
@@ -477,11 +477,11 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
             {/* Progress bar */}
             {isSubmitting && (
               <div className="space-y-1">
-                <div className="flex justify-between text-xs text-slate-400">
+                <div className="flex justify-between text-xs text-slate-500">
                   <span>Deploying to worker pipeline...</span>
                   <span>{uploadProgress}%</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                   <div
                     className="bg-blue-600 h-full transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
@@ -492,18 +492,18 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
           </div>
 
           {/* Footer Actions - Pinned at bottom */}
-          <div className="px-5 sm:px-6 py-3.5 border-t border-slate-800 bg-[#0b1120] flex items-center justify-end space-x-3 shrink-0">
+          <div className="px-5 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50/80 flex items-center justify-end space-x-3 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 rounded-lg transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-glow-primary transition-all cursor-pointer"
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all cursor-pointer"
             >
               <span>{isSubmitting ? 'Deploying...' : 'Create & Deploy'}</span>
               <ArrowRight className="w-4 h-4" />

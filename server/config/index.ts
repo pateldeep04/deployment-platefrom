@@ -49,8 +49,11 @@ export const config = {
   uploadMaxSizeMb: parseInt(process.env.UPLOAD_MAX_SIZE_MB || '100', 10),
   storageQuotaFreeMb: parseInt(process.env.STORAGE_QUOTA_FREE_MB || '500', 10),
   platformDomain: rawPlatformDomain,
-  razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_deployhub_sandbox_key',
-  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || 'rzp_test_deployhub_sandbox_secret',
+  serverIp: process.env.SERVER_IP || '127.0.0.1',
+
+  // Admin Credentials
+  adminEmail: (process.env.ADMIN_EMAIL || 'admin@pateldeeep.me').toLowerCase().trim(),
+  adminPassword: process.env.ADMIN_PASSWORD || 'AdminDeployHub2026!',
 
   // Namecheap DNS Automation
   namecheapApiUser: process.env.NAMECHEAP_API_USER || '',
@@ -61,24 +64,17 @@ export const config = {
   namecheapSld: process.env.NAMECHEAP_SLD || defaultSld,
   namecheapTld: process.env.NAMECHEAP_TLD || defaultTld,
 
-  // AWS EC2 Fleet Auto-Hosting & Free Tier Scaling
-  awsRegion: process.env.AWS_REGION || 'ap-south-1',
-  awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-  awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  awsEc2InstanceType: process.env.AWS_EC2_INSTANCE_TYPE || 't2.micro', // AWS Free Tier eligible
-  awsEc2AmiId: process.env.AWS_EC2_AMI_ID || 'ami-03f4878e83fed34e0', // Ubuntu 22.04 LTS ap-south-1
-  awsEc2KeyName: process.env.AWS_EC2_KEY_NAME || 'deployhub-key',
-  awsEc2SecurityGroupId: process.env.AWS_EC2_SECURITY_GROUP_ID || 'sg-deployhub-fleet',
-  awsAutoSpinupThresholdPercent: parseInt(process.env.AWS_STORAGE_THRESHOLD_PERCENT || '85', 10),
-  primaryServerIp: process.env.PRIMARY_SERVER_IP || '13.233.142.85',
-
   // Email / SMTP Dispatcher (Gmail, Amazon SES, Brevo, SendGrid, etc.)
   smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
   smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
   smtpSecure: process.env.SMTP_SECURE === 'true',
   smtpUser: process.env.SMTP_USER || '',
   smtpPass: process.env.SMTP_PASS || '',
-  smtpFrom: process.env.SMTP_FROM || (process.env.SMTP_USER ? `"DeployHub Cloud" <${process.env.SMTP_USER}>` : '"DeployHub Cloud" <no-reply@deployhub.com>'),
+  smtpFrom: (process.env.SMTP_FROM && process.env.SMTP_FROM.includes('<'))
+    ? process.env.SMTP_FROM
+    : (process.env.SMTP_USER
+      ? `"${(process.env.SMTP_FROM || 'DeployHub Cloud').replace(/"/g, '')}" <${process.env.SMTP_USER}>`
+      : '"DeployHub Cloud" <no-reply@deployhub.com>'),
 };
 
 export interface ProjectUrlTarget {

@@ -1,7 +1,15 @@
 import mongoose from 'mongoose';
+import dns from 'dns';
 import fs from 'fs';
 import path from 'path';
 import { config } from '../config';
+
+// Ensure public DNS fallback so MongoDB Atlas SRV lookups work reliably on all network configurations
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch {
+  // Ignored in environments where setServers is restricted
+}
 
 // Ensure storage directories exist
 export const ensureStorageDirectories = () => {

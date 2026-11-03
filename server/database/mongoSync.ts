@@ -92,7 +92,33 @@ export async function syncOnStartup(): Promise<void> {
       if (remoteDeployments.length > 0) {
         dbStore.deployments = remoteDeployments;
       }
+
+      // Ensure configured admin user is present and up to date
+      dbStore.seedDefaults();
       dbStore.save();
+
+      // Sync admin users to MongoDB Atlas
+      for (const admin of dbStore.users.filter(u => u.role === 'ADMIN')) {
+        await db.collection('users').updateOne(
+          { email: admin.email.toLowerCase() },
+          { $set: admin },
+          { upsert: true }
+        );
+      }
+
+      // Guarantee database-level compound uniqueness on domain fields
+      try {
+        await db.collection('projects').createIndex(
+          { assignedSubdomain: 1, platformDomain: 1 },
+          { unique: true, sparse: true, name: 'uniq_subdomain_platform' }
+        );
+        await db.collection('projects').createIndex(
+          { customDomain: 1 },
+          { unique: true, sparse: true, name: 'uniq_custom_domain' }
+        );
+      } catch (idxErr: any) {
+        console.log('[DeployHub MongoDB Indexes] Compound domain unique indexes check completed');
+      }
     }
   } catch (err: any) {
     console.warn('[DeployHub MongoDB Sync] Could not sync with MongoDB Atlas:', err.message);

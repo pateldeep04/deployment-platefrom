@@ -31,7 +31,7 @@ class NamecheapService {
     this.inMemoryHosts.set('@', {
       hostName: '@',
       recordType: 'A',
-      address: config.primaryServerIp,
+      address: config.serverIp || '127.0.0.1',
       ttl: 300,
     });
     this.inMemoryHosts.set('www', {
@@ -57,7 +57,7 @@ class NamecheapService {
 
   /**
    * Automatically creates or updates an A or CNAME host record on Namecheap DNS
-   * pointing to the active AWS EC2 worker node IP
+   * pointing to the active platform server host IP
    */
   public async createOrUpdateSubdomainHost(
     subdomain: string,
@@ -135,7 +135,7 @@ class NamecheapService {
       address: targetIp,
       fqdn,
       isLiveApi: false,
-      message: `Subdomain '${fqdn}' automatically mapped to AWS EC2 host ${targetIp} (${this.isConfigured() ? 'live' : 'sandbox/simulated'})`,
+      message: `Subdomain '${fqdn}' automatically mapped to DeployHub Edge host ${targetIp} (${this.isConfigured() ? 'live' : 'sandbox/simulated'})`,
     };
   }
 
@@ -196,7 +196,7 @@ class NamecheapService {
     expectedIp?: string
   ): Promise<{ propagated: boolean; resolvedIps: string[]; expectedIp: string; fqdn: string }> {
     const fqdn = this.getFqdn(subdomain);
-    const target = expectedIp || config.primaryServerIp;
+    const target = expectedIp || config.serverIp || '127.0.0.1';
 
     try {
       const resolved = await dns.promises.resolve4(fqdn);

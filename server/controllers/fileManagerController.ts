@@ -17,7 +17,7 @@ function resolveSafePath(siteDir: string, relativeSubPath: string = ''): string 
   const normalized = path.normalize(cleanRelative).replace(/^(\.\.[/\\])+/, '');
   const target = path.resolve(resolvedBase, normalized);
 
-  if (!target.startsWith(resolvedBase)) {
+  if (target !== resolvedBase && !target.startsWith(resolvedBase + path.sep)) {
     throw new Error('Access denied: Path traversal detected outside site root');
   }
 

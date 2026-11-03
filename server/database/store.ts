@@ -71,14 +71,14 @@ export interface IServerNode {
   name: string;
   publicIp: string;
   privateIp?: string;
-  instanceType: string; // 't2.micro' (AWS Free Tier)
+  instanceType: string;
   region: string;
-  provider: 'AWS_EC2' | 'LOCAL';
+  provider: 'LOCAL' | 'AWS_EC2' | 'CUSTOM';
   status: 'PROVISIONING' | 'RUNNING' | 'STOPPED' | 'DRAINING' | 'TERMINATED';
-  storageTotalBytes: number; // 30 GB AWS Free Tier EBS
+  storageTotalBytes: number;
   storageUsedBytes: number;
   storageUsagePercent: number;
-  maxAllowedStoragePercent: number; // default 85% threshold
+  maxAllowedStoragePercent: number;
   assignedProjectsCount: number;
   isPrimaryNode: boolean;
   isAcceptingTraffic: boolean;
@@ -147,6 +147,15 @@ export interface ITrafficLog {
   statusCode: number;
 }
 
+export interface IPlatformDomainItem {
+  domain: string;
+  label: string;
+  provider: 'SSL' | 'DuckDNS' | 'FreeDNS' | 'Custom';
+  isSsl: boolean;
+  isDefault?: boolean;
+  createdAt?: string;
+}
+
 export interface IPlatformSettings {
   developerPriceINR: number; // default: 30
   proPriceINR: number; // default: 399
@@ -155,6 +164,7 @@ export interface IPlatformSettings {
   adBannerText?: string;
   adBannerLink?: string;
   customAdScript?: string;
+  platformDomains?: IPlatformDomainItem[];
 }
 
 // In-memory + persistent JSON store for high performance and zero-dependency local setup
@@ -177,6 +187,14 @@ class DataStore {
     adBannerText: 'Fast free web hosting with SSL. Upgrade to Developer (₹30/mo) for 100% ad-free sites.',
     adBannerLink: 'https://deployhub.com',
     customAdScript: '',
+    platformDomains: [
+      { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false, isDefault: true },
+      { domain: 'deploye-ai.duckdns.org', label: 'deploye-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
+      { domain: 'ml-ai.duckdns.org', label: 'ml-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
+      { domain: 'ai-ml.mooo.com', label: 'ai-ml.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+      { domain: 'ml-ai.mooo.com', label: 'ml-ai.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+      { domain: 'ai-ml.chickenkiller.com', label: 'ai-ml.chickenkiller.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+    ],
   };
 
   constructor() {
@@ -219,11 +237,11 @@ class DataStore {
         this.serverNodes = data.serverNodes || [];
         const primaryNode = this.serverNodes.find(n => n.isPrimaryNode);
         if (primaryNode) {
-          primaryNode.instanceId = 'i-089bcd5af2cb5b8f3';
-          primaryNode.name = 'deploye test (EC2 Primary Node)';
-          primaryNode.publicIp = config.primaryServerIp;
-          primaryNode.privateIp = '172.31.11.217';
-          primaryNode.region = 'ap-south-1';
+          primaryNode.instanceId = 'local-edge-primary';
+          primaryNode.name = 'DeployHub Edge Server';
+          primaryNode.publicIp = config.serverIp || '127.0.0.1';
+          primaryNode.privateIp = '127.0.0.1';
+          primaryNode.region = 'local';
         }
         this.trafficLogs = (data.trafficLogs || []).filter((l: any) => remainingProjectIds.has(l.projectId));
         this.supportRequests = data.supportRequests || [];
@@ -237,6 +255,16 @@ class DataStore {
           customAdScript: '',
           ...(data.settings || {})
         };
+        if (!this.settings.platformDomains || this.settings.platformDomains.length === 0) {
+          this.settings.platformDomains = [
+            { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false, isDefault: true },
+            { domain: 'deploye-ai.duckdns.org', label: 'deploye-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
+            { domain: 'ml-ai.duckdns.org', label: 'ml-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
+            { domain: 'ai-ml.mooo.com', label: 'ai-ml.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+            { domain: 'ml-ai.mooo.com', label: 'ml-ai.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+            { domain: 'ai-ml.chickenkiller.com', label: 'ai-ml.chickenkiller.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+          ];
+        }
         // Migrate legacy 149 pricing to 30
         if (this.settings.developerPriceINR === 149) {
           this.settings.developerPriceINR = 30;
@@ -271,23 +299,43 @@ class DataStore {
     }
   }
 
-  private seedDefaults() {
-    // Seed Admin user if not present
-    if (!this.users.some(u => u.email === 'admin@deployhub.com')) {
-      const adminPassHash = bcrypt.hashSync('AdminDeployHub2026!', 10);
-      this.users.push({
-        _id: 'usr_admin_001',
-        name: 'DeployHub Admin',
-        email: 'admin@deployhub.com',
-        passwordHash: adminPassHash,
-        role: 'ADMIN',
-        plan: 'PRO',
-        emailVerified: true,
-        storageUsed: 0,
-        bandwidthUsed: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
+  public seedDefaults() {
+    // Seed or synchronize Admin user from environment configuration
+    const configuredAdminEmail = (config.adminEmail || 'admin@pateldeeep.me').toLowerCase().trim();
+    const adminPassHash = bcrypt.hashSync(config.adminPassword || 'AdminDeployHub2026!', 10);
+
+    const recognizedAdminEmails = Array.from(new Set([
+      configuredAdminEmail,
+      'admin@pateldeeep.me',
+      'admin@pateldeep.me',
+      'admin@deployhub.com',
+    ]));
+
+    for (let i = 0; i < recognizedAdminEmails.length; i++) {
+      const email = recognizedAdminEmails[i];
+      const existingUser = this.users.find(u => u.email.toLowerCase() === email);
+      if (existingUser) {
+        existingUser.role = 'ADMIN';
+        existingUser.plan = 'PRO';
+        existingUser.emailVerified = true;
+        existingUser.passwordHash = adminPassHash;
+        existingUser.updatedAt = new Date().toISOString();
+      } else {
+        const adminId = i === 0 ? 'usr_admin_001' : `usr_admin_00${i + 1}`;
+        this.users.unshift({
+          _id: adminId,
+          name: 'DeployHub Admin',
+          email,
+          passwordHash: adminPassHash,
+          role: 'ADMIN',
+          plan: 'PRO',
+          emailVerified: true,
+          storageUsed: 0,
+          bandwidthUsed: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
     }
 
     // Default websites and demo users are not seeded - platform starts in clean production mode
@@ -322,22 +370,22 @@ class DataStore {
       );
     }
 
-    // Seed initial Primary AWS EC2 Free Tier Node if none exist
+    // Seed initial Primary Node if none exist
     if (this.serverNodes.length === 0) {
       this.serverNodes.push({
         _id: 'node_primary_001',
-        instanceId: 'i-089bcd5af2cb5b8f3',
-        name: 'deploye test (EC2 Primary Node)',
-        publicIp: config.primaryServerIp,
-        privateIp: '172.31.11.217',
-        instanceType: config.awsEc2InstanceType,
-        region: 'ap-south-1',
-        provider: 'AWS_EC2',
+        instanceId: 'local-edge-primary',
+        name: 'DeployHub Edge Server',
+        publicIp: config.serverIp || '127.0.0.1',
+        privateIp: '127.0.0.1',
+        instanceType: 'bare-metal',
+        region: 'local',
+        provider: 'LOCAL',
         status: 'RUNNING',
-        storageTotalBytes: 30 * 1024 * 1024 * 1024, // 30 GB AWS Free Tier EBS
-        storageUsedBytes: 4.8 * 1024 * 1024 * 1024,  // Initial system usage
-        storageUsagePercent: 16.0,
-        maxAllowedStoragePercent: config.awsAutoSpinupThresholdPercent, // e.g. 85%
+        storageTotalBytes: 100 * 1024 * 1024 * 1024,
+        storageUsedBytes: 1.2 * 1024 * 1024 * 1024,
+        storageUsagePercent: 1.2,
+        maxAllowedStoragePercent: 90,
         assignedProjectsCount: this.projects.length,
         isPrimaryNode: true,
         isAcceptingTraffic: true,

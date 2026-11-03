@@ -1,6 +1,6 @@
 import { dbStore, IProject } from '../database/store';
 import { namecheapService, IDnsSyncResult } from './namecheapService';
-import { awsFleetService } from './awsFleetService';
+import { domainLockService } from './domainLockService';
 import { config } from '../config';
 
 const RESERVED_SUBDOMAINS = new Set([
@@ -107,6 +107,19 @@ class SubdomainService {
       };
     }
 
+    // Concurrency Lock Guard: Check if an in-flight transaction is actively claiming this subdomain
+    const lockKey = domainLockService.getSubdomainKey(subdomain, baseDomain);
+    if (domainLockService.isLocked(lockKey)) {
+      return {
+        subdomain,
+        baseDomain,
+        fqdn,
+        isAvailable: false,
+        reason: `Subdomain '${subdomain}.${baseDomain}' is currently in the middle of being claimed by another user`,
+        suggestions: this.generateSuggestions(subdomain),
+      };
+    }
+
     // Check existing projects claiming this subdomain under the same base domain
     const existing = dbStore.projects.find(
       (p) => 
@@ -169,67 +182,66 @@ class SubdomainService {
     rawBaseDomain?: string
   ): Promise<ISubdomainAssignmentResult> {
     const subdomain = this.sanitizeSubdomain(rawSubdomain);
-    const project = dbStore.projects.find((p) => p._id === projectId && (p.userId === userId || userId === 'ADMIN'));
+    const baseDomain = (rawBaseDomain || config.platformDomain || 'deployeai.duckdns.org').toLowerCase().trim();
+    const lockKey = domainLockService.getSubdomainKey(subdomain, baseDomain);
 
-    if (!project) {
-      throw new Error('Project not found');
-    }
+    // Guaranteed Concurrency Protection: Acquire atomic lock for this subdomain+baseDomain
+    return await domainLockService.withLock(lockKey, userId, async () => {
+      const project = dbStore.projects.find((p) => p._id === projectId && (p.userId === userId || userId === 'ADMIN'));
 
-    // 1. Verify availability
-    const check = this.checkAvailability(subdomain, projectId, rawBaseDomain);
-    if (!check.isAvailable) {
-      throw new Error(check.reason || `Subdomain '${subdomain}.${check.baseDomain}' is not available`);
-    }
+      if (!project) {
+        throw new Error('Project not found');
+      }
 
-    // 2. Select active AWS EC2 server node (or auto-spin up if storage full)
-    const activeNode = await awsFleetService.getActiveNodeForDeployment();
+      // 1. Double-check availability inside the locked critical section
+      const check = this.checkAvailability(subdomain, projectId, baseDomain);
+      if (!check.isAvailable) {
+        throw new Error(check.reason || `Subdomain '${subdomain}.${check.baseDomain}' is not available`);
+      }
 
-    // 3. Automatically create/update host record in Namecheap DNS
-    const dnsResult = await namecheapService.createOrUpdateSubdomainHost(subdomain, activeNode.publicIp, 'A');
+      // 2. Map DNS host record directly to the active DeployHub platform server host
+      const hostIp = config.serverIp || '127.0.0.1';
+      const dnsResult = await namecheapService.createOrUpdateSubdomainHost(subdomain, hostIp, 'A');
 
-    // 4. Update Project metadata
-    project.assignedSubdomain = subdomain;
-    project.platformDomain = check.baseDomain;
-    project.assignedServerNodeId = activeNode._id;
-    project.namecheapDnsConfigured = dnsResult.success;
-    project.updatedAt = new Date().toISOString();
+      // 3. Update Project metadata
+      project.assignedSubdomain = subdomain;
+      project.platformDomain = check.baseDomain;
+      project.namecheapDnsConfigured = dnsResult.success;
+      project.updatedAt = new Date().toISOString();
 
-    // Update node assigned projects metric
-    activeNode.assignedProjectsCount += 1;
-    activeNode.lastHeartbeatAt = new Date().toISOString();
+      dbStore.auditLogs.push({
+        _id: `audit_${Date.now()}`,
+        userId,
+        action: 'SUBDOMAIN_AUTOMATIC_ASSIGNMENT',
+        ip: '127.0.0.1',
+        details: {
+          projectId: project._id,
+          subdomain,
+          baseDomain: check.baseDomain,
+          fqdn: check.fqdn,
+          targetIp: hostIp,
+          nodeName: 'DeployHub Edge',
+        },
+        createdAt: new Date().toISOString(),
+      });
 
-    dbStore.auditLogs.push({
-      _id: `audit_${Date.now()}`,
-      userId,
-      action: 'SUBDOMAIN_AUTOMATIC_ASSIGNMENT',
-      ip: '127.0.0.1',
-      details: {
-        projectId: project._id,
+      dbStore.save();
+
+      console.log(`[Subdomain Assigned] ${check.fqdn} -> Platform Host ${hostIp}`);
+
+      return {
+        success: true,
         subdomain,
         baseDomain: check.baseDomain,
         fqdn: check.fqdn,
-        targetIp: activeNode.publicIp,
-        nodeName: activeNode.name,
-      },
-      createdAt: new Date().toISOString(),
+        publicIp: hostIp,
+        serverNodeId: 'primary',
+        serverNodeName: 'DeployHub Edge',
+        dnsResult,
+        project,
+        message: `Subdomain '${check.fqdn}' successfully assigned and routed on DeployHub Edge.`,
+      };
     });
-
-    dbStore.save();
-
-    console.log(`[Subdomain Assigned] ${check.fqdn} -> EC2 ${activeNode.publicIp} (${activeNode.name})`);
-
-    return {
-      success: true,
-      subdomain,
-      baseDomain: check.baseDomain,
-      fqdn: check.fqdn,
-      publicIp: activeNode.publicIp,
-      serverNodeId: activeNode._id,
-      serverNodeName: activeNode.name,
-      dnsResult,
-      project,
-      message: `Subdomain '${check.fqdn}' successfully assigned and mapped to AWS EC2 instance ${activeNode.name}`,
-    };
   }
 }
 

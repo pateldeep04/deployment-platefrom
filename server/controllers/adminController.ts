@@ -7,6 +7,8 @@ import { dbStore, IProject, IUser } from '../database/store';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { config, getDeploymentUrl } from '../config';
 import { deploymentEngine } from '../queue/deploymentQueue';
+import { domainLockService } from '../services/domainLockService';
+import { subdomainService } from '../services/subdomainService';
 
 function getDirectorySize(dirPath: string): number {
   let size = 0;
@@ -625,6 +627,405 @@ export const updatePlatformSettings = (req: AuthenticatedRequest, res: Response)
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Failed to update settings' });
+  }
+};
+
+/**
+ * GET /api/v1/admin/domains
+ * Returns list of platform routing domains and all project domain bindings
+ */
+export const getAdminDomains = (req: AuthenticatedRequest, res: Response): void => {
+  const platformDomains = dbStore.settings.platformDomains || [];
+
+  const projectDomains = dbStore.projects.map(p => {
+    const owner = dbStore.users.find(u => u._id === p.userId);
+    const primaryDomain = platformDomains.find(d => d.isDefault)?.domain || config.platformDomain;
+    const baseDomain = p.platformDomain || primaryDomain;
+    const fullSubdomain = p.assignedSubdomain ? `${p.assignedSubdomain}.${baseDomain}` : `${p.slug}.${baseDomain}`;
+
+    return {
+      projectId: p._id,
+      name: p.name,
+      slug: p.slug,
+      status: p.status,
+      ownerEmail: owner?.email || 'Unknown',
+      assignedSubdomain: p.assignedSubdomain || p.slug,
+      platformDomain: baseDomain,
+      fullSubdomainUrl: `http://${fullSubdomain}`,
+      customDomain: p.customDomain || null,
+      customDomainVerified: p.customDomainVerified || false,
+      sslEnabled: p.sslEnabled || false,
+      createdAt: p.createdAt,
+    };
+  });
+
+  res.json({
+    success: true,
+    data: {
+      platformDomains,
+      projectDomains,
+      defaultPlatformDomain: config.platformDomain,
+    },
+  });
+};
+
+/**
+ * POST /api/v1/admin/domains
+ * Add a new platform domain for project subdomains
+ */
+export const addPlatformDomain = (req: AuthenticatedRequest, res: Response): void => {
+  try {
+    const { domain, label, provider, isSsl, isDefault } = req.body;
+    if (!domain || typeof domain !== 'string') {
+      res.status(400).json({ success: false, error: 'Domain name is required' });
+      return;
+    }
+
+    const cleanDomain = domain.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+    if (!cleanDomain || cleanDomain.length < 3 || !cleanDomain.includes('.')) {
+      res.status(400).json({ success: false, error: 'Invalid domain format (e.g. yourdomain.duckdns.org or yourdomain.com)' });
+      return;
+    }
+
+    if (!dbStore.settings.platformDomains) {
+      dbStore.settings.platformDomains = [];
+    }
+
+    if (dbStore.settings.platformDomains.some(d => d.domain.toLowerCase() === cleanDomain)) {
+      res.status(400).json({ success: false, error: `Domain '${cleanDomain}' already exists in platform domains` });
+      return;
+    }
+
+    if (isDefault) {
+      dbStore.settings.platformDomains.forEach(d => { d.isDefault = false; });
+    }
+
+    const newDomainItem = {
+      domain: cleanDomain,
+      label: label && typeof label === 'string' ? label.trim() : `${cleanDomain} (${provider || 'Custom'})`,
+      provider: (provider as any) || 'Custom',
+      isSsl: Boolean(isSsl),
+      isDefault: Boolean(isDefault),
+      createdAt: new Date().toISOString(),
+    };
+
+    dbStore.settings.platformDomains.push(newDomainItem);
+
+    dbStore.auditLogs.push({
+      _id: `aud_${Date.now()}`,
+      userId: req.user!._id,
+      action: `ADMIN_ADD_PLATFORM_DOMAIN: Added '${cleanDomain}'`,
+      ip: req.ip || '127.0.0.1',
+      createdAt: new Date().toISOString(),
+    });
+
+    dbStore.save();
+
+    res.json({
+      success: true,
+      message: `Platform domain '${cleanDomain}' added successfully`,
+      data: {
+        platformDomains: dbStore.settings.platformDomains,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to add platform domain' });
+  }
+};
+
+/**
+ * DELETE /api/v1/admin/domains/:domain
+ * Remove a platform domain from the platform
+ */
+export const removePlatformDomain = (req: AuthenticatedRequest, res: Response): void => {
+  try {
+    const rawDomain = String(req.params.domain || '');
+    const cleanDomain = decodeURIComponent(rawDomain).toLowerCase().trim();
+
+    if (!dbStore.settings.platformDomains) {
+      dbStore.settings.platformDomains = [];
+    }
+
+    const idx = dbStore.settings.platformDomains.findIndex(d => d.domain.toLowerCase() === cleanDomain);
+    if (idx === -1) {
+      res.status(404).json({ success: false, error: `Domain '${cleanDomain}' not found in platform domains` });
+      return;
+    }
+
+    const removed = dbStore.settings.platformDomains.splice(idx, 1)[0];
+
+    if (removed.isDefault && dbStore.settings.platformDomains.length > 0) {
+      dbStore.settings.platformDomains[0].isDefault = true;
+    }
+
+    dbStore.auditLogs.push({
+      _id: `aud_${Date.now()}`,
+      userId: req.user!._id,
+      action: `ADMIN_REMOVE_PLATFORM_DOMAIN: Removed '${cleanDomain}'`,
+      ip: req.ip || '127.0.0.1',
+      createdAt: new Date().toISOString(),
+    });
+
+    dbStore.save();
+
+    res.json({
+      success: true,
+      message: `Platform domain '${cleanDomain}' removed successfully`,
+      data: {
+        platformDomains: dbStore.settings.platformDomains,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to remove platform domain' });
+  }
+};
+
+/**
+ * PATCH /api/v1/admin/domains/:domain/default
+ * Set a platform domain as the primary default
+ */
+export const setDefaultPlatformDomain = (req: AuthenticatedRequest, res: Response): void => {
+  try {
+    const rawDomain = String(req.params.domain || '');
+    const cleanDomain = decodeURIComponent(rawDomain).toLowerCase().trim();
+
+    if (!dbStore.settings.platformDomains) {
+      dbStore.settings.platformDomains = [];
+    }
+
+    const target = dbStore.settings.platformDomains.find(d => d.domain.toLowerCase() === cleanDomain);
+    if (!target) {
+      res.status(404).json({ success: false, error: `Domain '${cleanDomain}' not found` });
+      return;
+    }
+
+    dbStore.settings.platformDomains.forEach(d => {
+      d.isDefault = d.domain.toLowerCase() === cleanDomain;
+    });
+
+    dbStore.auditLogs.push({
+      _id: `aud_${Date.now()}`,
+      userId: req.user!._id,
+      action: `ADMIN_SET_DEFAULT_PLATFORM_DOMAIN: Set '${cleanDomain}' as primary default`,
+      ip: req.ip || '127.0.0.1',
+      createdAt: new Date().toISOString(),
+    });
+
+    dbStore.save();
+
+    res.json({
+      success: true,
+      message: `'${cleanDomain}' is now the primary default platform domain`,
+      data: {
+        platformDomains: dbStore.settings.platformDomains,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to set default platform domain' });
+  }
+};
+
+/**
+ * DELETE /api/v1/admin/domains/projects/:projectId/subdomain
+ * Admin action: Remove assigned subdomain from a project
+ */
+export const adminRemoveProjectSubdomain = (req: AuthenticatedRequest, res: Response): void => {
+  try {
+    const { projectId } = req.params;
+    const project = dbStore.projects.find(p => p._id === projectId);
+    if (!project) {
+      res.status(404).json({ success: false, error: 'Project not found' });
+      return;
+    }
+
+    const oldSubdomain = project.assignedSubdomain;
+    project.assignedSubdomain = undefined;
+    project.updatedAt = new Date().toISOString();
+
+    dbStore.auditLogs.push({
+      _id: `aud_${Date.now()}`,
+      userId: req.user!._id,
+      action: `ADMIN_UNBIND_SUBDOMAIN: Removed subdomain '${oldSubdomain}' from project '${project.name}' (${project._id})`,
+      ip: req.ip || '127.0.0.1',
+      createdAt: new Date().toISOString(),
+    });
+
+    dbStore.save();
+
+    res.json({
+      success: true,
+      message: `Subdomain unlinked from project '${project.name}'`,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to unlink subdomain' });
+  }
+};
+
+/**
+ * DELETE /api/v1/admin/domains/projects/:projectId/custom
+ * Admin action: Remove custom domain from a project
+ */
+export const adminRemoveProjectCustomDomain = (req: AuthenticatedRequest, res: Response): void => {
+  try {
+    const { projectId } = req.params;
+    const project = dbStore.projects.find(p => p._id === projectId);
+    if (!project) {
+      res.status(404).json({ success: false, error: 'Project not found' });
+      return;
+    }
+
+    const oldCustomDomain = project.customDomain;
+    project.customDomain = undefined;
+    project.customDomainVerified = false;
+    project.updatedAt = new Date().toISOString();
+
+    dbStore.auditLogs.push({
+      _id: `aud_${Date.now()}`,
+      userId: req.user!._id,
+      action: `ADMIN_UNBIND_CUSTOM_DOMAIN: Removed domain '${oldCustomDomain}' from project '${project.name}' (${project._id})`,
+      ip: req.ip || '127.0.0.1',
+      createdAt: new Date().toISOString(),
+    });
+
+    dbStore.save();
+
+    res.json({
+      success: true,
+      message: `Custom domain unlinked from project '${project.name}'`,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to unlink custom domain' });
+  }
+};
+
+/**
+ * POST /api/v1/admin/domains/projects/:projectId/subdomain
+ * Admin action: Assign or change a project's subdomain & platform base domain
+ */
+export const adminAssignProjectSubdomain = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { projectId } = req.params;
+    const { subdomain, baseDomain } = req.body;
+
+    if (!subdomain) {
+      res.status(400).json({ success: false, error: 'Subdomain is required' });
+      return;
+    }
+
+    const project = dbStore.projects.find(p => p._id === projectId);
+    if (!project) {
+      res.status(404).json({ success: false, error: 'Project not found' });
+      return;
+    }
+
+    const cleanSub = subdomainService.sanitizeSubdomain(subdomain);
+    const chosenBase = (baseDomain || project.platformDomain || config.platformDomain || 'deployeai.duckdns.org').toLowerCase().trim();
+    const lockKey = domainLockService.getSubdomainKey(cleanSub, chosenBase);
+
+    await domainLockService.withLock(lockKey, req.user!._id, async () => {
+      // Check collision
+      const check = subdomainService.checkAvailability(cleanSub, project._id, chosenBase);
+      if (!check.isAvailable) {
+        throw new Error(check.reason || `Subdomain '${cleanSub}.${chosenBase}' is already in use`);
+      }
+
+      project.assignedSubdomain = cleanSub;
+      project.platformDomain = chosenBase;
+      project.updatedAt = new Date().toISOString();
+
+      dbStore.auditLogs.push({
+        _id: `aud_${Date.now()}`,
+        userId: req.user!._id,
+        action: `ADMIN_ASSIGN_SUBDOMAIN: Set subdomain '${cleanSub}.${chosenBase}' on project '${project.name}' (${project._id})`,
+        ip: req.ip || '127.0.0.1',
+        createdAt: new Date().toISOString(),
+      });
+
+      dbStore.save();
+    });
+
+    res.json({
+      success: true,
+      message: `Assigned subdomain '${cleanSub}.${chosenBase}' to project '${project.name}'`,
+      data: {
+        projectId: project._id,
+        assignedSubdomain: project.assignedSubdomain,
+        platformDomain: project.platformDomain,
+        fqdn: `${cleanSub}.${chosenBase}`,
+      },
+    });
+  } catch (err: any) {
+    const isConflict = err.code === 'CONCURRENT_CLAIM_CONFLICT';
+    res.status(isConflict ? 409 : 400).json({
+      success: false,
+      conflict: isConflict,
+      error: err.message || 'Failed to assign subdomain',
+    });
+  }
+};
+
+/**
+ * POST /api/v1/admin/domains/projects/:projectId/custom
+ * Admin action: Assign and verify a custom domain for any project
+ */
+export const adminAssignProjectCustomDomain = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { projectId } = req.params;
+    const { domain, verified } = req.body;
+
+    if (!domain) {
+      res.status(400).json({ success: false, error: 'Custom domain is required' });
+      return;
+    }
+
+    const project = dbStore.projects.find(p => p._id === projectId);
+    if (!project) {
+      res.status(404).json({ success: false, error: 'Project not found' });
+      return;
+    }
+
+    const cleanDomain = domain.toLowerCase().trim().replace(/^[./]+|[./]+$/g, '');
+    const lockKey = domainLockService.getCustomDomainKey(cleanDomain);
+
+    await domainLockService.withLock(lockKey, req.user!._id, async () => {
+      // Check collision with other projects
+      if (dbStore.projects.some(p => p.customDomain?.toLowerCase() === cleanDomain && p._id !== project._id)) {
+        throw new Error(`Domain '${cleanDomain}' is already bound to another project`);
+      }
+
+      project.customDomain = cleanDomain;
+      project.customDomainVerified = verified !== undefined ? !!verified : true;
+      project.sslEnabled = true;
+      project.updatedAt = new Date().toISOString();
+
+      dbStore.auditLogs.push({
+        _id: `aud_${Date.now()}`,
+        userId: req.user!._id,
+        action: `ADMIN_ASSIGN_CUSTOM_DOMAIN: Set custom domain '${cleanDomain}' on project '${project.name}' (${project._id})`,
+        ip: req.ip || '127.0.0.1',
+        createdAt: new Date().toISOString(),
+      });
+
+      dbStore.save();
+    });
+
+    res.json({
+      success: true,
+      message: `Assigned custom domain '${cleanDomain}' to project '${project.name}'`,
+      data: {
+        projectId: project._id,
+        customDomain: project.customDomain,
+        customDomainVerified: project.customDomainVerified,
+        sslEnabled: project.sslEnabled,
+      },
+    });
+  } catch (err: any) {
+    const isConflict = err.code === 'CONCURRENT_CLAIM_CONFLICT';
+    res.status(isConflict ? 409 : 400).json({
+      success: false,
+      conflict: isConflict,
+      error: err.message || 'Failed to assign custom domain',
+    });
   }
 };
 

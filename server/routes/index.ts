@@ -18,7 +18,6 @@ import * as billingCtrl from '../controllers/billingController';
 import * as adsCtrl from '../controllers/adsController';
 import * as adminCtrl from '../controllers/adminController';
 import * as fileCtrl from '../controllers/fileManagerController';
-import * as fleetCtrl from '../controllers/cloudFleetController';
 import * as supportCtrl from '../controllers/supportController';
 
 const router = Router();
@@ -90,20 +89,10 @@ router.get('/subdomains/check', subdomainCheckLimiter, domainCtrl.checkSubdomain
 router.post('/subdomains/assign', authenticateJwt, subdomainCheckLimiter, domainCtrl.assignSubdomain);
 router.get('/subdomains/verify', subdomainCheckLimiter, domainCtrl.verifySubdomainDns);
 
-// ================= AWS EC2 FLEET & AUTO-SPINUP (SECURED) =================
-router.get('/fleet/nodes', authenticateJwt, fleetCtrl.listFleetNodes);
-router.get('/fleet/nodes/:id', authenticateJwt, fleetCtrl.getNodeDetails);
-router.post('/fleet/spinup', authenticateJwt, requireRole('ADMIN'), fleetCtrl.triggerSpinUpNode);
-router.post('/fleet/check-storage-threshold', authenticateJwt, requireRole('ADMIN'), fleetCtrl.checkStorageThreshold);
-router.post('/fleet/simulate-storage-full', authenticateJwt, requireRole('ADMIN'), fleetCtrl.simulateStorageFull);
-router.get('/fleet/dns-status', authenticateJwt, fleetCtrl.getDnsStatus);
-
 // ================= BILLING & PLANS =================
 router.get('/billing/plans', billingCtrl.getPlans);
 router.get('/billing/upi-details', billingCtrl.getUpiPaymentDetails);
 router.post('/billing/upi-verify', authenticateJwt, billingCtrl.verifyUpiPayment);
-router.post('/billing/checkout', authenticateJwt, billingCtrl.createCheckoutOrder);
-router.post('/billing/verify', authenticateJwt, billingCtrl.verifyPaymentAndUpgrade);
 
 // ================= ADVERTISEMENTS =================
 router.get('/ads', adsCtrl.getAdsByPlacement);
@@ -131,5 +120,15 @@ router.get('/admin/security-logs', authenticateJwt, requireRole('ADMIN'), adminC
 router.delete('/admin/security-logs', authenticateJwt, requireRole('ADMIN'), adminCtrl.clearSecurityLogs);
 router.get('/admin/settings', authenticateJwt, requireRole('ADMIN'), adminCtrl.getPlatformSettings);
 router.patch('/admin/settings', authenticateJwt, requireRole('ADMIN'), adminCtrl.updatePlatformSettings);
+
+// Admin Domain Management
+router.get('/admin/domains', authenticateJwt, requireRole('ADMIN'), adminCtrl.getAdminDomains);
+router.post('/admin/domains', authenticateJwt, requireRole('ADMIN'), adminCtrl.addPlatformDomain);
+router.delete('/admin/domains/:domain', authenticateJwt, requireRole('ADMIN'), adminCtrl.removePlatformDomain);
+router.patch('/admin/domains/:domain/default', authenticateJwt, requireRole('ADMIN'), adminCtrl.setDefaultPlatformDomain);
+router.post('/admin/domains/projects/:projectId/subdomain', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminAssignProjectSubdomain);
+router.delete('/admin/domains/projects/:projectId/subdomain', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminRemoveProjectSubdomain);
+router.post('/admin/domains/projects/:projectId/custom', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminAssignProjectCustomDomain);
+router.delete('/admin/domains/projects/:projectId/custom', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminRemoveProjectCustomDomain);
 
 export default router;

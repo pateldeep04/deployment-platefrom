@@ -19,46 +19,50 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
     return;
   }
 
-  if (!slug) {
-    const recognizedDomains = Array.from(new Set([
-      platformDomain,
-      ...AVAILABLE_PLATFORM_DOMAINS.map(d => d.domain.toLowerCase()),
-    ])).filter(Boolean);
+  // 1. Fast Redis / RAM Cache Lookup by host or explicit slug
+  const cacheKey: string = host || slug;
+  let matchedBaseDomain: string | undefined = undefined;
 
-    for (const domain of recognizedDomains) {
-      if (host.endsWith('.' + domain)) {
-        slug = host.slice(0, -(domain.length + 1));
-        break;
-      }
-    }
-
-    if (!slug) {
-      const parts = host.split('.');
-      if (parts.length > 1 && parts[0] !== 'localhost' && parts[0] !== '127') {
-        slug = parts[0];
-      }
-    }
-  }
-
-  if (!slug && !host) {
-    next();
-    return;
-  }
-
-  // 1. Fast Redis / RAM Cache Lookup
-  const cacheKey: string = slug || host;
-  let targetSlug: string = slug;
-  let cachedRoute = await redisCacheService.getRoute(cacheKey);
-
-  let project = null;
+  let project: any = null;
+  const cachedRoute = await redisCacheService.getRoute(cacheKey);
   if (cachedRoute) {
-    targetSlug = cachedRoute.slug;
-    project = dbStore.projects.find(p => p._id === cachedRoute!.projectId || p.slug === targetSlug);
+    project = dbStore.projects.find(p => p._id === cachedRoute!.projectId);
   }
 
   // 2. Fallback to Store if not in cache
   if (!project) {
-    project = dbStore.projects.find(p => p.slug === slug || p.assignedSubdomain === slug || p.customDomain === host);
+    // Priority A: Exact verified Custom Domain match
+    if (host) {
+      project = dbStore.projects.find(p => p.customDomain && p.customDomain.toLowerCase() === host);
+    }
+
+    // Priority B: Platform domain subdomain match
+    if (!project && host) {
+      const customDomains = (dbStore.settings.platformDomains || []).map(d => d.domain.toLowerCase());
+      const recognizedDomains = Array.from(new Set([
+        platformDomain,
+        ...AVAILABLE_PLATFORM_DOMAINS.map(d => d.domain.toLowerCase()),
+        ...customDomains,
+      ])).filter(Boolean);
+
+      for (const domain of recognizedDomains) {
+        if (host.endsWith('.' + domain)) {
+          const extractedSub = host.slice(0, -(domain.length + 1)).toLowerCase();
+          matchedBaseDomain = domain;
+          project = dbStore.projects.find(p => 
+            (p.assignedSubdomain?.toLowerCase() === extractedSub || p.slug.toLowerCase() === extractedSub) &&
+            (!p.platformDomain || p.platformDomain.toLowerCase() === domain)
+          );
+          if (project) break;
+        }
+      }
+    }
+
+    // Priority C: Direct path routing (/sites/:slug) or localhost testing
+    if (!project && slug) {
+      project = dbStore.projects.find(p => p.slug.toLowerCase() === slug.toLowerCase() || p.assignedSubdomain?.toLowerCase() === slug.toLowerCase());
+    }
+
     if (project) {
       // Populate Redis Cache (TTL: 10 mins)
       await redisCacheService.setRoute(cacheKey, {
@@ -68,7 +72,6 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
         assignedSubdomain: project.assignedSubdomain,
         status: project.status,
       }, 600);
-      targetSlug = project.slug;
     }
   }
 
@@ -204,6 +207,21 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
       subPath = 'index.htm';
     }
     targetPath = path.join(siteDir, subPath);
+  }
+
+  // Security Guard: Prevent Path Traversal Outside Project Site Directory
+  const resolvedSiteDir = path.resolve(siteDir);
+  const resolvedTarget = path.resolve(targetPath);
+  if (resolvedTarget !== resolvedSiteDir && !resolvedTarget.startsWith(resolvedSiteDir + path.sep)) {
+    res.status(403).send(`
+      <!DOCTYPE html>
+      <html><head><title>403 - Forbidden | DeployHub</title></head>
+      <body style="font-family:system-ui;text-align:center;padding:50px;background:#0F172A;color:#F8FAFC;">
+        <h2>403: Forbidden</h2>
+        <p>Access denied: Path traversal detected outside site root.</p>
+      </body></html>
+    `);
+    return;
   }
 
   const filePath = targetPath;

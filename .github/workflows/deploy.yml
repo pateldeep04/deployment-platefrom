@@ -1,4 +1,4 @@
-name: Deploy to AWS EC2
+name: Deploy to Live Server
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Build & Test
+    name: Build & Verify
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -23,35 +23,46 @@ jobs:
       - name: Install Dependencies
         run: npm ci || npm install
 
-      - name: Build Frontend and Backend
+      - name: Build Frontend & Backend
         run: npm run build
 
   deploy:
-    name: Deploy to AWS Live Server
+    name: Deploy to Live Server
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     steps:
-      - name: Deploy to AWS EC2 via SSH
+      - name: Check Deployment Credentials
+        id: check-secrets
+        run: |
+          if [ -z "${{ secrets.EC2_HOST }}" ] || [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ Note: EC2_HOST or EC2_SSH_KEY is not configured in GitHub Secrets. Skipping remote SSH deploy step."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to Server via SSH
+        if: steps.check-secrets.outputs.skip != 'true'
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ${{ secrets.EC2_USER || 'ubuntu' }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT || 22 }}
           script_stop: true
           script: |
-            echo "🚀 Starting automated deployment on AWS EC2..."
+            echo "🚀 Starting automated deployment on live server..."
             
-            # 1. Navigate to deployment directory (default: ~/deployhub)
+            # 1. Navigate to deployment directory (default: ~/deployhub or custom path)
             APP_DIR="${{ secrets.PROJECT_PATH }}"
             if [ -z "$APP_DIR" ]; then
               APP_DIR="$HOME/deployhub"
             fi
             
             if [ ! -d "$APP_DIR" ]; then
-              echo "Error: Directory $APP_DIR does not exist on the server."
-              exit 1
+              echo "Directory $APP_DIR does not exist. Creating it..."
+              mkdir -p "$APP_DIR"
             fi
             
             cd "$APP_DIR"
@@ -59,12 +70,12 @@ jobs:
             # 2. Pull latest code from GitHub
             echo "📥 Pulling latest code from GitHub..."
             git fetch origin
-            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-            git pull origin "$CURRENT_BRANCH"
+            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
+            git pull origin "$CURRENT_BRANCH" || git pull origin main
             
             # 3. Install packages & build
             echo "📦 Installing dependencies & building..."
-            npm install
+            npm ci || npm install
             npm run build
             
             # 4. Restart or reload PM2 process

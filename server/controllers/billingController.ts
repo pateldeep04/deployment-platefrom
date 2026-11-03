@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import crypto from 'crypto';
 import { dbStore } from '../database/store';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { config } from '../config';
 
 export const getDynamicPlans = () => {
   const devPrice = dbStore.settings?.developerPriceINR ?? 30;
@@ -58,69 +56,6 @@ export const PLANS = getDynamicPlans();
 
 export const getPlans = (req: Request, res: Response): void => {
   res.json({ success: true, data: { plans: getDynamicPlans(), settings: dbStore.settings } });
-};
-
-export const createCheckoutOrder = (req: AuthenticatedRequest, res: Response): void => {
-  const { planId } = req.body;
-  const user = req.user!;
-
-  const plans = getDynamicPlans();
-  const targetPlan = plans.find(p => p.id === planId);
-  if (!targetPlan || targetPlan.id === 'FREE') {
-    res.status(400).json({ success: false, error: 'Invalid plan selected for checkout' });
-    return;
-  }
-
-  // Generate simulated Razorpay order ID
-  const orderId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-  
-  res.json({
-    success: true,
-    data: {
-      orderId,
-      amount: targetPlan.priceINR * 100, // in paise
-      currency: 'INR',
-      keyId: config.razorpayKeyId,
-      plan: targetPlan,
-      user: {
-        name: user.name,
-        email: user.email,
-      }
-    }
-  });
-};
-
-export const verifyPaymentAndUpgrade = (req: AuthenticatedRequest, res: Response): void => {
-  const { orderId, paymentId, signature, planId } = req.body;
-  const user = req.user!;
-
-  if (!planId || !['DEVELOPER', 'PRO'].includes(planId)) {
-    res.status(400).json({ success: false, error: 'Invalid plan' });
-    return;
-  }
-
-  // In production, verify HMAC SHA256 signature using razorpayKeySecret:
-  // const expectedSignature = crypto.createHmac('sha256', config.razorpayKeySecret)
-  //   .update(`${orderId}|${paymentId}`).digest('hex');
-
-  user.plan = planId as any;
-  user.updatedAt = new Date().toISOString();
-
-  dbStore.auditLogs.push({
-    _id: `log_${Date.now()}`,
-    userId: user._id,
-    action: 'SUBSCRIPTION_UPGRADE',
-    ip: req.ip || '127.0.0.1',
-    details: { plan: planId, orderId, paymentId },
-    createdAt: new Date().toISOString(),
-  });
-  dbStore.save();
-
-  res.json({
-    success: true,
-    message: `Account successfully upgraded to ${planId}! All features unlocked.`,
-    data: { user: { _id: user._id, plan: user.plan } }
-  });
 };
 
 export const OFFICIAL_UPI_ID = 'pd626784-1@okicici';

@@ -8,23 +8,7 @@ import { AuthenticatedRequest } from '../middleware/auth';
 
 import { subdomainService } from '../services/subdomainService';
 import { domainExpiryService } from '../services/domainExpiryService';
-
-// Concurrency mutex lock to prevent simultaneous race conditions when 2 users claim the same domain at the exact same millisecond
-const activeSubdomainLocks = new Map<string, number>();
-
-function acquireSubdomainLock(subdomainKey: string, ttlMs = 6000): boolean {
-  const now = Date.now();
-  const expiresAt = activeSubdomainLocks.get(subdomainKey);
-  if (expiresAt && expiresAt > now) {
-    return false; // locked by concurrent in-flight request!
-  }
-  activeSubdomainLocks.set(subdomainKey, now + ttlMs);
-  return true;
-}
-
-function releaseSubdomainLock(subdomainKey: string): void {
-  activeSubdomainLocks.delete(subdomainKey);
-}
+import { domainLockService } from '../services/domainLockService';
 
 export const listProjects = (req: AuthenticatedRequest, res: Response): void => {
   const userId = req.user!._id;
@@ -52,7 +36,7 @@ export const getProject = (req: AuthenticatedRequest, res: Response): void => {
   });
 };
 
-export const createProject = (req: AuthenticatedRequest, res: Response): void => {
+export const createProject = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const user = req.user!;
   const parseResult = createProjectSchema.safeParse(req.body);
 
@@ -79,8 +63,9 @@ export const createProject = (req: AuthenticatedRequest, res: Response): void =>
   const platformDomain = (chosenDomain || config.platformDomain || 'deployeai.duckdns.org').toLowerCase();
 
   // 1. Concurrency Mutex Lock: Prevents two simultaneous requests from claiming the same subdomain at the same millisecond
-  const lockKey = `${assignedSubdomain}@${platformDomain}`;
-  if (!acquireSubdomainLock(lockKey, 6000)) {
+  const lockKey = domainLockService.getSubdomainKey(assignedSubdomain, platformDomain);
+  const lockResult = await domainLockService.acquireLock(lockKey, user._id, 8000);
+  if (!lockResult.acquired) {
     const suggestions = subdomainService.generateSuggestions(assignedSubdomain);
     res.status(409).json({
       success: false,
@@ -145,7 +130,7 @@ export const createProject = (req: AuthenticatedRequest, res: Response): void =>
 
     res.status(201).json({ success: true, data: { project: newProject } });
   } finally {
-    releaseSubdomainLock(lockKey);
+    domainLockService.releaseLock(lockKey, lockResult.leaseId);
   }
 };
 

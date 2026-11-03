@@ -5,8 +5,9 @@ import { customDomainSchema } from '../validators';
 import { config, AVAILABLE_PLATFORM_DOMAINS } from '../config';
 import { subdomainService } from '../services/subdomainService';
 import { namecheapService } from '../services/namecheapService';
+import { domainLockService } from '../services/domainLockService';
 
-export const addCustomDomain = (req: AuthenticatedRequest, res: Response): void => {
+export const addCustomDomain = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { projectId } = req.params;
   const user = req.user!;
   const project = dbStore.projects.find(p => p._id === projectId && p.userId === user._id);
@@ -32,30 +33,43 @@ export const addCustomDomain = (req: AuthenticatedRequest, res: Response): void 
   }
 
   const { domain } = parseResult.data;
+  const cleanDomain = domain.toLowerCase().trim();
+  const lockKey = domainLockService.getCustomDomainKey(cleanDomain);
 
-  // Check if domain is already in use by another project
-  if (dbStore.projects.some(p => p.customDomain === domain && p._id !== project._id)) {
-    res.status(400).json({ success: false, error: `Domain '${domain}' is already assigned to another project` });
-    return;
+  try {
+    await domainLockService.withLock(lockKey, user._id, async () => {
+      // Check if domain is already in use by another project
+      if (dbStore.projects.some(p => p.customDomain?.toLowerCase() === cleanDomain && p._id !== project._id)) {
+        throw new Error(`Domain '${cleanDomain}' is already assigned to another project`);
+      }
+
+      project.customDomain = cleanDomain;
+      project.customDomainVerified = false;
+      project.sslEnabled = false;
+      project.updatedAt = new Date().toISOString();
+      dbStore.save();
+    });
+
+    res.json({
+      success: true,
+      data: {
+        customDomain: cleanDomain,
+        cnameRecord: {
+          type: 'CNAME',
+          name: cleanDomain.startsWith('www.') ? 'www' : '@',
+          value: `cname.${config.platformDomain}`,
+        },
+        status: 'PENDING_VERIFICATION',
+      }
+    });
+  } catch (err: any) {
+    const isConflict = err.code === 'CONCURRENT_CLAIM_CONFLICT';
+    res.status(isConflict ? 409 : 400).json({
+      success: false,
+      conflict: isConflict,
+      error: err.message || `Failed to assign custom domain '${cleanDomain}'`,
+    });
   }
-
-  project.customDomain = domain;
-  project.customDomainVerified = false;
-  project.sslEnabled = false;
-  dbStore.save();
-
-  res.json({
-    success: true,
-    data: {
-      customDomain: domain,
-      cnameRecord: {
-        type: 'CNAME',
-        name: domain.startsWith('www.') ? 'www' : '@',
-        value: `cname.${config.platformDomain}`,
-      },
-      status: 'PENDING_VERIFICATION',
-    }
-  });
 };
 
 export const verifyCustomDomain = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -107,10 +121,14 @@ export const removeCustomDomain = (req: AuthenticatedRequest, res: Response): vo
  * Returns the list of free platform domains that users can choose from.
  */
 export const getAvailableDomains = (req: Request, res: Response): void => {
+  const domains = (dbStore.settings.platformDomains && dbStore.settings.platformDomains.length > 0)
+    ? dbStore.settings.platformDomains
+    : AVAILABLE_PLATFORM_DOMAINS;
+
   res.json({
     success: true,
     data: {
-      domains: AVAILABLE_PLATFORM_DOMAINS,
+      domains,
     },
   });
 };
@@ -171,7 +189,14 @@ export const assignSubdomain = async (req: AuthenticatedRequest, res: Response):
       },
     });
   } catch (err: any) {
-    res.status(400).json({ success: false, error: err.message || 'Failed to assign subdomain' });
+    const isConflict = err.code === 'CONCURRENT_CLAIM_CONFLICT';
+    const suggestions = subdomainService.generateSuggestions(req.body.subdomain || 'app');
+    res.status(isConflict ? 409 : 400).json({
+      success: false,
+      conflict: isConflict,
+      error: err.message || 'Failed to assign subdomain',
+      suggestions,
+    });
   }
 };
 

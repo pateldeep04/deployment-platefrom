@@ -9,7 +9,6 @@ import { connectDatabase, ensureStorageDirectories } from './database';
 import apiRouter from './routes';
 import { handleSiteRequest } from './router/edgeProxy';
 import { dbStore } from './database/store';
-import { awsFleetService } from './services/awsFleetService';
 import { domainExpiryService } from './services/domainExpiryService';
 
 const app = express();
@@ -24,9 +23,11 @@ app.use((req, res, next) => {
   if (isApi) return next();
 
   const platformDomain = (config.platformDomain || 'deployeai.duckdns.org').toLowerCase();
+  const customDomains = (dbStore.settings.platformDomains || []).map(d => d.domain.toLowerCase());
   const recognizedDomains = Array.from(new Set([
     platformDomain,
     ...AVAILABLE_PLATFORM_DOMAINS.map(d => d.domain.toLowerCase()),
+    ...customDomains,
   ])).filter(Boolean);
 
   // pateldeeep.me is the main platform website only (NOT for project subdomains)
@@ -230,21 +231,12 @@ const startServer = async () => {
   📍 Port: ${config.port}
   🌐 API Root: http://localhost:${config.port}/api/v1
   🔗 Edge Sites Router: http://localhost:${config.port}/sites/:slug/
-  ☁️  AWS EC2 Fleet: Free Tier (t2.micro) Auto-Spinup Ready
+  ☁️  DeployHub Engine: Standalone Edge Active
   🏷️  Namecheap DNS: ${config.namecheapSld}.${config.namecheapTld}
   🛡️  Security: Rate Limiter + Sandbox Guards + JWT Auth
 ======================================================
     `);
   });
-
-  // Background monitor: Periodically checks storage on active nodes and auto-spins up new AWS Free Tier instances if >= threshold
-  setInterval(async () => {
-    try {
-      await awsFleetService.checkNodeStorageThreshold();
-    } catch (err) {
-      console.error('[AWS Fleet Watcher] Storage check error:', err);
-    }
-  }, 5 * 60 * 1000); // Check every 5 minutes
 
   // Background Domain Expiry Monitor: Scans all projects, sends 1-month warning emails, and sends deactivation notices upon 3-month expiry
   try {

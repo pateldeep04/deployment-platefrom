@@ -553,7 +553,7 @@ export const CPanelPage: React.FC = () => {
   const liveUrl = project ? getLiveProjectUrl(project) : '';
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-deployText flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-800 flex flex-col font-sans">
       <Navbar />
 
       {/* Toast Notification */}
@@ -571,26 +571,26 @@ export const CPanelPage: React.FC = () => {
       )}
 
       {/* cPanel Top Control Bar */}
-      <div className="bg-[#0b1120] border-b border-[#1e293b] px-4 sm:px-6 py-3">
+      <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 shadow-sm">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
           
           {/* Breadcrumb & Project Identity */}
           <div className="flex items-center space-x-3">
             <Link
               to={`/projects/${id}`}
-              className="p-1.5 rounded-lg bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-300 hover:text-white transition-colors"
+              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
               title="Back to Project Overview"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
 
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/30 text-indigo-400">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700">
                 cPanel
               </span>
-              <h1 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center space-x-2">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight flex items-center space-x-2">
                 <span>{project?.name || 'Project'}</span>
-                <span className="text-xs font-normal text-deployText-secondary font-mono">
+                <span className="text-xs font-normal text-slate-500 font-mono">
                   ({project?.slug}.{PLATFORM_DOMAIN})
                 </span>
               </h1>
@@ -603,8 +603,8 @@ export const CPanelPage: React.FC = () => {
               onClick={() => setShowPreview(!showPreview)}
               className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                 showPreview
-                  ? 'bg-primary text-white border-primary shadow-glow-primary'
-                  : 'bg-[#1e293b] hover:bg-[#334155] border-[#334155] text-slate-200'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                  : 'bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700'
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
@@ -616,7 +616,7 @@ export const CPanelPage: React.FC = () => {
                 href={liveUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center space-x-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-400 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                className="flex items-center space-x-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
               >
                 <span>Visit Site</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -627,14 +627,14 @@ export const CPanelPage: React.FC = () => {
       </div>
 
       {/* cPanel Main Toolbar */}
-      <div className="bg-[#0e1626] border-b border-[#1e293b] px-4 sm:px-6 py-2.5">
+      <div className="bg-slate-50 border-b border-slate-200 px-4 sm:px-6 py-2.5">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
           
           {/* Action buttons */}
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setShowNewFileModal(true)}
-              className="flex items-center space-x-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-colors cursor-pointer"
+              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>New File</span>
@@ -642,17 +642,17 @@ export const CPanelPage: React.FC = () => {
 
             <button
               onClick={() => setShowNewFolderModal(true)}
-              className="flex items-center space-x-1.5 bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center space-x-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-sm"
             >
-              <FolderPlus className="w-3.5 h-3.5 text-amber-400" />
+              <FolderPlus className="w-3.5 h-3.5 text-amber-500" />
               <span>New Folder</span>
             </button>
 
             <button
               onClick={() => uploadInputRef.current?.click()}
-              className="flex items-center space-x-1.5 bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              className="flex items-center space-x-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-sm"
             >
-              <UploadCloud className="w-3.5 h-3.5 text-accent" />
+              <UploadCloud className="w-3.5 h-3.5 text-blue-600" />
               <span>Upload Files</span>
             </button>
             <input
@@ -666,13 +666,13 @@ export const CPanelPage: React.FC = () => {
             <button
               onClick={() => uploadArchiveInputRef.current?.click()}
               disabled={isUploadingArchive}
-              className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 border border-amber-500/40 text-amber-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-sm disabled:opacity-50"
+              className="flex items-center space-x-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-sm disabled:opacity-50"
               title="Upload and automatically extract .zip or .rar archive into this folder"
             >
               {isUploadingArchive ? (
-                <RefreshCw className="w-3.5 h-3.5 text-amber-300 animate-spin" />
+                <RefreshCw className="w-3.5 h-3.5 text-amber-600 animate-spin" />
               ) : (
-                <FolderDown className="w-3.5 h-3.5 text-amber-400" />
+                <FolderDown className="w-3.5 h-3.5 text-amber-600" />
               )}
               <span>{isUploadingArchive ? 'Unpacking Code...' : 'Upload & Extract (ZIP/RAR)'}</span>
             </button>
@@ -687,37 +687,37 @@ export const CPanelPage: React.FC = () => {
             <button
               onClick={handleCompressFolder}
               disabled={isCompressing}
-              className="flex items-center space-x-1.5 bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-amber-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center space-x-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
               title="Compress this current folder into a downloadable .zip archive"
             >
               {isCompressing ? (
-                <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-500" />
               ) : (
-                <Archive className="w-3.5 h-3.5 text-amber-400" />
+                <Archive className="w-3.5 h-3.5 text-amber-500" />
               )}
               <span>{isCompressing ? 'Compressing...' : 'Compress (ZIP)'}</span>
             </button>
             {/* Template drop */}
             <div className="relative group inline-block">
               <button
-                className="flex items-center space-x-1.5 bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-200 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                className="flex items-center space-x-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-sm"
               >
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                 <span>Templates</span>
               </button>
-              <div className="absolute left-0 mt-1 w-52 bg-[#0f172a] border border-[#1e293b] rounded-xl shadow-2xl p-1.5 hidden group-hover:block z-30">
+              <div className="absolute left-0 mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-xl p-1.5 hidden group-hover:block z-30">
                 <button
                   onClick={() => handleInitTemplate('STATIC')}
-                  className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-[#1e293b] text-slate-200 hover:text-white flex items-center space-x-2"
+                  className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-100 text-slate-700 flex items-center space-x-2"
                 >
-                  <FileCode className="w-3.5 h-3.5 text-blue-400" />
+                  <FileCode className="w-3.5 h-3.5 text-blue-600" />
                   <span>Static (HTML, CSS, JS)</span>
                 </button>
                 <button
                   onClick={() => handleInitTemplate('PHP')}
-                  className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-[#1e293b] text-slate-200 hover:text-white flex items-center space-x-2"
+                  className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-100 text-slate-700 flex items-center space-x-2"
                 >
-                  <Server className="w-3.5 h-3.5 text-indigo-400" />
+                  <Server className="w-3.5 h-3.5 text-indigo-600" />
                   <span>PHP (PHP, HTML, CSS, JS)</span>
                 </button>
               </div>
@@ -725,7 +725,7 @@ export const CPanelPage: React.FC = () => {
 
             <button
               onClick={() => fetchFiles(currentDir)}
-              className="p-1.5 rounded-lg bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 transition-colors cursor-pointer shadow-sm"
               title="Refresh file tree"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoadingFiles ? 'animate-spin' : ''}`} />
@@ -733,10 +733,10 @@ export const CPanelPage: React.FC = () => {
           </div>
 
           {/* Current Path Navigation */}
-          <div className="flex items-center space-x-1 text-xs text-deployText-secondary font-mono bg-[#070b14] px-2.5 py-1 rounded-md border border-[#1e293b]">
+          <div className="flex items-center space-x-1 text-xs text-slate-600 font-mono bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-sm">
             <button
               onClick={() => { setCurrentDir(''); fetchFiles(''); }}
-              className="hover:text-accent text-deployText font-semibold cursor-pointer"
+              className="hover:text-blue-600 text-slate-800 font-semibold cursor-pointer"
             >
               root
             </button>
@@ -745,10 +745,10 @@ export const CPanelPage: React.FC = () => {
                 const segPath = arr.slice(0, idx + 1).join('/');
                 return (
                   <React.Fragment key={segPath}>
-                    <ChevronRight className="w-3 h-3 text-deployText-secondary" />
+                    <ChevronRight className="w-3 h-3 text-slate-400" />
                     <button
                       onClick={() => { setCurrentDir(segPath); fetchFiles(segPath); }}
-                      className="hover:text-accent text-deployText cursor-pointer"
+                      className="hover:text-blue-600 text-slate-800 cursor-pointer"
                     >
                       {seg}
                     </button>
@@ -767,30 +767,30 @@ export const CPanelPage: React.FC = () => {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          className={`w-full md:w-80 shrink-0 bg-[#0c1322] border rounded-2xl flex flex-col overflow-hidden transition-all ${
-            isDraggingOver ? 'border-primary ring-2 ring-primary/40 bg-primary/5' : 'border-[#1e293b]'
+          className={`w-full md:w-80 shrink-0 bg-white border rounded-2xl flex flex-col overflow-hidden transition-all shadow-sm ${
+            isDraggingOver ? 'border-blue-600 ring-2 ring-blue-500/20 bg-blue-50/20' : 'border-slate-200'
           }`}
         >
           {/* File explorer header */}
-          <div className="px-4 py-3 border-b border-[#1e293b] flex items-center justify-between bg-[#0e1626]/70">
-            <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center space-x-2">
-              <Folder className="w-3.5 h-3.5 text-accent" />
+          <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+            <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center space-x-2">
+              <Folder className="w-3.5 h-3.5 text-blue-600" />
               <span>File Explorer</span>
             </span>
-            <span className="text-[11px] font-mono text-deployText-secondary">
+            <span className="text-[11px] font-mono text-slate-500">
               {files.length} items
             </span>
           </div>
 
           {/* Drag & Drop Alert */}
           {isDraggingOver && (
-            <div className="p-3 m-2 rounded-xl bg-primary/20 border border-primary/40 text-center text-xs text-primary font-semibold">
+            <div className="p-3 m-2 rounded-xl bg-blue-50 border border-blue-200 text-center text-xs text-blue-700 font-semibold">
               Drop files here to upload into {currentDir || 'root'}
             </div>
           )}
 
           {/* Files List */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-1 divide-y divide-[#1e293b]/20">
+          <div className="flex-1 overflow-y-auto p-2 space-y-1 divide-y divide-slate-100">
             {currentDir && (
               <button
                 onClick={() => {
@@ -798,27 +798,27 @@ export const CPanelPage: React.FC = () => {
                   setCurrentDir(parent);
                   fetchFiles(parent);
                 }}
-                className="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center space-x-2 hover:bg-[#152033] text-deployText-secondary hover:text-white transition-colors cursor-pointer"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center space-x-2 hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
               >
-                <Folder className="w-4 h-4 text-amber-400/80" />
+                <Folder className="w-4 h-4 text-amber-500" />
                 <span className="font-semibold">.. (Parent Directory)</span>
               </button>
             )}
 
             {files.length === 0 && !isLoadingFiles && (
               <div className="text-center py-10 px-4">
-                <FileCode className="w-10 h-10 text-deployText-secondary/40 mx-auto mb-2" />
-                <p className="text-xs text-deployText-secondary">No files in this folder.</p>
+                <FileCode className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs text-slate-500">No files in this folder.</p>
                 <div className="mt-3 flex flex-col gap-1.5">
                   <button
                     onClick={() => handleInitTemplate('STATIC')}
-                    className="text-xs text-primary hover:underline font-semibold"
+                    className="text-xs text-blue-600 hover:underline font-semibold cursor-pointer"
                   >
                     + Initialize Static Starter (HTML/CSS/JS)
                   </button>
                   <button
                     onClick={() => handleInitTemplate('PHP')}
-                    className="text-xs text-indigo-400 hover:underline font-semibold"
+                    className="text-xs text-indigo-600 hover:underline font-semibold cursor-pointer"
                   >
                     + Initialize PHP Starter
                   </button>
@@ -834,8 +834,8 @@ export const CPanelPage: React.FC = () => {
                   onClick={() => openFile(file)}
                   className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-primary/20 border border-primary/40 text-white font-semibold'
-                      : 'hover:bg-[#152033] text-deployText hover:text-white'
+                      ? 'bg-blue-50 border border-blue-200 text-blue-900 font-semibold shadow-xs'
+                      : 'hover:bg-slate-50 text-slate-700 hover:text-slate-900'
                   }`}
                 >
                   <div className="flex items-center space-x-2.5 truncate pr-2">
@@ -851,7 +851,7 @@ export const CPanelPage: React.FC = () => {
                           e.stopPropagation();
                           openExtractModal(file);
                         }}
-                        className="p-1 hover:text-amber-300 rounded text-amber-400"
+                        className="p-1 hover:text-amber-600 rounded text-amber-500 cursor-pointer"
                         title={`Extract ${file.extension.toUpperCase()} code into project`}
                       >
                         <FolderDown className="w-3.5 h-3.5" />
@@ -863,7 +863,7 @@ export const CPanelPage: React.FC = () => {
                         setItemToRename(file);
                         setRenameNewName(file.name);
                       }}
-                      className="p-1 hover:text-accent rounded text-deployText-secondary"
+                      className="p-1 hover:text-blue-600 rounded text-slate-400 hover:text-slate-700 cursor-pointer"
                       title="Rename"
                     >
                       <Edit3 className="w-3 h-3" />
@@ -873,7 +873,7 @@ export const CPanelPage: React.FC = () => {
                         e.stopPropagation();
                         handleDeleteItem(file);
                       }}
-                      className="p-1 hover:text-rose-400 rounded text-deployText-secondary"
+                      className="p-1 hover:text-rose-600 rounded text-slate-400 hover:text-rose-600 cursor-pointer"
                       title="Delete"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -885,42 +885,42 @@ export const CPanelPage: React.FC = () => {
           </div>
 
           {/* Quick upload drop hint */}
-          <div className="p-3 border-t border-[#1e293b] bg-[#0e1626]/40 text-center">
-            <p className="text-[11px] text-deployText-secondary">
-              Drag & drop <strong className="text-deployText">.html, .css, .js, .php</strong> directly here
+          <div className="p-3 border-t border-slate-100 bg-slate-50/70 text-center">
+            <p className="text-[11px] text-slate-500">
+              Drag & drop <strong className="text-slate-800">.html, .css, .js, .php</strong> directly here
             </p>
           </div>
         </div>
 
         {/* RIGHT COLUMN: Code Editor & Live Preview */}
-        <div className="flex-1 flex flex-col bg-[#0c1322] border border-[#1e293b] rounded-2xl overflow-hidden min-h-[500px]">
+        <div className="flex-1 flex flex-col bg-white border border-slate-200 rounded-2xl overflow-hidden min-h-[500px] shadow-sm">
           
           {/* Editor Header */}
-          <div className="px-4 py-2.5 border-b border-[#1e293b] flex items-center justify-between bg-[#0e1626]/80">
+          <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
             <div className="flex items-center space-x-2 truncate">
               {selectedFile ? (
                 <>
                   {selectedFile.isArchive ? (
                     <FolderDown className="w-4 h-4 text-amber-400 shrink-0" />
                   ) : (
-                    <Code2 className="w-4 h-4 text-accent shrink-0" />
+                    <Code2 className="w-4 h-4 text-blue-600 shrink-0" />
                   )}
-                  <span className="text-xs font-mono font-bold text-white truncate">
+                  <span className="text-xs font-mono font-bold text-slate-900 truncate">
                     {selectedFile.path}
                   </span>
                   {selectedFile.isArchive && (
-                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 uppercase">
                       {selectedFile.extension.toUpperCase()} Archive
                     </span>
                   )}
                   {!selectedFile.isArchive && hasUnsavedChanges && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
                       Unsaved *
                     </span>
                   )}
                 </>
               ) : (
-                <span className="text-xs font-semibold text-deployText-secondary">
+                <span className="text-xs font-semibold text-slate-500">
                   No file selected
                 </span>
               )}
@@ -932,7 +932,7 @@ export const CPanelPage: React.FC = () => {
                   <button
                     onClick={() => handleExtractArchive(selectedFile)}
                     disabled={isExtracting}
-                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-sm transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isExtracting ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -947,8 +947,8 @@ export const CPanelPage: React.FC = () => {
                     disabled={isSaving || !hasUnsavedChanges}
                     className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                       hasUnsavedChanges
-                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-glow-primary'
-                        : 'bg-surface text-deployText-secondary opacity-60 cursor-not-allowed'
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-400 opacity-60 cursor-not-allowed'
                     }`}
                     title="Ctrl + S to Save"
                   >
@@ -959,7 +959,7 @@ export const CPanelPage: React.FC = () => {
 
                 <button
                   onClick={() => setSelectedFile(null)}
-                  className="p-1 hover:text-white text-deployText-secondary rounded cursor-pointer"
+                  className="p-1 hover:text-slate-800 text-slate-400 rounded cursor-pointer"
                   title="Close panel"
                 >
                   <X className="w-4 h-4" />
@@ -972,23 +972,21 @@ export const CPanelPage: React.FC = () => {
           <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
             
             {/* Editor or Archive Station */}
-            <div className={`flex-1 flex flex-col overflow-hidden ${showPreview ? 'lg:border-r border-[#1e293b]' : ''}`}>
+            <div className={`flex-1 flex flex-col overflow-hidden ${showPreview ? 'lg:border-r border-slate-200' : ''}`}>
               {selectedFile ? (
                 selectedFile.isArchive ? (
                   /* Archive Extractor Control Station */
-                  <div className="flex-1 flex flex-col p-6 sm:p-8 bg-[#070b14] overflow-y-auto">
+                  <div className="flex-1 flex flex-col p-6 sm:p-8 bg-slate-50 overflow-y-auto">
                     <div className="max-w-2xl mx-auto w-full space-y-6">
                       
                       {/* Archive Hero Card */}
-                      <div className="bg-[#0e1626] border border-[#1e293b] rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-                        
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-[#1e293b]">
+                      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
                           <div className="flex items-center space-x-4">
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-lg ${
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-sm ${
                               selectedFile.extension.toLowerCase() === 'rar'
-                                ? 'bg-purple-950/60 border-purple-500/40 text-purple-400'
-                                : 'bg-amber-950/60 border-amber-500/40 text-amber-400'
+                                ? 'bg-purple-50 border-purple-200 text-purple-600'
+                                : 'bg-amber-50 border-amber-200 text-amber-600'
                             }`}>
                               {selectedFile.extension.toLowerCase() === 'rar' ? (
                                 <Archive className="w-7 h-7" />
@@ -998,17 +996,17 @@ export const CPanelPage: React.FC = () => {
                             </div>
                             <div>
                               <div className="flex items-center space-x-2">
-                                <h2 className="text-lg font-bold text-white font-mono">{selectedFile.name}</h2>
+                                <h2 className="text-lg font-bold text-slate-900 font-mono">{selectedFile.name}</h2>
                                 <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase border font-sans ${
                                   selectedFile.extension.toLowerCase() === 'rar'
-                                    ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                                    : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                    : 'bg-amber-50 text-amber-700 border-amber-200'
                                 }`}>
                                   {selectedFile.extension.toUpperCase()} ARCHIVE
                                 </span>
                               </div>
-                              <p className="text-xs text-deployText-secondary mt-1">
-                                File Size: <strong className="text-white">{(selectedFile.size / 1024).toFixed(1)} KB</strong> &bull; Modified: {new Date(selectedFile.modifiedAt).toLocaleString()}
+                              <p className="text-xs text-slate-500 mt-1">
+                                File Size: <strong className="text-slate-800">{(selectedFile.size / 1024).toFixed(1)} KB</strong> &bull; Modified: {new Date(selectedFile.modifiedAt).toLocaleString()}
                               </p>
                             </div>
                           </div>
@@ -1017,7 +1015,7 @@ export const CPanelPage: React.FC = () => {
                         {/* Extraction Configuration */}
                         <div className="pt-6 space-y-4">
                           <div>
-                            <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
+                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                               Extract Code to Destination Directory
                             </label>
                             <div className="flex items-center space-x-2">
@@ -1026,22 +1024,22 @@ export const CPanelPage: React.FC = () => {
                                 value={extractTargetDir}
                                 onChange={(e) => setExtractTargetDir(e.target.value)}
                                 placeholder="e.g. / or css or subfolder (leave empty for current folder)"
-                                className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#070b14] border border-[#1e293b] text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                                className="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 text-xs font-mono focus:outline-none focus:border-amber-500"
                               />
                               <button
                                 type="button"
                                 onClick={() => setExtractTargetDir('')}
                                 className={`px-3 py-2.5 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
                                   extractTargetDir === ''
-                                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                                    : 'bg-surface hover:bg-deployBorder text-deployText-secondary border-deployBorder'
+                                    ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                    : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
                                 }`}
                               >
                                 Root (/)
                               </button>
                             </div>
-                            <p className="text-[11px] text-deployText-secondary mt-1">
-                              Destination: <code className="text-amber-300">/sites/{project?.slug}/{extractTargetDir ? `${extractTargetDir}/` : ''}</code>
+                            <p className="text-[11px] text-slate-500 mt-1">
+                              Destination: <code className="text-amber-700 font-semibold">/sites/{project?.slug}/{extractTargetDir ? `${extractTargetDir}/` : ''}</code>
                             </p>
                           </div>
 
@@ -1052,11 +1050,11 @@ export const CPanelPage: React.FC = () => {
                                 type="checkbox"
                                 checked={autoPromoteArchive}
                                 onChange={(e) => setAutoPromoteArchive(e.target.checked)}
-                                className="mt-0.5 rounded border-deployBorder bg-[#070b14] text-amber-500 focus:ring-amber-400"
+                                className="mt-0.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                               />
                               <div>
-                                <span className="text-xs font-semibold text-white">Auto-flatten single wrapper directory</span>
-                                <p className="text-[11px] text-deployText-secondary">
+                                <span className="text-xs font-semibold text-slate-800">Auto-flatten single wrapper directory</span>
+                                <p className="text-[11px] text-slate-500">
                                   If the archive has a single parent directory (e.g. <code>my-site/index.html</code>), its contents will automatically be promoted to the target folder so <code>index.html</code> is immediately served.
                                 </p>
                               </div>
@@ -1067,11 +1065,11 @@ export const CPanelPage: React.FC = () => {
                                 type="checkbox"
                                 checked={deleteArchiveAfter}
                                 onChange={(e) => setDeleteArchiveAfter(e.target.checked)}
-                                className="mt-0.5 rounded border-deployBorder bg-[#070b14] text-amber-500 focus:ring-amber-400"
+                                className="mt-0.5 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                               />
                               <div>
-                                <span className="text-xs font-semibold text-white">Delete archive file after successful extraction</span>
-                                <p className="text-[11px] text-deployText-secondary">
+                                <span className="text-xs font-semibold text-slate-800">Delete archive file after successful extraction</span>
+                                <p className="text-[11px] text-slate-500">
                                   Removes this <code>.{selectedFile.extension}</code> archive after unpacking to free up storage space.
                                 </p>
                               </div>
@@ -1083,7 +1081,7 @@ export const CPanelPage: React.FC = () => {
                             <button
                               onClick={() => handleExtractArchive(selectedFile)}
                               disabled={isExtracting}
-                              className="w-full sm:w-auto flex-1 flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
+                              className="w-full sm:w-auto flex-1 flex items-center justify-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-sm transition-all cursor-pointer disabled:opacity-50"
                             >
                               {isExtracting ? (
                                 <>
@@ -1101,14 +1099,14 @@ export const CPanelPage: React.FC = () => {
 
                           {/* Extracted Result Feedback */}
                           {extractedStats && (
-                            <div className="mt-4 p-4 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-200 flex items-center justify-between animate-in fade-in">
+                            <div className="mt-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between animate-in fade-in">
                               <div className="flex items-center space-x-3">
-                                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                                 <div>
-                                  <p className="text-xs font-bold text-white">
+                                  <p className="text-xs font-bold text-slate-900">
                                     Successfully extracted {extractedStats.count} files!
                                   </p>
-                                  <p className="text-[11px] text-emerald-300/80">
+                                  <p className="text-[11px] text-emerald-700">
                                     Your website code is deployed and ready on edge runtime.
                                   </p>
                                 </div>
@@ -1118,7 +1116,7 @@ export const CPanelPage: React.FC = () => {
                                   setShowPreview(true);
                                   setPreviewKey(Date.now());
                                 }}
-                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold cursor-pointer shrink-0"
+                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer shrink-0 shadow-sm"
                               >
                                 View in Live Preview
                               </button>
@@ -1129,22 +1127,22 @@ export const CPanelPage: React.FC = () => {
 
                       {/* Security & Feature Notes */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div className="p-4 rounded-xl bg-[#0e1626] border border-[#1e293b] space-y-1">
-                          <h4 className="font-semibold text-white flex items-center space-x-1.5">
-                            <Server className="w-3.5 h-3.5 text-accent" />
+                        <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-1 shadow-sm">
+                          <h4 className="font-semibold text-slate-900 flex items-center space-x-1.5">
+                            <Server className="w-3.5 h-3.5 text-blue-600" />
                             <span>Sandboxed Unpacking</span>
                           </h4>
-                          <p className="text-[11px] text-deployText-secondary">
+                          <p className="text-[11px] text-slate-500">
                             Integrated path traversal protection and decompression bomb checks verify every archive entry before writing to disk.
                           </p>
                         </div>
 
-                        <div className="p-4 rounded-xl bg-[#0e1626] border border-[#1e293b] space-y-1">
-                          <h4 className="font-semibold text-white flex items-center space-x-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-1 shadow-sm">
+                          <h4 className="font-semibold text-slate-900 flex items-center space-x-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                             <span>Instant Edge Serving</span>
                           </h4>
-                          <p className="text-[11px] text-deployText-secondary">
+                          <p className="text-[11px] text-slate-500">
                             Extracted static files (HTML, CSS, JS) and PHP scripts are immediately served on your custom subdomain.
                           </p>
                         </div>
@@ -1154,11 +1152,11 @@ export const CPanelPage: React.FC = () => {
                   </div>
                 ) : (
                   /* Professional Code Editor with Line Numbers, Status Bar, and Auto-Save */
-                  <div className="relative flex-1 flex flex-col bg-[#070b14] overflow-hidden">
+                  <div className="relative flex-1 flex flex-col bg-white overflow-hidden">
                     {/* Editor Status Bar */}
-                    <div className="flex items-center justify-between px-3 py-1.5 bg-[#0a0f1d] border-b border-[#1e293b] text-xs">
+                    <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50 border-b border-slate-200 text-xs">
                       <div className="flex items-center space-x-3">
-                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-primary/20 text-primary border border-primary/30 uppercase font-bold">
+                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase font-bold">
                           {selectedFile.extension.toUpperCase() || 'PLAINTEXT'}
                         </span>
                         <span className="text-[11px] text-deployText-secondary font-mono">
@@ -1167,35 +1165,35 @@ export const CPanelPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center space-x-3">
-                        <label className="flex items-center space-x-1.5 cursor-pointer text-[11px] text-deployText-secondary hover:text-white select-none">
+                        <label className="flex items-center space-x-1.5 cursor-pointer text-[11px] text-deployText-secondary hover:text-slate-900 select-none">
                           <input
                             type="checkbox"
                             checked={autoSaveEnabled}
                             onChange={(e) => setAutoSaveEnabled(e.target.checked)}
-                            className="rounded border-deployBorder bg-[#070b14] text-emerald-500 focus:ring-emerald-400 w-3 h-3"
+                            className="rounded border-slate-300 bg-white text-emerald-600 focus:ring-emerald-500 w-3 h-3"
                           />
                           <span>Auto-Save (2.5s)</span>
                         </label>
 
-                        <div className="flex items-center space-x-1 bg-[#111827] border border-[#1e293b] rounded px-1.5 py-0.5">
+                        <div className="flex items-center space-x-1 bg-white border border-slate-200 rounded px-1.5 py-0.5 shadow-xs">
                           <button
                             onClick={() => setFontSize(Math.max(11, fontSize - 1))}
-                            className="text-[11px] text-deployText-secondary hover:text-white px-1"
+                            className="text-[11px] text-slate-500 hover:text-slate-900 px-1"
                             title="Decrease font size"
                           >
                             A-
                           </button>
-                          <span className="text-[10px] text-deployText font-mono px-1">{fontSize}px</span>
+                          <span className="text-[10px] text-slate-700 font-mono px-1">{fontSize}px</span>
                           <button
                             onClick={() => setFontSize(Math.min(18, fontSize + 1))}
-                            className="text-[11px] text-deployText-secondary hover:text-white px-1"
+                            className="text-[11px] text-slate-500 hover:text-slate-900 px-1"
                             title="Increase font size"
                           >
                             A+
                           </button>
                         </div>
 
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 font-mono">
                           UTF-8
                         </span>
                       </div>
@@ -1203,8 +1201,8 @@ export const CPanelPage: React.FC = () => {
 
                     {/* Main Editor Body */}
                     {isLoadingContent ? (
-                      <div className="flex-1 flex items-center justify-center text-xs text-deployText-secondary">
-                        <RefreshCw className="w-5 h-5 text-primary animate-spin mr-2" />
+                      <div className="flex-1 flex items-center justify-center text-xs text-slate-500">
+                        <RefreshCw className="w-5 h-5 text-blue-600 animate-spin mr-2" />
                         Loading file contents...
                       </div>
                     ) : (
@@ -1212,13 +1210,13 @@ export const CPanelPage: React.FC = () => {
                         {/* Line Numbers Gutter */}
                         <div
                           ref={lineNumbersRef}
-                          className="w-12 py-4 select-none bg-[#0a0f1d] border-r border-[#1e293b] text-deployText-secondary/40 font-mono text-right pr-3 overflow-hidden"
+                          className="w-12 py-4 select-none bg-slate-50 border-r border-slate-200 text-slate-400 font-mono text-right pr-3 overflow-hidden"
                           style={{ fontSize: `${fontSize}px`, lineHeight: '1.625' }}
                         >
                           {fileContent.split('\n').map((_, idx) => (
                             <div
                               key={idx}
-                              className={cursorPosition.line === idx + 1 ? 'text-primary font-bold' : ''}
+                              className={cursorPosition.line === idx + 1 ? 'text-blue-600 font-bold' : ''}
                             >
                               {idx + 1}
                             </div>
@@ -1238,7 +1236,7 @@ export const CPanelPage: React.FC = () => {
                           onScroll={handleEditorScroll}
                           onKeyDown={handleEditorKeyDown}
                           spellCheck={false}
-                          className="w-full flex-1 p-4 bg-transparent text-emerald-300 font-mono leading-relaxed resize-none focus:outline-none selection:bg-primary/30 whitespace-pre overflow-auto"
+                          className="w-full flex-1 p-4 bg-white text-slate-900 font-mono leading-relaxed resize-none focus:outline-none selection:bg-blue-100 whitespace-pre overflow-auto"
                           style={{ fontSize: `${fontSize}px`, lineHeight: '1.625', tabSize: 2 }}
                           placeholder="Start writing HTML, CSS, JS or PHP code..."
                         />
@@ -1248,42 +1246,42 @@ export const CPanelPage: React.FC = () => {
                 )
               ) : (
                 /* Empty Selection State */
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#070b14]">
-                  <div className="w-16 h-16 rounded-2xl bg-[#0f172a] border border-[#1e293b] flex items-center justify-center mb-4 text-accent">
+                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/50">
+                  <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center mb-4 text-blue-600">
                     <FileCode className="w-8 h-8" />
                   </div>
-                  <h3 className="text-base font-bold text-white mb-1">Select a File or Archive</h3>
-                  <p className="text-xs text-deployText-secondary max-w-sm mb-6">
-                    Click any HTML, CSS, JavaScript, or PHP file to edit code, or select a <strong className="text-amber-400">.ZIP</strong> or <strong className="text-purple-400">.RAR</strong> archive to unpack your website.
+                  <h3 className="text-base font-bold text-slate-900 mb-1">Select a File or Archive</h3>
+                  <p className="text-xs text-slate-500 max-w-sm mb-6">
+                    Click any HTML, CSS, JavaScript, or PHP file to edit code, or select a <strong className="text-amber-600">.ZIP</strong> or <strong className="text-purple-600">.RAR</strong> archive to unpack your website.
                   </p>
                   
                   <div className="flex flex-wrap justify-center gap-2">
                     <button
                       onClick={() => uploadArchiveInputRef.current?.click()}
-                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-xs text-amber-300 font-semibold transition-colors cursor-pointer"
+                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-xs text-amber-800 font-semibold transition-colors cursor-pointer"
                     >
-                      <FolderDown className="w-3.5 h-3.5 text-amber-400" />
+                      <FolderDown className="w-3.5 h-3.5 text-amber-600" />
                       <span>Upload & Extract ZIP/RAR</span>
                     </button>
                     <button
                       onClick={() => setShowNewFileModal(true)}
-                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 transition-colors cursor-pointer"
+                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition-colors cursor-pointer shadow-sm"
                     >
-                      <Plus className="w-3.5 h-3.5 text-accent" />
+                      <Plus className="w-3.5 h-3.5 text-blue-600" />
                       <span>Create index.html</span>
                     </button>
                     <button
                       onClick={() => handleInitTemplate('STATIC')}
-                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 transition-colors cursor-pointer"
+                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition-colors cursor-pointer shadow-sm"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                      <Sparkles className="w-3.5 h-3.5 text-blue-600" />
                       <span>Static Starter</span>
                     </button>
                     <button
                       onClick={() => handleInitTemplate('PHP')}
-                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 transition-colors cursor-pointer"
+                      className="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 transition-colors cursor-pointer shadow-sm"
                     >
-                      <Server className="w-3.5 h-3.5 text-indigo-400" />
+                      <Server className="w-3.5 h-3.5 text-indigo-600" />
                       <span>PHP Starter</span>
                     </button>
                   </div>
@@ -1293,15 +1291,15 @@ export const CPanelPage: React.FC = () => {
 
             {/* Split Screen Live Preview */}
             {showPreview && (
-              <div className="w-full lg:w-1/2 flex flex-col bg-[#070b14] border-t lg:border-t-0 border-[#1e293b]">
-                <div className="px-3 py-2 border-b border-[#1e293b] bg-[#0e1626]/70 flex items-center justify-between">
+              <div className="w-full lg:w-1/2 flex flex-col bg-slate-50 border-t lg:border-t-0 border-slate-200">
+                <div className="px-3 py-2 border-b border-slate-200 bg-white flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-semibold text-white">Live Site Preview</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-semibold text-slate-800">Live Site Preview</span>
                   </div>
                   <button
                     onClick={() => setPreviewKey(Date.now())}
-                    className="p-1 rounded hover:bg-surface text-deployText-secondary hover:text-white text-xs flex items-center space-x-1"
+                    className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 text-xs flex items-center space-x-1 cursor-pointer"
                     title="Reload Preview"
                   >
                     <RefreshCw className="w-3 h-3" />
@@ -1327,16 +1325,16 @@ export const CPanelPage: React.FC = () => {
 
       {/* Modal: New File */}
       {showNewFileModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-[#0c1322] border border-[#1e293b] rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white flex items-center space-x-2">
-                <Plus className="w-4 h-4 text-primary" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <Plus className="w-4 h-4 text-blue-600" />
                 <span>Create New File</span>
               </h3>
               <button
                 onClick={() => setShowNewFileModal(false)}
-                className="p-1 text-deployText-secondary hover:text-white"
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1344,7 +1342,7 @@ export const CPanelPage: React.FC = () => {
 
             <form onSubmit={handleCreateFile} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   File Name (e.g. index.html, style.css, script.js, index.php)
                 </label>
                 <input
@@ -1354,7 +1352,7 @@ export const CPanelPage: React.FC = () => {
                   value={newFileName}
                   onChange={(e) => setNewFileName(e.target.value)}
                   placeholder="index.html"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070b14] border border-[#1e293b] text-white text-sm focus:outline-none focus:border-primary font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-blue-600 font-mono"
                 />
               </div>
 
@@ -1365,24 +1363,24 @@ export const CPanelPage: React.FC = () => {
                     type="button"
                     key={sample}
                     onClick={() => setNewFileName(sample)}
-                    className="px-2 py-1 rounded bg-[#172033] hover:bg-[#1e293b] text-[11px] font-mono text-deployText transition-colors"
+                    className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-[11px] font-mono text-slate-700 transition-colors cursor-pointer"
                   >
                     {sample}
                   </button>
                 ))}
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-2">
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowNewFileModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-700 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-glow-primary"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm"
                 >
                   Create File
                 </button>
@@ -1394,16 +1392,16 @@ export const CPanelPage: React.FC = () => {
 
       {/* Modal: New Folder */}
       {showNewFolderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-[#0c1322] border border-[#1e293b] rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white flex items-center space-x-2">
-                <FolderPlus className="w-4 h-4 text-amber-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <FolderPlus className="w-4 h-4 text-amber-500" />
                 <span>Create New Folder</span>
               </h3>
               <button
                 onClick={() => setShowNewFolderModal(false)}
-                className="p-1 text-deployText-secondary hover:text-white"
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1411,7 +1409,7 @@ export const CPanelPage: React.FC = () => {
 
             <form onSubmit={handleCreateFolder} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Folder Name (e.g. css, js, images, assets)
                 </label>
                 <input
@@ -1421,21 +1419,21 @@ export const CPanelPage: React.FC = () => {
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="css"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070b14] border border-[#1e293b] text-white text-sm focus:outline-none focus:border-primary font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-blue-600 font-mono"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-2">
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowNewFolderModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-700 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-glow-primary"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm"
                 >
                   Create Folder
                 </button>
@@ -1447,16 +1445,16 @@ export const CPanelPage: React.FC = () => {
 
       {/* Modal: Rename Item */}
       {itemToRename && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-[#0c1322] border border-[#1e293b] rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white flex items-center space-x-2">
-                <Edit3 className="w-4 h-4 text-accent" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <Edit3 className="w-4 h-4 text-blue-600" />
                 <span>Rename Item</span>
               </h3>
               <button
                 onClick={() => setItemToRename(null)}
-                className="p-1 text-deployText-secondary hover:text-white"
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1464,7 +1462,7 @@ export const CPanelPage: React.FC = () => {
 
             <form onSubmit={handleRename} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   New Name
                 </label>
                 <input
@@ -1473,21 +1471,21 @@ export const CPanelPage: React.FC = () => {
                   autoFocus
                   value={renameNewName}
                   onChange={(e) => setRenameNewName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070b14] border border-[#1e293b] text-white text-sm focus:outline-none focus:border-primary font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-sm focus:outline-none focus:border-blue-600 font-mono"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-2">
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setItemToRename(null)}
-                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-700 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-glow-primary"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm"
                 >
                   Save Name
                 </button>
@@ -1499,38 +1497,38 @@ export const CPanelPage: React.FC = () => {
 
       {/* Modal: Extract Archive */}
       {showExtractModal && archiveToExtract && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md bg-[#0c1322] border border-[#1e293b] rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white flex items-center space-x-2">
-                <FolderDown className="w-4 h-4 text-amber-400" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <FolderDown className="w-4 h-4 text-amber-500" />
                 <span>Extract {archiveToExtract.extension.toUpperCase()} Archive</span>
               </h3>
               <button
                 onClick={() => setShowExtractModal(false)}
-                className="p-1 text-deployText-secondary hover:text-white"
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-4">
-              <div className="p-3 rounded-xl bg-[#070b14] border border-[#1e293b] flex items-center space-x-3">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center space-x-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-xs uppercase ${
                   archiveToExtract.extension.toLowerCase() === 'rar'
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    ? 'bg-purple-100 text-purple-700 border border-purple-200'
+                    : 'bg-amber-100 text-amber-700 border border-amber-200'
                 }`}>
                   {archiveToExtract.extension}
                 </div>
                 <div className="truncate flex-1">
-                  <p className="text-xs font-mono font-bold text-white truncate">{archiveToExtract.name}</p>
-                  <p className="text-[11px] text-deployText-secondary">{(archiveToExtract.size / 1024).toFixed(1)} KB</p>
+                  <p className="text-xs font-mono font-bold text-slate-900 truncate">{archiveToExtract.name}</p>
+                  <p className="text-[11px] text-slate-500">{(archiveToExtract.size / 1024).toFixed(1)} KB</p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-deployText-secondary mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Target Destination Directory
                 </label>
                 <input
@@ -1538,9 +1536,9 @@ export const CPanelPage: React.FC = () => {
                   value={extractTargetDir}
                   onChange={(e) => setExtractTargetDir(e.target.value)}
                   placeholder="e.g. root (leave blank) or subfolder"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#070b14] border border-[#1e293b] text-white text-xs font-mono focus:outline-none focus:border-amber-400"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600"
                 />
-                <p className="text-[11px] text-deployText-secondary mt-1">
+                <p className="text-[11px] text-slate-500 mt-1">
                   Leave empty to extract into the root website directory.
                 </p>
               </div>
@@ -1551,11 +1549,11 @@ export const CPanelPage: React.FC = () => {
                     type="checkbox"
                     checked={autoPromoteArchive}
                     onChange={(e) => setAutoPromoteArchive(e.target.checked)}
-                    className="mt-0.5 rounded border-deployBorder bg-[#070b14] text-amber-500"
+                    className="mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-500"
                   />
                   <div>
-                    <span className="text-xs font-semibold text-white">Auto-flatten single wrapper directory</span>
-                    <p className="text-[11px] text-deployText-secondary">
+                    <span className="text-xs font-semibold text-slate-800">Auto-flatten single wrapper directory</span>
+                    <p className="text-[11px] text-slate-500">
                       Ensures <code>index.html</code> lands at root if the archive contains a top-level folder.
                     </p>
                   </div>
@@ -1566,22 +1564,22 @@ export const CPanelPage: React.FC = () => {
                     type="checkbox"
                     checked={deleteArchiveAfter}
                     onChange={(e) => setDeleteArchiveAfter(e.target.checked)}
-                    className="mt-0.5 rounded border-deployBorder bg-[#070b14] text-amber-500"
+                    className="mt-0.5 rounded border-slate-300 text-amber-500 focus:ring-amber-500"
                   />
                   <div>
-                    <span className="text-xs font-semibold text-white">Delete archive file after extraction</span>
-                    <p className="text-[11px] text-deployText-secondary">
+                    <span className="text-xs font-semibold text-slate-800">Delete archive file after extraction</span>
+                    <p className="text-[11px] text-slate-500">
                       Frees up project storage space immediately after unpacking.
                     </p>
                   </div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-2">
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowExtractModal(false)}
-                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#334155] border border-[#334155] text-xs text-slate-200 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-700 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1589,7 +1587,7 @@ export const CPanelPage: React.FC = () => {
                   type="button"
                   onClick={() => handleExtractArchive()}
                   disabled={isExtracting}
-                  className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 cursor-pointer disabled:opacity-50"
+                  className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm cursor-pointer disabled:opacity-50"
                 >
                   {isExtracting ? (
                     <>

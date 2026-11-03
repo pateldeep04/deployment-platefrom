@@ -36,7 +36,7 @@ class EmailAuthService {
         secure: config.smtpSecure || config.smtpPort === 465,
         auth: {
           user: config.smtpUser,
-          pass: config.smtpPass,
+          pass: (config.smtpPass || '').replace(/\s+/g, ''),
         },
         tls: {
           rejectUnauthorized: false,
