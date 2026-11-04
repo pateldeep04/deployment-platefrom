@@ -1,9 +1,26 @@
 import { z } from 'zod';
 
+export const RESERVED_SUBDOMAINS = new Set([
+  'www', 'admin', 'api', 'app', 'mail', 'ftp', 'cname', 'ns1', 'ns2',
+  'dashboard', 'status', 'support', 'billing', 'docs', 'auth', 'login',
+  'signup', 'register', 'root', 'ssl', 'cpanel', 'deployhub', 'abuse', 'security',
+  'system', 'telemetry', 'gateway', 'proxy', 'edge', 'static', 'cdn'
+]);
+
+const COMMON_WEAK_PASSWORDS = new Set([
+  'password', 'password123', 'admin123', 'admin12345', '1234567890',
+  'qwerty12345', 'letmein123', 'deployhub123', 'welcome123', 'iloveyou123',
+  'password1234', '12345678901'
+]);
+
 export const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(50),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string()
+    .min(10, 'Password must be at least 10 characters for enhanced security')
+    .refine((val) => !COMMON_WEAK_PASSWORDS.has(val.toLowerCase()), {
+      message: 'This password is too common and easily breached. Please choose a stronger unique password.',
+    }),
 });
 
 export const loginSchema = z.object({
@@ -17,7 +34,14 @@ export const createProjectSchema = z.object({
   slug: z.string().min(2).max(50)
     .regex(/^[a-z0-9-]+$/, 'Slug must only contain lowercase letters, numbers, and hyphens')
     .optional(),
-  subdomain: z.string().min(2).max(63).optional(),
+  subdomain: z.string()
+    .min(2, 'Subdomain must be at least 2 characters')
+    .max(63, 'Subdomain cannot exceed 63 characters')
+    .regex(/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/, 'Subdomain must only contain lowercase alphanumeric characters and hyphens, and cannot start or end with a hyphen')
+    .refine((val) => !RESERVED_SUBDOMAINS.has(val.toLowerCase()), {
+      message: 'This subdomain is reserved by the platform for system security.',
+    })
+    .optional(),
   platformDomain: z.string().optional(),
   type: z.enum(['STATIC', 'PHP', 'REACT', 'VITE', 'NODE']),
   buildCommand: z.string().optional(),
@@ -54,8 +78,21 @@ export const verifyEmailSchema = z.object({
   code: z.string().min(4, 'Code must be at least 4 digits').max(10),
 });
 
+export const verifyAdmin2faSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  code: z.string().min(6, '2FA Code must be 6 digits').max(6),
+});
+
 export const requestOtpSchema = z.object({
   email: z.string().email('Invalid email address'),
+});
+
+export const reportAbuseSchema = z.object({
+  targetUrlOrDomain: z.string().min(3, 'Target URL or domain is required').max(250),
+  category: z.enum(['PHISHING', 'MALWARE', 'SPAM', 'COPYRIGHT', 'ILLEGAL_CONTENT', 'OTHER']),
+  reporterEmail: z.string().email('Valid reporter email is required for status notifications'),
+  description: z.string().min(10, 'Please provide at least 10 characters describing the abuse or violation').max(3000),
+  evidenceUrl: z.string().url('Must be a valid URL').optional().or(z.literal('')),
 });
 
 export const supportRequestSchema = z.object({

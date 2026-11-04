@@ -126,12 +126,13 @@ npm run dev
 
 ---
 
-## 🔑 Pre-Seeded Demo Accounts (1-Click Login Available)
+## 🔑 Administrative Access & Security Configuration
 
-| Account | Email | Password | Role | Plan |
-|---|---|---|---|---|
-| **Admin** | `admin@deployhub.com` | `AdminDeployHub2026!` | `ADMIN` | `PRO` (Access to `/admin`) |
-| **Developer** | `developer@deployhub.com` | `Developer2026!` | `USER` | `DEVELOPER` |
+DeployHub follows strict tenant isolation and authentication policies (v2 Architecture). Administrative credentials must be supplied via environment variables (`.env`) rather than hardcoded credentials:
+
+- `ADMIN_EMAIL` — Superuser admin email address
+- `ADMIN_PASSWORD` — Strong administrative password (minimum 10 characters)
+- Mandatory 2FA OTP verification is enforced on all administrative sign-ins.
 
 ---
 

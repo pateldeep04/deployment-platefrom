@@ -166,17 +166,8 @@ class EmailAuthService {
       }
     }
 
-    // Fallback display log
-    console.log(`
-============================================================
-  📧 [DeployHub Email Dispatcher - Active Code]
-  To: ${email}
-  Type: ${type}
-  Subject: ${subject}
-  🔐 6-Digit Verification Code: [ ${code} ]
-  ⏳ Valid for: 15 minutes
-============================================================
-    `);
+    // Fallback simulated code for local dev
+    console.log(`[DeployHub Auth] Verification code for ${email}: ${code} (${type})`);
 
     return true;
   }

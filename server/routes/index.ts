@@ -29,13 +29,17 @@ router.post('/auth/resend-verification', authLimiter, authCtrl.resendVerificatio
 router.post('/auth/login', authLimiter, authCtrl.login);
 router.post('/auth/send-login-otp', authLimiter, authCtrl.sendLoginOtp);
 router.post('/auth/verify-login-otp', authLimiter, authCtrl.verifyLoginOtp);
+router.post('/auth/verify-admin-2fa', authLimiter, authCtrl.verifyAdmin2fa);
 router.post('/auth/refresh', authLimiter, authCtrl.refreshToken);
 router.get('/auth/me', authenticateJwt, authCtrl.getCurrentUser);
 
-// ================= DOMAIN REQUESTS & USER QUERIES =================
+// ================= DOMAIN REQUESTS, SUPPORT & ABUSE TAKEDOWNS =================
 router.post('/support/request', authLimiter, supportCtrl.submitSupportRequest);
 router.get('/support/status/:ticketNumber', supportCtrl.getTicketStatus);
 router.get('/support/requests', authenticateJwt, requireRole('ADMIN'), supportCtrl.listSupportRequests);
+router.post('/abuse/report', authLimiter, supportCtrl.submitAbuseReport);
+router.get('/admin/abuse-reports', authenticateJwt, requireRole('ADMIN'), supportCtrl.listAbuseReports);
+router.patch('/admin/abuse-reports/:reportId', authenticateJwt, requireRole('ADMIN'), supportCtrl.updateAbuseReport);
 
 // ================= PROJECTS =================
 router.get('/projects', authenticateJwt, projectCtrl.listProjects);
@@ -85,14 +89,22 @@ router.delete('/projects/:projectId/domains', authenticateJwt, domainCtrl.remove
 
 // ================= AUTOMATED SUBDOMAINS & PLATFORM DOMAINS =================
 router.get('/domains/available', domainCtrl.getAvailableDomains);
+router.get('/domains/ask', domainCtrl.askTlsApproval);
+router.get('/internal/tls-ask', domainCtrl.askTlsApproval);
 router.get('/subdomains/check', subdomainCheckLimiter, domainCtrl.checkSubdomainAvailability);
 router.post('/subdomains/assign', authenticateJwt, subdomainCheckLimiter, domainCtrl.assignSubdomain);
 router.get('/subdomains/verify', subdomainCheckLimiter, domainCtrl.verifySubdomainDns);
 
-// ================= BILLING & PLANS =================
+// ================= BILLING & PLANS (SECTION 9) =================
 router.get('/billing/plans', billingCtrl.getPlans);
 router.get('/billing/upi-details', billingCtrl.getUpiPaymentDetails);
+router.post('/billing/upi/submit-utr', authenticateJwt, billingCtrl.submitUpiPayment);
 router.post('/billing/upi-verify', authenticateJwt, billingCtrl.verifyUpiPayment);
+router.get('/billing/history', authenticateJwt, billingCtrl.getBillingHistory);
+
+// Admin Payments Management (Section 9 & 11)
+router.get('/admin/payments', authenticateJwt, requireRole('ADMIN'), billingCtrl.listAdminPayments);
+router.patch('/admin/payments/:paymentId', authenticateJwt, requireRole('ADMIN'), billingCtrl.reviewPayment);
 
 // ================= ADVERTISEMENTS =================
 router.get('/ads', adsCtrl.getAdsByPlacement);
@@ -113,6 +125,10 @@ router.patch('/admin/projects/:projectId/status', authenticateJwt, requireRole('
 router.get('/admin/users', authenticateJwt, requireRole('ADMIN'), adminCtrl.listAllUsers);
 router.patch('/admin/users/:userId', authenticateJwt, requireRole('ADMIN'), adminCtrl.updateUserPlanOrRole);
 router.post('/admin/users/:userId/reset-password', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminResetUserPassword);
+router.post('/admin/users/:userId/ban', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminBanUser);
+router.post('/admin/users/:userId/unban', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminUnbanUser);
+router.post('/admin/security/ban-ip', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminBanIp);
+router.delete('/admin/security/ban-ip/:ip', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminUnbanIp);
 router.delete('/admin/users/:userId', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminDeleteUser);
 router.post('/admin/prune-storage', authenticateJwt, requireRole('ADMIN'), adminCtrl.adminPruneStorage);
 router.get('/admin/deployments', authenticateJwt, requireRole('ADMIN'), adminCtrl.listAllDeployments);

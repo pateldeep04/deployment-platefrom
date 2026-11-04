@@ -61,8 +61,8 @@ export const RegisterPage: React.FC = () => {
       setError('Please accept the developer terms to proceed.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (password.length < 10) {
+      setError('Password must be at least 10 characters for enhanced security.');
       return;
     }
 

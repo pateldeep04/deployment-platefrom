@@ -10,13 +10,57 @@ export interface IUser {
   passwordHash: string;
   role: 'USER' | 'ADMIN' | 'SUPPORT';
   plan: 'FREE' | 'DEVELOPER' | 'PRO';
+  planExpiresAt?: string;
   emailVerified: boolean;
   verificationCode?: string;
   verificationCodeExpires?: string;
+  verificationAttempts?: number;
   loginOtpCode?: string;
   loginOtpExpires?: string;
+  loginOtpAttempts?: number;
+  admin2faCode?: string;
+  admin2faExpires?: string;
+  admin2faAttempts?: number;
+  isBanned?: boolean;
+  bannedReason?: string;
+  bannedAt?: string;
+  signupIp?: string;
   storageUsed: number; // in bytes
   bandwidthUsed: number; // in bytes
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IPayment {
+  _id: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  plan: 'DEVELOPER' | 'PRO';
+  amountINR: number;
+  utr: string; // 12-digit UPI transaction reference number (UNIQUE)
+  senderUpiId?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewedBy?: string;
+  reviewedAt?: string;
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IAbuseReport {
+  _id: string;
+  reportNumber: string;
+  targetUrlOrDomain: string;
+  category: 'PHISHING' | 'MALWARE' | 'SPAM' | 'COPYRIGHT' | 'ILLEGAL_CONTENT' | 'OTHER';
+  reporterEmail: string;
+  description: string;
+  evidenceUrl?: string;
+  ip: string;
+  status: 'PENDING' | 'INVESTIGATING' | 'RESOLVED' | 'DISMISSED';
+  actionTaken?: 'SITE_SUSPENDED' | 'USER_BANNED' | 'DOMAIN_UNLINKED' | 'NO_ACTION';
+  resolvedBy?: string;
+  resolvedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -50,6 +94,7 @@ export interface IProject {
   outputDirectory?: string;
   customDomain?: string;
   customDomainVerified?: boolean;
+  verifyToken?: string;
   sslEnabled?: boolean;
   assignedServerNodeId?: string;
   assignedSubdomain?: string;
@@ -58,6 +103,8 @@ export interface IProject {
   domainExpiresAt?: string;
   domainStatus?: 'ACTIVE' | 'EXPIRING_SOON' | 'DEACTIVATED';
   isDomainExpired?: boolean;
+  lastActivityAt?: string;
+  currentVersion?: number;
   deactivationWarningSentAt?: string;
   deactivationEmailSentAt?: string;
   reactivatedAt?: string;
@@ -165,6 +212,10 @@ export interface IPlatformSettings {
   adBannerLink?: string;
   customAdScript?: string;
   platformDomains?: IPlatformDomainItem[];
+  bannedIps?: string[];
+  securityMailbox?: string;
+  abuseMailbox?: string;
+  enablePhpExecution?: boolean;
 }
 
 // In-memory + persistent JSON store for high performance and zero-dependency local setup
@@ -179,6 +230,8 @@ class DataStore {
   public serverNodes: IServerNode[] = [];
   public trafficLogs: ITrafficLog[] = [];
   public supportRequests: ISupportRequest[] = [];
+  public abuseReports: IAbuseReport[] = [];
+  public payments: IPayment[] = [];
   public settings: IPlatformSettings = {
     developerPriceINR: 30,
     proPriceINR: 399,
@@ -187,6 +240,10 @@ class DataStore {
     adBannerText: 'Fast free web hosting with SSL. Upgrade to Developer (₹30/mo) for 100% ad-free sites.',
     adBannerLink: 'https://deployhub.com',
     customAdScript: '',
+    bannedIps: [],
+    securityMailbox: 'security@pateldeeep.me',
+    abuseMailbox: 'abuse@pateldeeep.me',
+    enablePhpExecution: false,
     platformDomains: [
       { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false, isDefault: true },
       { domain: 'deploye-ai.duckdns.org', label: 'deploye-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
@@ -245,6 +302,8 @@ class DataStore {
         }
         this.trafficLogs = (data.trafficLogs || []).filter((l: any) => remainingProjectIds.has(l.projectId));
         this.supportRequests = data.supportRequests || [];
+        this.abuseReports = data.abuseReports || [];
+        this.payments = data.payments || [];
         this.settings = {
           developerPriceINR: 30,
           proPriceINR: 399,
@@ -253,8 +312,15 @@ class DataStore {
           adBannerText: 'Fast free web hosting with SSL. Upgrade to Developer (₹30/mo) for 100% ad-free sites.',
           adBannerLink: 'https://deployhub.com',
           customAdScript: '',
+          bannedIps: [],
+          securityMailbox: 'security@pateldeeep.me',
+          abuseMailbox: 'abuse@pateldeeep.me',
+          enablePhpExecution: false,
           ...(data.settings || {})
         };
+        if (!Array.isArray(this.settings.bannedIps)) {
+          this.settings.bannedIps = [];
+        }
         if (!this.settings.platformDomains || this.settings.platformDomains.length === 0) {
           this.settings.platformDomains = [
             { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false, isDefault: true },
@@ -287,6 +353,8 @@ class DataStore {
         serverNodes: this.serverNodes,
         trafficLogs: this.trafficLogs,
         supportRequests: this.supportRequests,
+        abuseReports: this.abuseReports,
+        payments: this.payments,
         settings: this.settings,
       };
       const dir = path.dirname(this.filePath);
@@ -297,6 +365,12 @@ class DataStore {
     } catch (err) {
       console.error('Failed to save store to file:', err);
     }
+  }
+
+  public isIpBanned(ip: string): boolean {
+    if (!ip) return false;
+    const cleanIp = ip.replace(/^::ffff:/, '').trim();
+    return (this.settings.bannedIps || []).some(banned => banned.trim() === cleanIp);
   }
 
   public seedDefaults() {

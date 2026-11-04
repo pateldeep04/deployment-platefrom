@@ -6,9 +6,10 @@ interface AuthContextType {
   user: IUser | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ requiresAdmin2fa?: boolean; email?: string } | void>;
   register: (name: string, email: string, password: string) => Promise<{ requiresVerification: boolean; email: string }>;
   verifyEmail: (email: string, code: string) => Promise<void>;
+  verifyAdmin2fa: (email: string, code: string) => Promise<void>;
   resendVerification: (email: string) => Promise<void>;
   sendLoginOtp: (email: string) => Promise<{ success: boolean; message: string }>;
   verifyLoginOtp: (email: string, code: string) => Promise<void>;
@@ -45,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('deployhub_user', JSON.stringify(res.data.data.user));
       }
     } catch (e) {
-      console.warn('Could not refresh user session');
+      // Session expired or unauthenticated
     }
   };
 
@@ -57,13 +58,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [token]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<{ requiresAdmin2fa?: boolean; email?: string } | void> => {
     const res = await api.post('/auth/login', { email, password });
     if (res.data.success) {
+      if (res.data.requiresAdmin2fa) {
+        return { requiresAdmin2fa: true, email: res.data.email };
+      }
       const { user: authUser, tokens } = res.data.data;
       saveAuthSession(authUser, tokens);
     } else {
       throw new Error(res.data.error || 'Login failed');
+    }
+  };
+
+  const verifyAdmin2fa = async (email: string, code: string) => {
+    const res = await api.post('/auth/verify-admin-2fa', { email, code });
+    if (res.data.success) {
+      const { user: authUser, tokens } = res.data.data;
+      saveAuthSession(authUser, tokens);
+    } else {
+      throw new Error(res.data.error || 'Admin 2FA verification failed');
     }
   };
 
@@ -137,6 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         verifyEmail,
+        verifyAdmin2fa,
         resendVerification,
         sendLoginOtp,
         verifyLoginOtp,

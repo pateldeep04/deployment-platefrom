@@ -32,7 +32,7 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login, sendLoginOtp, verifyLoginOtp, verifyEmail } = useAuth();
+  const { login, sendLoginOtp, verifyLoginOtp, verifyEmail, verifyAdmin2fa } = useAuth();
   const navigate = useNavigate();
 
   // Password submission
@@ -42,7 +42,13 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(email.trim(), password);
+      const result = await login(email.trim(), password);
+      if (result && result.requiresAdmin2fa) {
+        setAuthMode('EMAIL_OTP');
+        setOtpStep('ENTER_CODE');
+        setOtpMessage('🛡️ Admin 2FA Security: Please enter the 6-digit code sent to your registered admin email.');
+        return;
+      }
       navigate('/dashboard');
     } catch (err: any) {
       if (err.response?.data?.requiresVerification) {
@@ -95,11 +101,15 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Try verifying login OTP first, fallback to verify email
+      // Try verifying Admin 2FA first, then login OTP, then email verification
       try {
-        await verifyLoginOtp(email.trim(), otpCode.trim());
-      } catch (loginErr) {
-        await verifyEmail(email.trim(), otpCode.trim());
+        await verifyAdmin2fa(email.trim(), otpCode.trim());
+      } catch (adminErr) {
+        try {
+          await verifyLoginOtp(email.trim(), otpCode.trim());
+        } catch (loginErr) {
+          await verifyEmail(email.trim(), otpCode.trim());
+        }
       }
       navigate('/dashboard');
     } catch (err: any) {

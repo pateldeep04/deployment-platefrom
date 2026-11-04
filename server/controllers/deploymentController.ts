@@ -11,6 +11,18 @@ export const uploadAndDeploy = async (req: AuthenticatedRequest, res: Response):
   try {
     const { projectId } = req.params;
     const user = req.user!;
+
+    // Section 7: Enforce email verification prior to deployment
+    if (!user.emailVerified) {
+      if (req.file) { try { fs.unlinkSync(req.file.path); } catch {} }
+      res.status(403).json({
+        success: false,
+        requiresVerification: true,
+        error: 'Email verification is required before deploying websites. Please verify your email first.',
+      });
+      return;
+    }
+
     const project = dbStore.projects.find(p => p._id === projectId && p.userId === user._id);
 
     if (!project) {
@@ -244,11 +256,13 @@ export const rollbackDeployment = async (req: AuthenticatedRequest, res: Respons
     return;
   }
 
+  const releaseDir = path.join(config.storageDir, 'releases', project.slug, `v${targetDeployment.version}`);
   const previousArtifactDir = path.join(config.storageDir, 'artifacts', `${project.slug}-v${targetDeployment.version}`);
+  const sourceDir = fs.existsSync(releaseDir) ? releaseDir : (fs.existsSync(previousArtifactDir) ? previousArtifactDir : null);
   const liveSiteDir = path.join(config.storageDir, 'sites', project.slug);
 
-  if (!fs.existsSync(previousArtifactDir)) {
-    res.status(400).json({ success: false, error: 'Artifact for this version is no longer cached in storage' });
+  if (!sourceDir || !fs.existsSync(sourceDir)) {
+    res.status(400).json({ success: false, error: 'Release snapshot for this version is no longer cached in storage' });
     return;
   }
 
@@ -256,9 +270,11 @@ export const rollbackDeployment = async (req: AuthenticatedRequest, res: Respons
   if (fs.existsSync(liveSiteDir)) {
     fs.rmSync(liveSiteDir, { recursive: true, force: true });
   }
-  fs.cpSync(previousArtifactDir, liveSiteDir, { recursive: true });
+  fs.cpSync(sourceDir, liveSiteDir, { recursive: true });
 
   project.currentDeploymentId = targetDeployment._id;
+  project.currentVersion = targetDeployment.version;
+  project.lastActivityAt = new Date().toISOString();
   project.status = 'ACTIVE';
 
   targetDeployment.logs.push({

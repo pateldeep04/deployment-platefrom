@@ -38,6 +38,17 @@ export const getProject = (req: AuthenticatedRequest, res: Response): void => {
 
 export const createProject = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const user = req.user!;
+
+  // Section 7: Enforce email verification prior to project creation
+  if (!user.emailVerified) {
+    res.status(403).json({
+      success: false,
+      requiresVerification: true,
+      error: 'Email verification is required before creating websites. Please verify your email first.',
+    });
+    return;
+  }
+
   const parseResult = createProjectSchema.safeParse(req.body);
 
   if (!parseResult.success) {

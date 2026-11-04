@@ -9,6 +9,7 @@ import { config, getDeploymentUrl } from '../config';
 import { deploymentEngine } from '../queue/deploymentQueue';
 import { domainLockService } from '../services/domainLockService';
 import { subdomainService } from '../services/subdomainService';
+import { redisCacheService } from '../services/redisCacheService';
 
 function getDirectorySize(dirPath: string): number {
   let size = 0;
@@ -449,6 +450,176 @@ export const adminDeleteUser = (req: AuthenticatedRequest, res: Response): void 
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Failed to delete user' });
+  }
+};
+
+/**
+ * POST /api/v1/admin/users/:userId/ban
+ * One-click takedown: Bans user, suspends all projects, blocks IP, and logs audit
+ */
+export const adminBanUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { reason = 'Terms of Service violation / Security takedown' } = req.body;
+
+    if (userId === req.user!._id) {
+      res.status(400).json({ success: false, error: 'Cannot ban your own administrative account' });
+      return;
+    }
+
+    const user = dbStore.users.find(u => u._id === userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    user.isBanned = true;
+    user.bannedReason = reason;
+    user.bannedAt = new Date().toISOString();
+
+    // Block signup/login IP if available
+    if (user.signupIp && !dbStore.settings.bannedIps?.includes(user.signupIp)) {
+      dbStore.settings.bannedIps = dbStore.settings.bannedIps || [];
+      dbStore.settings.bannedIps.push(user.signupIp);
+    }
+
+    // Suspend all active tenant projects and invalidate routes
+    const userProjects = dbStore.projects.filter(p => p.userId === user._id);
+    for (const proj of userProjects) {
+      proj.status = 'INACTIVE';
+      proj.updatedAt = new Date().toISOString();
+      const keysToClear = [proj.slug, proj.customDomain, proj.assignedSubdomain].filter(Boolean) as string[];
+      await redisCacheService.invalidateRoute(keysToClear);
+    }
+
+    dbStore.auditLogs.push({
+      _id: `log_${Date.now()}`,
+      userId: req.user!._id,
+      action: 'ADMIN_USER_BANNED',
+      ip: req.ip || '127.0.0.1',
+      details: {
+        bannedUserId: user._id,
+        bannedEmail: user.email,
+        reason,
+        projectsSuspended: userProjects.length,
+      },
+      createdAt: new Date().toISOString(),
+    });
+
+    dbStore.save();
+
+    res.json({
+      success: true,
+      message: `User '${user.email}' has been banned and ${userProjects.length} website(s) suspended immediately.`,
+      data: { user: { _id: user._id, email: user.email, isBanned: user.isBanned } },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to ban user' });
+  }
+};
+
+/**
+ * POST /api/v1/admin/users/:userId/unban
+ * Unbans a previously suspended user account
+ */
+export const adminUnbanUser = (req: AuthenticatedRequest, res: Response): void => {
+  try {
+    const { userId } = req.params;
+    const user = dbStore.users.find(u => u._id === userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    user.isBanned = false;
+    user.bannedReason = undefined;
+    user.bannedAt = undefined;
+
+    // Reactivate projects
+    const userProjects = dbStore.projects.filter(p => p.userId === user._id);
+    for (const proj of userProjects) {
+      proj.status = 'ACTIVE';
+      proj.updatedAt = new Date().toISOString();
+    }
+
+    dbStore.auditLogs.push({
+      _id: `log_${Date.now()}`,
+      userId: req.user!._id,
+      action: 'ADMIN_USER_UNBANNED',
+      ip: req.ip || '127.0.0.1',
+      details: { unbannedUserId: user._id, unbannedEmail: user.email },
+      createdAt: new Date().toISOString(),
+    });
+
+    dbStore.save();
+
+    res.json({
+      success: true,
+      message: `User '${user.email}' unbanned successfully.`,
+      data: { user: { _id: user._id, email: user.email, isBanned: user.isBanned } },
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to unban user' });
+  }
+};
+
+/**
+ * POST /api/v1/admin/security/ban-ip
+ * Adds an IP address to the platform blacklist
+ */
+export const adminBanIp = (req: AuthenticatedRequest, res: Response): void => {
+  try {
+    const { ip } = req.body;
+    if (!ip) {
+      res.status(400).json({ success: false, error: 'IP address is required' });
+      return;
+    }
+
+    const cleanIp = ip.replace(/^::ffff:/, '').trim();
+    dbStore.settings.bannedIps = dbStore.settings.bannedIps || [];
+
+    if (!dbStore.settings.bannedIps.includes(cleanIp)) {
+      dbStore.settings.bannedIps.push(cleanIp);
+      dbStore.auditLogs.push({
+        _id: `log_${Date.now()}`,
+        userId: req.user!._id,
+        action: 'ADMIN_IP_BANNED',
+        ip: req.ip || '127.0.0.1',
+        details: { bannedIp: cleanIp },
+        createdAt: new Date().toISOString(),
+      });
+      dbStore.save();
+    }
+
+    res.json({ success: true, message: `IP ${cleanIp} has been blocked from accessing DeployHub.` });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to ban IP' });
+  }
+};
+
+/**
+ * DELETE /api/v1/admin/security/ban-ip/:ip
+ * Removes an IP address from the platform blacklist
+ */
+export const adminUnbanIp = (req: AuthenticatedRequest, res: Response): void => {
+  try {
+    const rawIp = req.params.ip as string;
+    const cleanIp = (rawIp || '').replace(/^::ffff:/, '').trim();
+    dbStore.settings.bannedIps = (dbStore.settings.bannedIps || []).filter(item => item !== cleanIp);
+
+    dbStore.auditLogs.push({
+      _id: `log_${Date.now()}`,
+      userId: req.user!._id,
+      action: 'ADMIN_IP_UNBANNED',
+      ip: req.ip || '127.0.0.1',
+      details: { unbannedIp: cleanIp },
+      createdAt: new Date().toISOString(),
+    });
+    dbStore.save();
+
+    res.json({ success: true, message: `IP ${cleanIp} has been unblocked.` });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to unban IP' });
   }
 };
 

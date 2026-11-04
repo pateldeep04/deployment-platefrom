@@ -42,7 +42,7 @@ export const connectDatabase = async (): Promise<boolean> => {
       serverSelectionTimeoutMS: timeout,
     });
     isConnected = true;
-    console.log('[DeployHub Database] Connected to MongoDB at', config.mongoUri.replace(/:([^:@]+)@/, ':****@'));
+    console.log('[DeployHub Database] Connected to MongoDB');
 
     // Automatically sync data between local file store and global MongoDB Atlas
     const { syncOnStartup } = await import('./mongoSync');

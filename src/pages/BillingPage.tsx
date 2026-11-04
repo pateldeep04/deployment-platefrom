@@ -36,8 +36,19 @@ export const BillingPage: React.FC = () => {
   const [isVerifyingUpi, setIsVerifyingUpi] = useState(false);
   const [upiError, setUpiError] = useState<string | null>(null);
   const [copiedUpi, setCopiedUpi] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
   
   const upiSectionRef = useRef<HTMLDivElement>(null);
+
+  const fetchHistory = () => {
+    api.get('/billing/history')
+      .then((res) => {
+        if (res.data.success) {
+          setPaymentHistory(res.data.data.payments || []);
+        }
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
     api.get('/billing/plans')
@@ -46,7 +57,9 @@ export const BillingPage: React.FC = () => {
           setPlans(res.data.data.plans);
         }
       })
-      .catch((e) => console.error(e));
+      .catch(() => {});
+
+    fetchHistory();
   }, []);
 
   const handleCopyUpi = () => {
@@ -67,13 +80,9 @@ export const BillingPage: React.FC = () => {
     e.preventDefault();
     setUpiError(null);
 
-    const cleanUtr = utrNumber.trim();
-    if (!cleanUtr) {
-      setUpiError('Please enter the 12-digit UPI Reference Number (UTR) from your payment app.');
-      return;
-    }
-    if (cleanUtr.length < 8) {
-      setUpiError('Invalid UTR number. UPI reference numbers typically contain 12 digits.');
+    const cleanUtr = utrNumber.replace(/\D/g, '').trim();
+    if (!cleanUtr || cleanUtr.length !== 12) {
+      setUpiError('Please enter the exact 12-digit numeric UPI Reference Number (UTR) from your payment receipt.');
       return;
     }
 
@@ -82,7 +91,7 @@ export const BillingPage: React.FC = () => {
       const targetPlan = plans.find(p => p.id === selectedUpiPlanId);
       const amount = targetPlan ? targetPlan.priceINR : (selectedUpiPlanId === 'DEVELOPER' ? 30 : 399);
 
-      const res = await api.post('/billing/upi-verify', {
+      const res = await api.post('/billing/upi/submit-utr', {
         planId: selectedUpiPlanId,
         utrNumber: cleanUtr,
         amount,
@@ -90,9 +99,10 @@ export const BillingPage: React.FC = () => {
       });
 
       if (res.data.success) {
-        setSuccessMsg(`🎉 Payment verified! Your account has been upgraded to ${selectedUpiPlanId} Plan.`);
+        setSuccessMsg(res.data.message || `Payment submitted! Your 12-digit UTR (#${cleanUtr}) is queued for administrative verification.`);
         setUtrNumber('');
         setSenderUpiId('');
+        fetchHistory();
         await refreshUser();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
@@ -466,8 +476,8 @@ export const BillingPage: React.FC = () => {
                     )}
                   </button>
 
-                  <p className="text-[11px] text-deployText-muted text-center leading-normal">
-                    🔒 Verification checks the UTR timestamp and instantly applies your tier privileges to your account.
+                  <p className="text-[11px] text-slate-500 text-center leading-normal">
+                    🔒 Verification checks the 12-digit UTR against merchant bank receipts and confirms your tier privileges.
                   </p>
                 </form>
 
@@ -476,6 +486,64 @@ export const BillingPage: React.FC = () => {
 
           </div>
         </section>
+
+        {/* Section 9: Submitted Transactions & Verification Status */}
+        {paymentHistory.length > 0 && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mb-12">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center space-x-2">
+              <CreditCard className="w-4 h-4 text-blue-600" />
+              <span>Your Submitted Payment Transactions</span>
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse font-sans">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50">
+                    <th className="py-2.5 px-3">DATE</th>
+                    <th className="py-2.5 px-3">UTR NUMBER</th>
+                    <th className="py-2.5 px-3">PLAN</th>
+                    <th className="py-2.5 px-3">AMOUNT</th>
+                    <th className="py-2.5 px-3">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-mono">
+                  {paymentHistory.map((p) => (
+                    <tr key={p._id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-2.5 px-3 text-slate-500">
+                        {new Date(p.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-900 font-bold">
+                        {p.utr}
+                      </td>
+                      <td className="py-2.5 px-3 text-blue-600 font-semibold">
+                        {p.plan}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-800">
+                        ₹{p.amountINR}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        {p.status === 'APPROVED' && (
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                            APPROVED
+                          </span>
+                        )}
+                        {p.status === 'PENDING' && (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold">
+                            PENDING VERIFICATION
+                          </span>
+                        )}
+                        {p.status === 'REJECTED' && (
+                          <span className="px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold">
+                            REJECTED
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Security / Compliance Notice */}
         <div className="p-4 rounded-xl bg-card border border-deployBorder flex items-center justify-between text-xs text-deployText-secondary">

@@ -225,23 +225,15 @@ const startServer = async () => {
   await connectDatabase();
 
   app.listen(config.port, () => {
-    console.log(`
-======================================================
-  🚀 DeployHub Core API & Edge Proxy Online!
-  📍 Port: ${config.port}
-  🌐 API Root: http://localhost:${config.port}/api/v1
-  🔗 Edge Sites Router: http://localhost:${config.port}/sites/:slug/
-  ☁️  DeployHub Engine: Standalone Edge Active
-  🏷️  Namecheap DNS: ${config.namecheapSld}.${config.namecheapTld}
-  🛡️  Security: Rate Limiter + Sandbox Guards + JWT Auth
-======================================================
-    `);
+    console.log(`[DeployHub] Server listening on http://localhost:${config.port}`);
   });
 
-  // Background Domain Expiry Monitor: Scans all projects, sends 1-month warning emails, and sends deactivation notices upon 3-month expiry
+  // Background Domain Expiry Monitor: Scans all projects
   try {
     const summary = await domainExpiryService.checkAndProcessDomainExpiries();
-    console.log(`[Domain Expiry Watcher] Initialized: ${summary.warningsSent} advance warning(s) sent, ${summary.deactivationsSent} deactivation notice(s) sent.`);
+    if (summary.warningsSent > 0 || summary.deactivationsSent > 0) {
+      console.log(`[Domain Expiry Watcher] Processed: ${summary.warningsSent} warning(s), ${summary.deactivationsSent} deactivation(s).`);
+    }
   } catch (err) {
     console.error('[Domain Expiry Watcher] Initial run error:', err);
   }

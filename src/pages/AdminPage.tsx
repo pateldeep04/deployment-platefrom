@@ -31,7 +31,9 @@ import {
   Link2,
   Unlink,
   AlertCircle,
-  Shield
+  Shield,
+  CreditCard,
+  Ban
 } from 'lucide-react';
 
 interface PlatformDomainItem {
@@ -60,7 +62,7 @@ interface ProjectDomainBinding {
 
 export const AdminPage: React.FC = () => {
   const { isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState<'monitoring' | 'domains' | 'projects' | 'users' | 'deployments' | 'security' | 'ads'>('monitoring');
+  const [activeTab, setActiveTab] = useState<'monitoring' | 'domains' | 'projects' | 'users' | 'deployments' | 'security' | 'ads' | 'payments'>('monitoring');
 
   // Telemetry & Data States
   const [monitoringData, setMonitoringData] = useState<any>(null);
@@ -69,6 +71,7 @@ export const AdminPage: React.FC = () => {
   const [deployments, setDeployments] = useState<any[]>([]);
   const [securityLogs, setSecurityLogs] = useState<any[]>([]);
   const [ads, setAds] = useState<any[]>([]);
+  const [adminPayments, setAdminPayments] = useState<any[]>([]);
   const [settings, setSettings] = useState<{
     developerPriceINR: number;
     proPriceINR: number;
@@ -170,7 +173,7 @@ export const AdminPage: React.FC = () => {
 
   const fetchAllData = useCallback(async () => {
     try {
-      const [monRes, projRes, usersRes, depsRes, secRes, adsRes, setRes, domRes] = await Promise.all([
+      const [monRes, projRes, usersRes, depsRes, secRes, adsRes, setRes, domRes, payRes] = await Promise.all([
         api.get('/admin/monitoring'),
         api.get('/admin/projects'),
         api.get('/admin/users'),
@@ -179,6 +182,7 @@ export const AdminPage: React.FC = () => {
         api.get('/admin/ads'),
         api.get('/admin/settings'),
         api.get('/admin/domains').catch(() => ({ data: { success: false } })),
+        api.get('/admin/payments').catch(() => ({ data: { success: false } })),
       ]);
 
       if (monRes.data.success) setMonitoringData(monRes.data.data);
@@ -189,6 +193,7 @@ export const AdminPage: React.FC = () => {
       if (adsRes.data.success) setAds(adsRes.data.data.ads);
       if (setRes.data.success && setRes.data.data?.settings) setSettings(setRes.data.data.settings);
       if (domRes.data?.success) setDomainsData(domRes.data.data);
+      if (payRes.data?.success) setAdminPayments(payRes.data.data.payments || []);
     } catch (err: any) {
       console.error('Failed to load admin data:', err);
     } finally {
@@ -348,6 +353,37 @@ export const AdminPage: React.FC = () => {
       showToast(err.response?.data?.error || 'Failed to save settings', 'error');
     } finally {
       setIsSavingSettings(false);
+    }
+  };
+
+  const handleReviewPayment = async (paymentId: string, status: 'APPROVED' | 'REJECTED') => {
+    try {
+      const res = await api.patch(`/admin/payments/${paymentId}`, { status });
+      showToast(res.data.message || `Payment ${status.toLowerCase()} successfully`, 'success');
+      fetchAllData();
+    } catch (err: any) {
+      showToast(err.response?.data?.error || `Failed to review payment`, 'error');
+    }
+  };
+
+  const handleBanUser = async (userId: string, email: string) => {
+    if (!window.confirm(`Are you sure you want to ban user '${email}'? All their hosted websites will be suspended immediately.`)) return;
+    try {
+      const res = await api.post(`/admin/users/${userId}/ban`, { reason: 'Terms of Service Violation / Administrative takedown' });
+      showToast(res.data.message || `User '${email}' has been banned`, 'success');
+      fetchAllData();
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to ban user', 'error');
+    }
+  };
+
+  const handleUnbanUser = async (userId: string, email: string) => {
+    try {
+      const res = await api.post(`/admin/users/${userId}/unban`);
+      showToast(res.data.message || `User '${email}' unbanned`, 'success');
+      fetchAllData();
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to unban user', 'error');
     }
   };
 
@@ -613,6 +649,7 @@ export const AdminPage: React.FC = () => {
             { id: 'deployments', label: `Deployments (${deployments.length})`, icon: Rocket },
             { id: 'security', label: `Security Logs (${securityLogs.length})`, icon: ShieldCheck },
             { id: 'ads', label: `Plan Pricing & Ads (${ads.length})`, icon: IndianRupee },
+            { id: 'payments', label: `Payments & UTR (${adminPayments.filter(p => p.status === 'PENDING').length} pending)`, icon: CreditCard },
           ].map((tab) => {
             const Icon = tab.icon;
             const isSelected = activeTab === tab.id;
@@ -837,6 +874,126 @@ export const AdminPage: React.FC = () => {
 
             </div>
 
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 8: MANUAL UPI BILLING & UTR AUDIT */}
+        {/* ========================================================= */}
+        {activeTab === 'payments' && (
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm space-y-4 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span>Manual UPI Payments & UTR Audit Log</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review submitted 12-digit bank UTR numbers. Approving activates the plan for 30 days immediately.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                  {adminPayments.filter(p => p.status === 'PENDING').length} Pending Review
+                </span>
+                <button
+                  onClick={() => fetchAllData()}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+            </div>
+
+            {adminPayments.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-xs">
+                No UPI payments submitted yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/70">
+                      <th className="py-2.5 px-3">DATE</th>
+                      <th className="py-2.5 px-3">USER</th>
+                      <th className="py-2.5 px-3">PLAN & AMOUNT</th>
+                      <th className="py-2.5 px-3">12-DIGIT UTR / SENDER UPI</th>
+                      <th className="py-2.5 px-3">STATUS</th>
+                      <th className="py-2.5 px-3 text-right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {adminPayments.map((p) => (
+                      <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">
+                          {new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">{p.userName || 'User'}</div>
+                          <div className="text-[11px] font-mono text-slate-500">{p.userEmail}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">
+                            {p.plan} PLAN
+                          </div>
+                          <div className="text-[11px] font-mono text-emerald-600 font-bold">
+                            ₹{p.amountINR} INR
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">
+                            {p.utr}
+                          </div>
+                          {p.senderUpiId && (
+                            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                              From: {p.senderUpiId}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                            p.status === 'APPROVED'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : p.status === 'REJECTED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {p.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'APPROVED')}
+                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Approve payment & activate plan"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'REJECTED')}
+                                className="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Reject payment"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] font-mono text-slate-400">
+                              Reviewed {p.reviewedAt ? new Date(p.reviewedAt).toLocaleDateString() : ''}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -1110,6 +1267,126 @@ export const AdminPage: React.FC = () => {
         )}
 
         {/* ========================================================= */}
+        {/* TAB 8: MANUAL UPI BILLING & UTR AUDIT */}
+        {/* ========================================================= */}
+        {activeTab === 'payments' && (
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm space-y-4 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span>Manual UPI Payments & UTR Audit Log</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review submitted 12-digit bank UTR numbers. Approving activates the plan for 30 days immediately.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                  {adminPayments.filter(p => p.status === 'PENDING').length} Pending Review
+                </span>
+                <button
+                  onClick={() => fetchAllData()}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+            </div>
+
+            {adminPayments.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-xs">
+                No UPI payments submitted yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/70">
+                      <th className="py-2.5 px-3">DATE</th>
+                      <th className="py-2.5 px-3">USER</th>
+                      <th className="py-2.5 px-3">PLAN & AMOUNT</th>
+                      <th className="py-2.5 px-3">12-DIGIT UTR / SENDER UPI</th>
+                      <th className="py-2.5 px-3">STATUS</th>
+                      <th className="py-2.5 px-3 text-right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {adminPayments.map((p) => (
+                      <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">
+                          {new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">{p.userName || 'User'}</div>
+                          <div className="text-[11px] font-mono text-slate-500">{p.userEmail}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">
+                            {p.plan} PLAN
+                          </div>
+                          <div className="text-[11px] font-mono text-emerald-600 font-bold">
+                            ₹{p.amountINR} INR
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">
+                            {p.utr}
+                          </div>
+                          {p.senderUpiId && (
+                            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                              From: {p.senderUpiId}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                            p.status === 'APPROVED'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : p.status === 'REJECTED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {p.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'APPROVED')}
+                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Approve payment & activate plan"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'REJECTED')}
+                                className="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Reject payment"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] font-mono text-slate-400">
+                              Reviewed {p.reviewedAt ? new Date(p.reviewedAt).toLocaleDateString() : ''}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
         {/* TAB 3: GLOBAL WEBSITES & PROJECTS MANAGER */}
         {/* ========================================================= */}
         {activeTab === 'projects' && (
@@ -1258,6 +1535,126 @@ export const AdminPage: React.FC = () => {
         )}
 
         {/* ========================================================= */}
+        {/* TAB 8: MANUAL UPI BILLING & UTR AUDIT */}
+        {/* ========================================================= */}
+        {activeTab === 'payments' && (
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm space-y-4 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span>Manual UPI Payments & UTR Audit Log</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review submitted 12-digit bank UTR numbers. Approving activates the plan for 30 days immediately.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                  {adminPayments.filter(p => p.status === 'PENDING').length} Pending Review
+                </span>
+                <button
+                  onClick={() => fetchAllData()}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+            </div>
+
+            {adminPayments.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-xs">
+                No UPI payments submitted yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/70">
+                      <th className="py-2.5 px-3">DATE</th>
+                      <th className="py-2.5 px-3">USER</th>
+                      <th className="py-2.5 px-3">PLAN & AMOUNT</th>
+                      <th className="py-2.5 px-3">12-DIGIT UTR / SENDER UPI</th>
+                      <th className="py-2.5 px-3">STATUS</th>
+                      <th className="py-2.5 px-3 text-right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {adminPayments.map((p) => (
+                      <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">
+                          {new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">{p.userName || 'User'}</div>
+                          <div className="text-[11px] font-mono text-slate-500">{p.userEmail}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">
+                            {p.plan} PLAN
+                          </div>
+                          <div className="text-[11px] font-mono text-emerald-600 font-bold">
+                            ₹{p.amountINR} INR
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">
+                            {p.utr}
+                          </div>
+                          {p.senderUpiId && (
+                            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                              From: {p.senderUpiId}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                            p.status === 'APPROVED'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : p.status === 'REJECTED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {p.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'APPROVED')}
+                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Approve payment & activate plan"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'REJECTED')}
+                                className="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Reject payment"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] font-mono text-slate-400">
+                              Reviewed {p.reviewedAt ? new Date(p.reviewedAt).toLocaleDateString() : ''}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
         {/* TAB 4: USER ACCOUNTS MANAGER */}
         {/* ========================================================= */}
         {activeTab === 'users' && (
@@ -1294,7 +1691,12 @@ export const AdminPage: React.FC = () => {
                   {filteredUsers.map((u) => (
                     <tr key={u._id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3 px-3">
-                        <div className="font-bold text-slate-900">{u.name}</div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="font-bold text-slate-900">{u.name}</span>
+                          {u.isBanned && (
+                            <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold">BANNED</span>
+                          )}
+                        </div>
                         <span className="text-[11px] font-mono text-slate-500">{u.email}</span>
                       </td>
                       <td className="py-3 px-3">
@@ -1333,6 +1735,26 @@ export const AdminPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-3 text-right">
                         <div className="flex items-center justify-end space-x-2">
+                          {u.isBanned ? (
+                            <button
+                              onClick={() => handleUnbanUser(u._id, u.email)}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                              title="Unban User Account"
+                            >
+                              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                              <span>Unban</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleBanUser(u._id, u.email)}
+                              className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                              title="Ban User Account & Suspend Sites"
+                            >
+                              <Ban className="w-3 h-3 text-rose-600" />
+                              <span>Ban</span>
+                            </button>
+                          )}
+
                           <button
                             onClick={() => {
                               setResetPasswordModal({ userId: u._id, email: u.email });
@@ -1360,6 +1782,126 @@ export const AdminPage: React.FC = () => {
               </table>
             </div>
 
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 8: MANUAL UPI BILLING & UTR AUDIT */}
+        {/* ========================================================= */}
+        {activeTab === 'payments' && (
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm space-y-4 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span>Manual UPI Payments & UTR Audit Log</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review submitted 12-digit bank UTR numbers. Approving activates the plan for 30 days immediately.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                  {adminPayments.filter(p => p.status === 'PENDING').length} Pending Review
+                </span>
+                <button
+                  onClick={() => fetchAllData()}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+            </div>
+
+            {adminPayments.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-xs">
+                No UPI payments submitted yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/70">
+                      <th className="py-2.5 px-3">DATE</th>
+                      <th className="py-2.5 px-3">USER</th>
+                      <th className="py-2.5 px-3">PLAN & AMOUNT</th>
+                      <th className="py-2.5 px-3">12-DIGIT UTR / SENDER UPI</th>
+                      <th className="py-2.5 px-3">STATUS</th>
+                      <th className="py-2.5 px-3 text-right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {adminPayments.map((p) => (
+                      <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">
+                          {new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">{p.userName || 'User'}</div>
+                          <div className="text-[11px] font-mono text-slate-500">{p.userEmail}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">
+                            {p.plan} PLAN
+                          </div>
+                          <div className="text-[11px] font-mono text-emerald-600 font-bold">
+                            ₹{p.amountINR} INR
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">
+                            {p.utr}
+                          </div>
+                          {p.senderUpiId && (
+                            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                              From: {p.senderUpiId}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                            p.status === 'APPROVED'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : p.status === 'REJECTED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {p.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'APPROVED')}
+                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Approve payment & activate plan"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'REJECTED')}
+                                className="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Reject payment"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] font-mono text-slate-400">
+                              Reviewed {p.reviewedAt ? new Date(p.reviewedAt).toLocaleDateString() : ''}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -1452,6 +1994,126 @@ export const AdminPage: React.FC = () => {
         )}
 
         {/* ========================================================= */}
+        {/* TAB 8: MANUAL UPI BILLING & UTR AUDIT */}
+        {/* ========================================================= */}
+        {activeTab === 'payments' && (
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm space-y-4 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span>Manual UPI Payments & UTR Audit Log</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review submitted 12-digit bank UTR numbers. Approving activates the plan for 30 days immediately.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                  {adminPayments.filter(p => p.status === 'PENDING').length} Pending Review
+                </span>
+                <button
+                  onClick={() => fetchAllData()}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+            </div>
+
+            {adminPayments.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-xs">
+                No UPI payments submitted yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/70">
+                      <th className="py-2.5 px-3">DATE</th>
+                      <th className="py-2.5 px-3">USER</th>
+                      <th className="py-2.5 px-3">PLAN & AMOUNT</th>
+                      <th className="py-2.5 px-3">12-DIGIT UTR / SENDER UPI</th>
+                      <th className="py-2.5 px-3">STATUS</th>
+                      <th className="py-2.5 px-3 text-right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {adminPayments.map((p) => (
+                      <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">
+                          {new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">{p.userName || 'User'}</div>
+                          <div className="text-[11px] font-mono text-slate-500">{p.userEmail}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">
+                            {p.plan} PLAN
+                          </div>
+                          <div className="text-[11px] font-mono text-emerald-600 font-bold">
+                            ₹{p.amountINR} INR
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">
+                            {p.utr}
+                          </div>
+                          {p.senderUpiId && (
+                            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                              From: {p.senderUpiId}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                            p.status === 'APPROVED'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : p.status === 'REJECTED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {p.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'APPROVED')}
+                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Approve payment & activate plan"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'REJECTED')}
+                                className="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Reject payment"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] font-mono text-slate-400">
+                              Reviewed {p.reviewedAt ? new Date(p.reviewedAt).toLocaleDateString() : ''}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
         {/* TAB 6: SECURITY AUDIT LOGS */}
         {/* ========================================================= */}
         {activeTab === 'security' && (
@@ -1516,6 +2178,126 @@ export const AdminPage: React.FC = () => {
               </table>
             </div>
 
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 8: MANUAL UPI BILLING & UTR AUDIT */}
+        {/* ========================================================= */}
+        {activeTab === 'payments' && (
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm space-y-4 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span>Manual UPI Payments & UTR Audit Log</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review submitted 12-digit bank UTR numbers. Approving activates the plan for 30 days immediately.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                  {adminPayments.filter(p => p.status === 'PENDING').length} Pending Review
+                </span>
+                <button
+                  onClick={() => fetchAllData()}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+            </div>
+
+            {adminPayments.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-xs">
+                No UPI payments submitted yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/70">
+                      <th className="py-2.5 px-3">DATE</th>
+                      <th className="py-2.5 px-3">USER</th>
+                      <th className="py-2.5 px-3">PLAN & AMOUNT</th>
+                      <th className="py-2.5 px-3">12-DIGIT UTR / SENDER UPI</th>
+                      <th className="py-2.5 px-3">STATUS</th>
+                      <th className="py-2.5 px-3 text-right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {adminPayments.map((p) => (
+                      <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">
+                          {new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">{p.userName || 'User'}</div>
+                          <div className="text-[11px] font-mono text-slate-500">{p.userEmail}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">
+                            {p.plan} PLAN
+                          </div>
+                          <div className="text-[11px] font-mono text-emerald-600 font-bold">
+                            ₹{p.amountINR} INR
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">
+                            {p.utr}
+                          </div>
+                          {p.senderUpiId && (
+                            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                              From: {p.senderUpiId}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                            p.status === 'APPROVED'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : p.status === 'REJECTED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {p.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'APPROVED')}
+                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Approve payment & activate plan"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'REJECTED')}
+                                className="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Reject payment"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] font-mono text-slate-400">
+                              Reviewed {p.reviewedAt ? new Date(p.reviewedAt).toLocaleDateString() : ''}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -1758,6 +2540,246 @@ export const AdminPage: React.FC = () => {
               })}
             </div>
 
+          </div>
+        )}
+
+              {/* ========================================================= */}
+        {/* TAB 8: MANUAL UPI BILLING & UTR AUDIT */}
+        {/* ========================================================= */}
+        {activeTab === 'payments' && (
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm space-y-4 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span>Manual UPI Payments & UTR Audit Log</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review submitted 12-digit bank UTR numbers. Approving activates the plan for 30 days immediately.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                  {adminPayments.filter(p => p.status === 'PENDING').length} Pending Review
+                </span>
+                <button
+                  onClick={() => fetchAllData()}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+            </div>
+
+            {adminPayments.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-xs">
+                No UPI payments submitted yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/70">
+                      <th className="py-2.5 px-3">DATE</th>
+                      <th className="py-2.5 px-3">USER</th>
+                      <th className="py-2.5 px-3">PLAN & AMOUNT</th>
+                      <th className="py-2.5 px-3">12-DIGIT UTR / SENDER UPI</th>
+                      <th className="py-2.5 px-3">STATUS</th>
+                      <th className="py-2.5 px-3 text-right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {adminPayments.map((p) => (
+                      <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">
+                          {new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">{p.userName || 'User'}</div>
+                          <div className="text-[11px] font-mono text-slate-500">{p.userEmail}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">
+                            {p.plan} PLAN
+                          </div>
+                          <div className="text-[11px] font-mono text-emerald-600 font-bold">
+                            ₹{p.amountINR} INR
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">
+                            {p.utr}
+                          </div>
+                          {p.senderUpiId && (
+                            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                              From: {p.senderUpiId}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                            p.status === 'APPROVED'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : p.status === 'REJECTED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {p.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'APPROVED')}
+                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Approve payment & activate plan"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'REJECTED')}
+                                className="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Reject payment"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] font-mono text-slate-400">
+                              Reviewed {p.reviewedAt ? new Date(p.reviewedAt).toLocaleDateString() : ''}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 8: MANUAL UPI BILLING & UTR AUDIT */}
+        {/* ========================================================= */}
+        {activeTab === 'payments' && (
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm space-y-4 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span>Manual UPI Payments & UTR Audit Log</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Review submitted 12-digit bank UTR numbers. Approving activates the plan for 30 days immediately.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                  {adminPayments.filter(p => p.status === 'PENDING').length} Pending Review
+                </span>
+                <button
+                  onClick={() => fetchAllData()}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+            </div>
+
+            {adminPayments.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 text-xs">
+                No UPI payments submitted yet.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 font-mono bg-slate-50/70">
+                      <th className="py-2.5 px-3">DATE</th>
+                      <th className="py-2.5 px-3">USER</th>
+                      <th className="py-2.5 px-3">PLAN & AMOUNT</th>
+                      <th className="py-2.5 px-3">12-DIGIT UTR / SENDER UPI</th>
+                      <th className="py-2.5 px-3">STATUS</th>
+                      <th className="py-2.5 px-3 text-right">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {adminPayments.map((p) => (
+                      <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-3 font-mono text-slate-500 whitespace-nowrap">
+                          {new Date(p.createdAt).toLocaleDateString()} {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">{p.userName || 'User'}</div>
+                          <div className="text-[11px] font-mono text-slate-500">{p.userEmail}</div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900">
+                            {p.plan} PLAN
+                          </div>
+                          <div className="text-[11px] font-mono text-emerald-600 font-bold">
+                            ₹{p.amountINR} INR
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">
+                            {p.utr}
+                          </div>
+                          {p.senderUpiId && (
+                            <div className="text-[11px] font-mono text-slate-500 mt-0.5">
+                              From: {p.senderUpiId}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${
+                            p.status === 'APPROVED'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : p.status === 'REJECTED'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          {p.status === 'PENDING' ? (
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'APPROVED')}
+                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Approve payment & activate plan"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => handleReviewPayment(p._id, 'REJECTED')}
+                                className="px-3 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                                title="Reject payment"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-[11px] font-mono text-slate-400">
+                              Reviewed {p.reviewedAt ? new Date(p.reviewedAt).toLocaleDateString() : ''}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

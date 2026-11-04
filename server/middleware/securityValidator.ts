@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import AdmZip from 'adm-zip';
-import { createExtractorFromData } from 'node-unrar-js';
 import { IUser } from '../database/store';
 import { MalwareScanner } from '../services/malwareScanner';
 
@@ -35,7 +34,19 @@ export class SecurityValidator {
     }
 
     const ext = path.extname(archiveFilePath).toLowerCase();
-    const archiveFormat: 'ZIP' | 'RAR' = ext === '.rar' ? 'RAR' : 'ZIP';
+    if (ext !== '.zip') {
+      return {
+        valid: false,
+        error: 'Unsupported archive format. DeployHub v2 operates exclusively on standard .zip archives (RAR/TAR are not supported).',
+        totalSize: 0,
+        fileCount: 0,
+        hasIndexHtml: false,
+        hasIndexPhp: false,
+        hasPackageJson: false,
+        archiveFormat: 'ZIP',
+      };
+    }
+    const archiveFormat: 'ZIP' = 'ZIP';
 
     // 0. Antivirus, Corruption & Webshell Heuristic Inspection
     const malwareScan = await MalwareScanner.scanFile(archiveFilePath);
@@ -52,8 +63,15 @@ export class SecurityValidator {
       };
     }
 
-    const maxFiles = 10000;
-    const forbiddenExtensions = ['.exe', '.bat', '.cmd', '.msi', '.vbs', '.scr', '.pif', '.dll', '.so', '.dylib'];
+    // Section 5.1 Rules: Max 5,000 files, allowlist verification
+    const maxFiles = 5000;
+    const maxSingleFileBytes = 25 * 1024 * 1024; // 25 MB max single file
+    const allowedExtensions = new Set([
+      '.html', '.htm', '.css', '.js', '.mjs', '.json', '.map', '.txt', '.xml',
+      '.svg', '.ico', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif',
+      '.woff', '.woff2', '.ttf', '.otf', '.eot', '.mp3', '.mp4', '.webm',
+      '.pdf', '.md', '.webmanifest', '.php', '.inc'
+    ]);
 
     let totalUncompressedSize = 0;
     let fileCount = 0;
@@ -61,95 +79,6 @@ export class SecurityValidator {
     let hasIndexPhp = false;
     let hasPackageJson = false;
 
-    if (ext === '.rar') {
-      try {
-        const fileBuf = fs.readFileSync(archiveFilePath);
-        const data = Uint8Array.from(fileBuf).buffer;
-        const extractor = await createExtractorFromData({ data });
-        const list = extractor.getFileList();
-        const headers = [...list.fileHeaders];
-
-        if (headers.length > maxFiles) {
-          return {
-            valid: false,
-            error: `Archive contains too many files (${headers.length}). Maximum permitted is ${maxFiles}.`,
-            totalSize: 0,
-            fileCount: headers.length,
-            hasIndexHtml: false,
-            hasIndexPhp: false,
-            hasPackageJson: false,
-            archiveFormat,
-          };
-        }
-
-        for (const header of headers) {
-          const entryName = header.name;
-          const cleanName = entryName.replace(/^[/\\]+/, '');
-
-          // Path Traversal Guard
-          if (entryName.includes('../') || entryName.includes('..\\') || cleanName.includes('../') || cleanName.includes('..\\')) {
-            return {
-              valid: false,
-              error: `Security Violation: Directory traversal sequence detected in file '${entryName}'`,
-              totalSize: 0,
-              fileCount,
-              hasIndexHtml,
-              hasIndexPhp,
-              hasPackageJson,
-              archiveFormat,
-            };
-          }
-
-          // Drive letter guard
-          if (/^[a-zA-Z]:[/\\]/.test(cleanName)) {
-            return {
-              valid: false,
-              error: `Security Violation: Absolute drive path detected in archive '${entryName}'`,
-              totalSize: 0,
-              fileCount,
-              hasIndexHtml,
-              hasIndexPhp,
-              hasPackageJson,
-              archiveFormat,
-            };
-          }
-
-          const fileExt = path.extname(entryName).toLowerCase();
-          if (forbiddenExtensions.includes(fileExt)) {
-            return {
-              valid: false,
-              error: `Security Violation: Disallowed executable file '${entryName}' detected in archive`,
-              totalSize: 0,
-              fileCount,
-              hasIndexHtml,
-              hasIndexPhp,
-              hasPackageJson,
-              archiveFormat,
-            };
-          }
-
-          if (!header.flags.directory) {
-            fileCount++;
-            totalUncompressedSize += header.unpSize || 0;
-            const baseName = path.basename(entryName).toLowerCase();
-            if (baseName === 'index.html' || baseName === 'index.htm') hasIndexHtml = true;
-            if (baseName === 'index.php') hasIndexPhp = true;
-            if (baseName === 'package.json') hasPackageJson = true;
-          }
-        }
-      } catch (err: any) {
-        return {
-          valid: false,
-          error: `Invalid or corrupt RAR archive: ${err.message}`,
-          totalSize: 0,
-          fileCount: 0,
-          hasIndexHtml: false,
-          hasIndexPhp: false,
-          hasPackageJson: false,
-          archiveFormat,
-        };
-      }
-    } else {
       // Standard ZIP handling via AdmZip
       let zip: AdmZip;
       try {
@@ -176,6 +105,36 @@ export class SecurityValidator {
         const entryName = entry.entryName;
         const cleanName = entryName.replace(/^[/\\]+/, '');
 
+        // Null byte injection guard
+        if (entryName.includes('\0') || cleanName.includes('\0')) {
+          return {
+            valid: false,
+            error: `Security Violation: Null byte detected in file '${entryName}'`,
+            totalSize: 0,
+            fileCount,
+            hasIndexHtml,
+            hasIndexPhp,
+            hasPackageJson,
+            archiveFormat,
+          };
+        }
+
+        // Unix file attribute check for symbolic link: S_IFLNK is 0120000 (0xA000 in top 16 bits)
+        const mode = (entry.header as any)?.attr ? ((entry.header as any).attr >>> 16) : 0;
+        const isSymlink = (mode & 0o170000) === 0o120000;
+        if (isSymlink) {
+          return {
+            valid: false,
+            error: `Security Violation: Symbolic link detected in archive entry '${entryName}'. Symlinks and hardlinks are strictly prohibited.`,
+            totalSize: 0,
+            fileCount,
+            hasIndexHtml,
+            hasIndexPhp,
+            hasPackageJson,
+            archiveFormat,
+          };
+        }
+
         if (entryName.includes('../') || entryName.includes('..\\') || cleanName.includes('../') || cleanName.includes('..\\')) {
           return {
             valid: false,
@@ -189,7 +148,7 @@ export class SecurityValidator {
           };
         }
 
-        if (/^[a-zA-Z]:[/\\]/.test(cleanName)) {
+        if (/^[a-zA-Z]:[/\\]/.test(cleanName) || path.isAbsolute(cleanName)) {
           return {
             valid: false,
             error: `Security Violation: Absolute drive path detected in archive '${entryName}'`,
@@ -203,10 +162,27 @@ export class SecurityValidator {
         }
 
         const fileExt = path.extname(entryName).toLowerCase();
-        if (forbiddenExtensions.includes(fileExt)) {
+        const baseName = path.basename(entryName).toLowerCase();
+
+        // Dotfile guard (Section 5.1): reject .env, .git, .htaccess, etc.
+        if (baseName.startsWith('.') || cleanName.startsWith('.')) {
           return {
             valid: false,
-            error: `Security Violation: Disallowed executable file '${entryName}' detected in archive`,
+            error: `Security Violation: Hidden dotfile or configuration '${entryName}' detected in archive. Dotfiles are prohibited.`,
+            totalSize: 0,
+            fileCount,
+            hasIndexHtml,
+            hasIndexPhp,
+            hasPackageJson,
+            archiveFormat,
+          };
+        }
+
+        // Section 5.1 Strict Extension Allowlist verification
+        if (!entry.isDirectory && fileExt && !allowedExtensions.has(fileExt)) {
+          return {
+            valid: false,
+            error: `Security Violation: File extension '${fileExt}' in '${entryName}' is not permitted under the platform allowlist.`,
             totalSize: 0,
             fileCount,
             hasIndexHtml,
@@ -217,16 +193,47 @@ export class SecurityValidator {
         }
 
         if (!entry.isDirectory) {
+          // Single file limit check (max 25MB)
+          if (entry.header.size > maxSingleFileBytes) {
+            return {
+              valid: false,
+              error: `Security Violation: File '${entryName}' (${(entry.header.size / (1024 * 1024)).toFixed(1)}MB) exceeds maximum single-file limit of 25MB.`,
+              totalSize: 0,
+              fileCount,
+              hasIndexHtml,
+              hasIndexPhp,
+              hasPackageJson,
+              archiveFormat,
+            };
+          }
+
           fileCount++;
           totalUncompressedSize += entry.header.size;
 
-          const baseName = path.basename(entryName).toLowerCase();
           if (baseName === 'index.html' || baseName === 'index.htm') hasIndexHtml = true;
           if (baseName === 'index.php') hasIndexPhp = true;
           if (baseName === 'package.json') hasPackageJson = true;
         }
       }
-    }
+
+    // Zip Bomb Defense: Check compression ratio (max 100:1)
+    try {
+      const archiveStats = fs.statSync(archiveFilePath);
+      const compressedSize = Math.max(archiveStats.size, 1);
+      const compressionRatio = totalUncompressedSize / compressedSize;
+      if (compressionRatio > 100) {
+        return {
+          valid: false,
+          error: `Security Violation: Archive compression ratio exceeds 100:1 (${Math.round(compressionRatio)}:1). Upload rejected as potential decompression bomb.`,
+          totalSize: totalUncompressedSize,
+          fileCount,
+          hasIndexHtml,
+          hasIndexPhp,
+          hasPackageJson,
+          archiveFormat,
+        };
+      }
+    } catch {}
 
     if (totalUncompressedSize > maxAllowedUncompressedBytes) {
       return {
@@ -327,43 +334,6 @@ export class SecurityValidator {
     const ext = path.extname(archiveFilePath).toLowerCase();
     let extractedCount = 0;
 
-    if (ext === '.rar') {
-      const fileBuf = fs.readFileSync(archiveFilePath);
-      const data = Uint8Array.from(fileBuf).buffer;
-      const extractor = await createExtractorFromData({ data });
-      const extracted = extractor.extract();
-      const files = [...extracted.files];
-
-      for (const item of files) {
-        const header = item.fileHeader;
-        if (header.name.startsWith('__MACOSX') || header.name.includes('/__MACOSX') || header.name.endsWith('.DS_Store')) {
-          continue;
-        }
-
-        const cleanEntryName = header.name.replace(/^[/\\]+/, '');
-        const safeEntryPath = path.normalize(cleanEntryName).replace(/^(\.\.[/\\])+/, '');
-        const fullTarget = path.resolve(resolvedDest, safeEntryPath);
-
-        if (!fullTarget.startsWith(resolvedDest + path.sep) && fullTarget !== resolvedDest) {
-          throw new Error(`Path traversal attempt blocked in RAR: ${header.name}`);
-        }
-
-        if (header.flags.directory) {
-          if (!fs.existsSync(fullTarget)) {
-            fs.mkdirSync(fullTarget, { recursive: true });
-          }
-        } else {
-          const parent = path.dirname(fullTarget);
-          if (!fs.existsSync(parent)) {
-            fs.mkdirSync(parent, { recursive: true });
-          }
-          if (item.extraction) {
-            fs.writeFileSync(fullTarget, Buffer.from(item.extraction));
-            extractedCount++;
-          }
-        }
-      }
-    } else {
       // ZIP extraction
       const zip = new AdmZip(archiveFilePath);
       const entries = zip.getEntries();
@@ -392,6 +362,31 @@ export class SecurityValidator {
           extractedCount++;
         }
       }
+
+    // Post-Extraction Defense: verify realpath of every file stays strictly inside destDir
+    const verifyDirectoryJail = (dir: string) => {
+      const items = fs.readdirSync(dir, { withFileTypes: true });
+      for (const item of items) {
+        const fullItemPath = path.join(dir, item.name);
+        if (item.isSymbolicLink()) {
+          throw new Error(`Security Violation: Extracted entry '${item.name}' is a symbolic link. Symlinks are strictly prohibited.`);
+        }
+        const real = fs.realpathSync(fullItemPath);
+        if (real !== resolvedDest && !real.startsWith(resolvedDest + path.sep)) {
+          throw new Error(`Security Violation: File '${item.name}' resolves outside target jail directory.`);
+        }
+        if (item.isDirectory()) {
+          verifyDirectoryJail(fullItemPath);
+        }
+      }
+    };
+
+    try {
+      verifyDirectoryJail(resolvedDest);
+    } catch (err) {
+      // Abort & delete destination directory immediately on jail escape violation
+      try { fs.rmSync(resolvedDest, { recursive: true, force: true }); } catch {}
+      throw err;
     }
 
     return { extractedCount };

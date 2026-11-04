@@ -1,0 +1,40 @@
+# ==============================================================================
+# DeployHub Systemd Service Unit
+# Runs Node.js API server as unprivileged dedicated user with security sandboxing
+# Location: /etc/systemd/system/deployhub.service
+# ==============================================================================
+
+[Unit]
+Description=DeployHub Cloud Application Platform
+After=network.target
+
+[Service]
+Type=simple
+User=deployhub
+Group=deployhub
+WorkingDirectory=/var/www/deployhub
+ExecStart=/usr/bin/node dist/server/index.js
+Restart=always
+RestartSec=5s
+
+# Environment configuration
+Environment=NODE_ENV=production
+Environment=PORT=5000
+Environment=STORAGE_DIR=/var/www/deployhub/storage
+EnvironmentFile=-/var/www/deployhub/.env
+
+# Linux Security Hardening & Sandboxing
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/www/deployhub/storage /var/log/deployhub
+
+# Resource limits (prevent runaway memory usage)
+LimitNOFILE=65535
+MemoryHigh=1800M
+MemoryMax=2048M
+
+[Install]
+WantedBy=multi-user.target
+

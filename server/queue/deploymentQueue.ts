@@ -48,9 +48,8 @@ class DeploymentEngine {
         await this.executeDeploymentPipeline(job.data);
       }, { connection: this.redisClient, concurrency: 3 });
 
-      console.log('[DeployHub Queue] Redis + BullMQ Queue engine initialized with concurrency 3');
+      // Redis queue initialized
     } catch (err: any) {
-      console.log('[DeployHub Queue] Redis not running locally. Operating with isolated in-memory Queue engine.');
       this.redisClient = null;
       this.bullQueue = null;
     }
@@ -209,15 +208,37 @@ class DeploymentEngine {
         this.addLog(deployment, 'Verified entrypoint: Valid index file confirmed.', 'BUILD', 'success');
       }
 
-      // 4. Promote verified site files to live edge directory
+      // 4. Section 5.2: Save immutable release to /storage/releases/{slug}/{version}
+      const releaseDir = path.join(config.storageDir, 'releases', project.slug, `v${deployment.version}`);
+      if (fs.existsSync(releaseDir)) {
+        fs.rmSync(releaseDir, { recursive: true, force: true });
+      }
+      fs.mkdirSync(path.dirname(releaseDir), { recursive: true });
+      fs.cpSync(effectiveSiteRoot, releaseDir, { recursive: true });
+      this.addLog(deployment, `Stored immutable release v${deployment.version} in releases repository.`, 'RELEASE', 'info');
+
+      // Prune releases older than the last 5 to conserve disk space
+      try {
+        const releasesParent = path.join(config.storageDir, 'releases', project.slug);
+        const existingReleases = fs.readdirSync(releasesParent);
+        if (existingReleases.length > 5) {
+          const sorted = existingReleases.sort();
+          const toRemove = sorted.slice(0, existingReleases.length - 5);
+          for (const oldRel of toRemove) {
+            fs.rmSync(path.join(releasesParent, oldRel), { recursive: true, force: true });
+          }
+        }
+      } catch {}
+
+      // 5. Promote verified site files to live edge directory (/storage/sites/{slug})
       const liveSiteDir = path.join(config.storageDir, 'sites', project.slug);
       if (fs.existsSync(liveSiteDir)) {
         fs.rmSync(liveSiteDir, { recursive: true, force: true });
       }
-      fs.cpSync(effectiveSiteRoot, liveSiteDir, { recursive: true });
-      this.addLog(deployment, 'Promoted files to edge serving directory successfully.', 'EDGE', 'success');
+      fs.cpSync(releaseDir, liveSiteDir, { recursive: true });
+      this.addLog(deployment, 'Atomic edge deployment completed successfully.', 'EDGE', 'success');
 
-      // 4. Update Deployment & Project Status to LIVE
+      // 6. Update Deployment & Project Status to LIVE
       deployment.status = 'DEPLOYING';
       const targetDomain = project.assignedSubdomain ? `${project.assignedSubdomain}.${config.platformDomain}` : `${project.slug}.${config.platformDomain}`;
       this.addLog(deployment, `Registering Edge routing for ${targetDomain}...`, 'ROUTING', 'info');
@@ -228,6 +249,8 @@ class DeploymentEngine {
 
       project.status = 'ACTIVE';
       project.currentDeploymentId = deployment._id;
+      project.currentVersion = deployment.version;
+      project.lastActivityAt = new Date().toISOString();
       project.storageUsed += scanResult.totalSize;
       user.storageUsed += scanResult.totalSize;
 

@@ -75,10 +75,8 @@ export async function syncOnStartup(): Promise<void> {
   try {
     const remoteUserCount = await db.collection('users').countDocuments();
     if (remoteUserCount === 0 && dbStore.users.length > 0) {
-      console.log('[DeployHub MongoDB] Remote Atlas database is empty. Pushing initial local state...');
       await transferDataToMongo();
     } else if (remoteUserCount > 0) {
-      console.log(`[DeployHub MongoDB] Syncing ${remoteUserCount} users from MongoDB Atlas into active runtime...`);
       const remoteUsers = (await db.collection('users').find({}).toArray()) as any[];
       const remoteProjects = (await db.collection('projects').find({}).toArray()) as any[];
       const remoteDeployments = (await db.collection('deployments').find({}).toArray()) as any[];
@@ -117,7 +115,7 @@ export async function syncOnStartup(): Promise<void> {
           { unique: true, sparse: true, name: 'uniq_custom_domain' }
         );
       } catch (idxErr: any) {
-        console.log('[DeployHub MongoDB Indexes] Compound domain unique indexes check completed');
+        // Indexes already created
       }
     }
   } catch (err: any) {

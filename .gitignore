@@ -28,6 +28,8 @@ storage/scratch/*
 !storage/scratch/.gitkeep
 storage/data/*
 !storage/data/.gitkeep
+storage/backups/*
+!storage/backups/.gitkeep
 scratch/
 
 
@@ -58,3 +60,8 @@ lerna-debug.log*
 *.sw?
 .DS_Store
 Thumbs.db
+
+# Documentation markdown files: keep locally, exclude from GitHub (only README.md and SECURITY.md are published)
+*.md
+!README.md
+!SECURITY.md

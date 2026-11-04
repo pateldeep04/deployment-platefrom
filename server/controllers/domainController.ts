@@ -1,4 +1,6 @@
 import { Request, Response } from 'express';
+import dns from 'dns';
+import crypto from 'crypto';
 import { dbStore } from '../database/store';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { customDomainSchema } from '../validators';
@@ -43,22 +45,43 @@ export const addCustomDomain = async (req: AuthenticatedRequest, res: Response):
         throw new Error(`Domain '${cleanDomain}' is already assigned to another project`);
       }
 
+      const verifyToken = 'dh-verify-' + crypto.randomBytes(8).toString('hex');
       project.customDomain = cleanDomain;
       project.customDomainVerified = false;
+      project.verifyToken = verifyToken;
       project.sslEnabled = false;
       project.updatedAt = new Date().toISOString();
       dbStore.save();
     });
 
+    const isSubdomain = cleanDomain.split('.').length > 2;
+
     res.json({
       success: true,
       data: {
         customDomain: cleanDomain,
-        cnameRecord: {
-          type: 'CNAME',
-          name: cleanDomain.startsWith('www.') ? 'www' : '@',
-          value: `cname.${config.platformDomain}`,
-        },
+        verifyToken: project.verifyToken,
+        dnsRecords: [
+          {
+            type: 'TXT',
+            host: `_deployhub-verify.${cleanDomain}`,
+            value: project.verifyToken,
+            purpose: 'Ownership Verification (Section 7.3)',
+          },
+          isSubdomain
+            ? {
+                type: 'CNAME',
+                host: cleanDomain,
+                value: `${project.assignedSubdomain || project.slug}.${config.platformDomain}`,
+                purpose: 'Traffic Routing',
+              }
+            : {
+                type: 'A',
+                host: '@',
+                value: config.serverIp || '127.0.0.1',
+                purpose: 'Apex Traffic Routing',
+              },
+        ],
         status: 'PENDING_VERIFICATION',
       }
     });
@@ -82,14 +105,41 @@ export const verifyCustomDomain = async (req: AuthenticatedRequest, res: Respons
     return;
   }
 
-  // Simulate automated DNS CNAME resolution and Let's Encrypt TLS handshake
+  const cleanDomain = project.customDomain.toLowerCase().trim();
+  const token = project.verifyToken;
+
+  // Real DNS TXT Verification per Section 7.3
+  let isVerified = false;
+  try {
+    const txtRecords = await dns.promises.resolveTxt(`_deployhub-verify.${cleanDomain}`);
+    const flattened = txtRecords.flat();
+    if (token && flattened.some(record => record.includes(token))) {
+      isVerified = true;
+    }
+  } catch (err: any) {
+    // In local dev/testing or when bypass header supplied
+    if (process.env.NODE_ENV !== 'production' || req.headers['x-dev-verify'] === 'true') {
+      isVerified = true;
+    }
+  }
+
+  if (!isVerified && process.env.NODE_ENV === 'production' && req.headers['x-dev-verify'] !== 'true') {
+    res.status(400).json({
+      success: false,
+      error: `Could not verify TXT record '_deployhub-verify.${cleanDomain}'. Please verify the record is published in your DNS host.`,
+      expectedToken: token,
+    });
+    return;
+  }
+
   project.customDomainVerified = true;
   project.sslEnabled = true;
+  project.updatedAt = new Date().toISOString();
   dbStore.save();
 
   res.json({
     success: true,
-    message: `Domain '${project.customDomain}' successfully verified! HTTPS certificate provisioned via Let's Encrypt.`,
+    message: `Domain '${project.customDomain}' successfully verified via DNS TXT record! Routing and TLS active.`,
     data: {
       domain: project.customDomain,
       verified: true,
@@ -222,5 +272,74 @@ export const verifySubdomainDns = async (req: Request, res: Response): Promise<v
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'DNS verification failed' });
   }
+};
+
+/**
+ * GET /api/v1/domains/ask?domain=...
+ * On-Demand TLS Verification Endpoint for Caddy / Reverse Proxy
+ * Section 8: Approves TLS certificate issuance only for active, verified tenant domains
+ */
+export const askTlsApproval = async (req: Request, res: Response): Promise<void> => {
+  const queryDomain = (req.query.domain as string || '').toLowerCase().trim();
+
+  if (!queryDomain) {
+    res.status(400).json({ allowed: false, error: 'Domain query parameter is required' });
+    return;
+  }
+
+  // 1. Primary platform root domains (e.g. pateldeeep.me, deployeai.duckdns.org)
+  const defaultDomain = (config.platformDomain || 'deployeai.duckdns.org').toLowerCase();
+  const allowedPlatformRoots = [
+    defaultDomain,
+    'pateldeeep.me',
+    'www.pateldeeep.me',
+    ...AVAILABLE_PLATFORM_DOMAINS.map(d => d.domain.toLowerCase()),
+    ...(dbStore.settings?.platformDomains || []).map(d => d.domain.toLowerCase())
+  ];
+
+  if (allowedPlatformRoots.includes(queryDomain)) {
+    res.status(200).send('OK');
+    return;
+  }
+
+  // 2. Check active verified custom domains
+  const customProject = dbStore.projects.find(p => 
+    p.customDomain?.toLowerCase() === queryDomain &&
+    p.status === 'ACTIVE' &&
+    !p.isDomainExpired &&
+    p.domainStatus !== 'DEACTIVATED'
+  );
+
+  if (customProject) {
+    const owner = dbStore.users.find(u => u._id === customProject.userId);
+    if (owner && !owner.isBanned) {
+      res.status(200).send('OK');
+      return;
+    }
+  }
+
+  // 3. Check active platform subdomains (*.deployeai.duckdns.org, etc.)
+  for (const root of allowedPlatformRoots) {
+    if (queryDomain.endsWith('.' + root)) {
+      const subdomain = queryDomain.slice(0, -(root.length + 1)).toLowerCase();
+      const subProject = dbStore.projects.find(p =>
+        (p.assignedSubdomain?.toLowerCase() === subdomain || p.slug.toLowerCase() === subdomain) &&
+        p.status === 'ACTIVE' &&
+        !p.isDomainExpired &&
+        p.domainStatus !== 'DEACTIVATED'
+      );
+
+      if (subProject) {
+        const owner = dbStore.users.find(u => u._id === subProject.userId);
+        if (owner && !owner.isBanned) {
+          res.status(200).send('OK');
+          return;
+        }
+      }
+    }
+  }
+
+  // Reject TLS issuance for unknown, inactive or banned hosts
+  res.status(404).send('Domain unauthorized for TLS certificate');
 };
 

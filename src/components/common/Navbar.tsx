@@ -28,6 +28,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenNewProject }) => {
     { name: 'Projects', path: '/projects', icon: FolderKanban },
     { name: 'Billing', path: '/billing', icon: CreditCard },
     { name: 'Docs', path: '/docs', icon: BookOpen },
+    { name: 'Help & Abuse', path: '/support/request', icon: ShieldAlert },
     ...(isAdmin ? [{ name: 'Admin & Monitoring', path: '/admin', icon: Activity }] : []),
   ];
 

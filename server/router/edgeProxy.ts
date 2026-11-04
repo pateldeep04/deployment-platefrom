@@ -154,6 +154,43 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
   }
   dbStore.save();
 
+  // Security Check: Tenant Suspended or Banned Guard
+  if (project.status === 'INACTIVE' || projectOwner?.isBanned) {
+    res.status(403).send(`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>403 - Site Suspended | DeployHub</title>
+          <style>
+            body { background: #F8FAFC; color: #0F172A; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+            .card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 40px; max-width: 500px; text-align: center; box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.06); }
+            .icon { font-size: 40px; margin-bottom: 12px; }
+            h1 { font-size: 22px; font-weight: 800; color: #DC2626; margin: 0 0 12px; }
+            p { font-size: 14px; line-height: 1.6; color: #64748B; margin: 0 0 24px; }
+            .btn { display: inline-block; background: #2563EB; color: #FFFFFF; font-size: 13px; font-weight: 600; text-decoration: none; padding: 10px 22px; border-radius: 8px; }
+            .footer { margin-top: 24px; font-size: 11px; color: #94A3B8; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="icon">🛡️</div>
+            <h1>Website Suspended</h1>
+            <p>This hosted project has been temporarily deactivated or suspended in compliance with the DeployHub Security & Abuse Takedown Policy.</p>
+            <a href="/support/request?type=SUPPORT_QUERY" class="btn">Contact Trust & Safety Team &rarr;</a>
+            <div class="footer">DeployHub Cloud Security Enforcement</div>
+          </div>
+        </body>
+      </html>
+    `);
+    return;
+  }
+
+  // Tenant Response Security Headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
   const siteDir = path.join(config.storageDir, 'sites', project.slug);
   if (!fs.existsSync(siteDir)) {
     res.status(404).send(`<h3>Project '${project.name}' has no active build artifact. Please trigger a deployment.</h3>`);
@@ -209,7 +246,14 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
     targetPath = path.join(siteDir, subPath);
   }
 
-  // Security Guard: Prevent Path Traversal Outside Project Site Directory
+  // 1. Dotfile Security Guard: Strictly deny .env, .git, .htaccess, .DS_Store, etc.
+  const pathSegments = subPath.split(/[/\\]/);
+  if (pathSegments.some(seg => seg.startsWith('.'))) {
+    res.status(404).type('text/plain').send('404: Not Found');
+    return;
+  }
+
+  // 2. Security Guard: Prevent Path Traversal Outside Project Site Directory
   const resolvedSiteDir = path.resolve(siteDir);
   const resolvedTarget = path.resolve(targetPath);
   if (resolvedTarget !== resolvedSiteDir && !resolvedTarget.startsWith(resolvedSiteDir + path.sep)) {
@@ -224,21 +268,95 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
     return;
   }
 
+  // 3. Symlink Jail Escape Verification
+  try {
+    const realSiteDir = fs.realpathSync(siteDir);
+    if (fs.existsSync(targetPath)) {
+      const realTarget = fs.realpathSync(targetPath);
+      if (realTarget !== realSiteDir && !realTarget.startsWith(realSiteDir + path.sep)) {
+        res.status(403).type('text/plain').send('403: Forbidden - Symlink target outside site root');
+        return;
+      }
+    }
+  } catch {
+    res.status(404).type('text/plain').send('404: File Not Found');
+    return;
+  }
+
   const filePath = targetPath;
 
-  // 2. PHP Execution & Rendering
+  // 4. PHP Execution & Sandboxing
   if (subPath.endsWith('.php') && fs.existsSync(filePath)) {
+    // If PHP execution is disabled by security policy (Phase 4 isolation requirement)
+    if (!dbStore.settings?.enablePhpExecution) {
+      res.status(403).send(`
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <title>403 - PHP Execution Restricted | DeployHub</title>
+            <style>
+              body { background: #F8FAFC; color: #0F172A; font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+              .card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 36px; max-width: 520px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+              h1 { font-size: 20px; font-weight: 800; color: #B45309; margin: 0 0 10px; }
+              p { font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 16px; }
+              code { background: #F1F5F9; padding: 2px 6px; border-radius: 4px; font-size: 13px; color: #0F172A; }
+              .info { font-size: 12px; color: #94A3B8; margin-top: 20px; border-top: 1px solid #F1F5F9; padding-top: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <h1>PHP Execution Sandboxed</h1>
+              <p>Under <strong>DeployHub Security Policy (v2 - Phase 4)</strong>, tenant PHP execution requires containerization and isolated resource pools.</p>
+              <p>Static websites (HTML, CSS, JavaScript, React, Vite) are fully active and unrestricted. Administrators can enable sandboxed PHP in Mission Control Settings.</p>
+              <div class="info">DeployHub Security Architecture v2 &bull; Tenant Isolation Standard</div>
+            </div>
+          </body>
+        </html>
+      `);
+      return;
+    }
+
     let responded = false;
     try {
-      const phpProcess = spawn('php', [filePath], {
+      // Clean, sanitized CGI environment - NEVER leak platform secrets (...process.env is strictly blocked!)
+      const safeCgiEnv: NodeJS.ProcessEnv = {
+        PATH: process.env.PATH || '',
+        SystemRoot: process.env.SystemRoot || '',
+        COMSPEC: process.env.COMSPEC || '',
+        REQUEST_METHOD: req.method,
+        QUERY_STRING: req.url.split('?')[1] || '',
+        SCRIPT_FILENAME: filePath,
+        REMOTE_ADDR: req.ip || '127.0.0.1',
+        SERVER_SOFTWARE: 'DeployHub-Edge/2.0',
+        GATEWAY_INTERFACE: 'CGI/1.1',
+        SERVER_PROTOCOL: 'HTTP/1.1',
+      };
+
+      const phpArgs = [
+        '-d', 'disable_functions=exec,system,shell_exec,passthru,proc_open,popen,pcntl_exec,curl_multi_exec,parse_ini_file,show_source,dl',
+        '-d', 'allow_url_fopen=Off',
+        '-d', 'allow_url_include=Off',
+        '-d', 'expose_php=Off',
+        '-d', 'memory_limit=64M',
+        '-d', 'max_execution_time=10',
+        '-d', `open_basedir=${siteDir}`,
+        filePath
+      ];
+
+      const phpProcess = spawn('php', phpArgs, {
         cwd: siteDir,
-        env: {
-          ...process.env,
-          REQUEST_METHOD: req.method,
-          QUERY_STRING: req.url.split('?')[1] || '',
-          SCRIPT_FILENAME: filePath,
-        }
+        env: safeCgiEnv,
       });
+
+      // Strict 10-second timeout to kill runaway processes
+      const killTimer = setTimeout(() => {
+        if (!responded) {
+          responded = true;
+          try { phpProcess.kill('SIGKILL'); } catch {}
+          res.status(504).send('<h3>504 Gateway Timeout: PHP execution exceeded maximum allowed 10-second limit.</h3>');
+        }
+      }, 10000);
 
       let output = '';
       let errOutput = '';
@@ -247,6 +365,7 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
       phpProcess.stderr.on('data', (d) => { errOutput += d.toString(); });
 
       phpProcess.on('error', () => {
+        clearTimeout(killTimer);
         if (responded) return;
         responded = true;
         
@@ -254,14 +373,12 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
         const rawContent = fs.readFileSync(filePath, 'utf-8');
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         
-        // Evaluate simple PHP echo expressions, dates, variables, and strip PHP tags cleanly
         let renderedHtml = rawContent
           .replace(/<\?php\s+echo\s+date\(['"]([^'"]+)['"]\);\s*\?>/gi, () => new Date().toISOString())
           .replace(/<\?php\s+echo\s+['"]([^'"]*)['"];?\s*\?>/gi, '$1')
           .replace(/<\?=\s*['"]([^'"]*)['"]\s*;?\s*\?>/gi, '$1')
-          .replace(/<\?php[\s\S]*?\?>/gi, ''); // Cleanly strip unhandled server tags so HTML/CSS renders
+          .replace(/<\?php[\s\S]*?\?>/gi, '');
 
-        // If the file was pure PHP with no HTML tags
         if (!renderedHtml.includes('<html') && !renderedHtml.includes('<body') && !renderedHtml.includes('<div')) {
           renderedHtml = `
             <!DOCTYPE html>
@@ -277,7 +394,7 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
               <body>
                 <div class="container">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <span class="badge">PHP Engine</span>
+                    <span class="badge">PHP Sandbox Engine</span>
                     <span style="color:#94A3B8; font-size:12px;">Script: ${escapeHtml(subPath)}</span>
                   </div>
                   <pre style="color:#A7F3D0; margin:0; line-height:1.5;">${escapeHtml(rawContent)}</pre>
@@ -291,6 +408,7 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
       });
 
       phpProcess.on('close', (code) => {
+        clearTimeout(killTimer);
         if (responded) return;
         responded = true;
         if (code === 0) {
@@ -375,8 +493,14 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
   res.status(404).send(`
     <!DOCTYPE html>
     <html>
-      <head><title>404 - Not Found</title><style>body{background:#0B1120;color:#F8FAFC;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}.box{text-align:center;border:1px solid #1E293B;padding:40px;border-radius:12px;background:#111827;}h1{color:#F43F5E;margin:0 0 10px;}</style></head>
-      <body><div class="box"><h1>404: File Not Found</h1><p>The requested path <code>${escapeHtml(subPath)}</code> was not found in project <code>${escapeHtml(project.name)}</code>.</p></div></body>
+      <head><title>404 - Not Found | DeployHub</title><style>body{background:#0B1120;color:#F8FAFC;font-family:system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}.box{text-align:center;border:1px solid #1E293B;padding:40px;border-radius:12px;background:#111827;}h1{color:#F43F5E;margin:0 0 10px;}.abuse-link{margin-top:24px;font-size:12px;color:#94A3B8;}.abuse-link a{color:#60A5FA;text-decoration:none;}</style></head>
+      <body>
+        <div class="box">
+          <h1>404: File Not Found</h1>
+          <p>The requested path <code>${escapeHtml(subPath)}</code> was not found in project <code>${escapeHtml(project.name)}</code>.</p>
+          <div class="abuse-link">Suspect phishing or abuse on this domain? <a href="/support/request?type=BUG_REPORT">Report Abuse &rarr;</a></div>
+        </div>
+      </body>
     </html>
   `);
 };
