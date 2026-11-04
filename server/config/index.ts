@@ -30,60 +30,56 @@ export const AVAILABLE_PLATFORM_DOMAINS: PlatformDomainOption[] = [
   { domain: 'ai-ml.chickenkiller.com', label: 'ai-ml.chickenkiller.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
 ];
 
-const rawPlatformDomain = process.env.PLATFORM_DOMAIN || 'deployeai.duckdns.org';
+const rawPlatformDomain = process.env.PLATFORM_DOMAIN || '';
 const domainParts = rawPlatformDomain.split('.');
-const defaultSld = domainParts.length >= 2 ? domainParts[0] : 'deployeai';
-const defaultTld = domainParts.length >= 2 ? domainParts.slice(1).join('.') : 'duckdns.org';
+const defaultSld = domainParts.length >= 2 ? domainParts[0] : '';
+const defaultTld = domainParts.length >= 2 ? domainParts.slice(1).join('.') : '';
 
 export const config = {
-  env: process.env.NODE_ENV || 'development',
+  env: process.env.NODE_ENV || 'production',
   port: parseInt(process.env.PORT || '5000', 10),
-  apiUrl: process.env.API_URL || 'http://localhost:5000',
-  jwtSecret: process.env.JWT_SECRET || 'super-secret-deployhub-jwt-token-key-change-in-production-32chars',
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'super-secret-deployhub-refresh-token-key-32chars',
+  apiUrl: process.env.API_URL || '',
+  jwtSecret: process.env.JWT_SECRET || '',
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || '',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '15m',
   jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-  mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/deployhub',
-  redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  mongoUri: process.env.MONGODB_URI || '',
+  redisUrl: process.env.REDIS_URL || '',
   storageDir: baseStorage,
   uploadMaxSizeMb: parseInt(process.env.UPLOAD_MAX_SIZE_MB || '100', 10),
   storageQuotaFreeMb: parseInt(process.env.STORAGE_QUOTA_FREE_MB || '500', 10),
   platformDomain: rawPlatformDomain,
-  serverIp: process.env.SERVER_IP || '127.0.0.1',
+  serverIp: process.env.SERVER_IP || '',
 
-  // Admin Credentials
-  adminEmail: (process.env.ADMIN_EMAIL || 'admin@pateldeeep.me').toLowerCase().trim(),
-  adminPassword: process.env.ADMIN_PASSWORD || 'AdminDeployHub2026!',
+  // Admin Credentials (loaded strictly from environment variables)
+  adminEmail: (process.env.ADMIN_EMAIL || '').toLowerCase().trim(),
+  adminPassword: process.env.ADMIN_PASSWORD || '',
 
   // Namecheap DNS Automation
   namecheapApiUser: process.env.NAMECHEAP_API_USER || '',
   namecheapApiKey: process.env.NAMECHEAP_API_KEY || '',
   namecheapUserName: process.env.NAMECHEAP_USERNAME || '',
-  namecheapClientIp: process.env.NAMECHEAP_CLIENT_IP || '127.0.0.1',
-  namecheapUseSandbox: process.env.NAMECHEAP_USE_SANDBOX === 'true' || false,
+  namecheapClientIp: process.env.NAMECHEAP_CLIENT_IP || '',
+  namecheapUseSandbox: process.env.NAMECHEAP_USE_SANDBOX === 'true',
   namecheapSld: process.env.NAMECHEAP_SLD || defaultSld,
   namecheapTld: process.env.NAMECHEAP_TLD || defaultTld,
 
   // Email / SMTP Dispatcher (Gmail, Amazon SES, Brevo, SendGrid, etc.)
-  smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
+  smtpHost: process.env.SMTP_HOST || '',
   smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
   smtpSecure: process.env.SMTP_SECURE === 'true',
   smtpUser: process.env.SMTP_USER || '',
   smtpPass: process.env.SMTP_PASS || '',
-  smtpFrom: (process.env.SMTP_FROM && process.env.SMTP_FROM.includes('<'))
-    ? process.env.SMTP_FROM
-    : (process.env.SMTP_USER
-      ? `"${(process.env.SMTP_FROM || 'DeployHub Cloud').replace(/"/g, '')}" <${process.env.SMTP_USER}>`
-      : '"DeployHub Cloud" <no-reply@deployhub.com>'),
+  smtpFrom: process.env.SMTP_FROM || '',
 };
 
 // Production Security Health Check
 if (process.env.NODE_ENV === 'production') {
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.includes('change-in-production')) {
-    console.warn('⚠️ [SECURITY AUDIT] JWT_SECRET is using a default key! For maximum security, define a dedicated random secret in production.');
+  if (!process.env.JWT_SECRET) {
+    console.warn('⚠️ [SECURITY AUDIT] JWT_SECRET environment variable is missing.');
   }
-  if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'AdminDeployHub2026!') {
-    console.warn('⚠️ [SECURITY AUDIT] ADMIN_PASSWORD is set to the default value. Update ADMIN_PASSWORD in your production environment variables.');
+  if (!process.env.ADMIN_PASSWORD) {
+    console.warn('⚠️ [SECURITY AUDIT] ADMIN_PASSWORD environment variable is missing.');
   }
 }
 

@@ -49,7 +49,7 @@ export const getLiveProjectUrl = (project?: ProjectUrlLike | null): string => {
       return `${protocol}//${sub}.ai-ml.chickenkiller.com/`;
     }
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//${sub}.localhost:5000/`;
+      return `${window.location.origin}/sites/${sub}/`;
     }
   }
 

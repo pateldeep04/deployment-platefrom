@@ -266,15 +266,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     let user = dbStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
 
     if (!user) {
-      const configuredAdminEmail = (config.adminEmail || 'admin@pateldeeep.me').toLowerCase().trim();
-      const isAdminCandidate = [
-        configuredAdminEmail,
-        'admin@pateldeeep.me',
-        'admin@pateldeep.me',
-        'admin@deployhub.com'
-      ].includes(normalizedEmail);
-
-      if (isAdminCandidate) {
+      const configuredAdminEmail = (config.adminEmail || process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+      if (configuredAdminEmail && normalizedEmail === configuredAdminEmail) {
         dbStore.seedDefaults();
         dbStore.save();
         user = dbStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
@@ -295,10 +288,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     let isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch && user.role === 'ADMIN') {
-      const defaultAdminPass = config.adminPassword || 'AdminDeployHub2026!';
-      if (password === defaultAdminPass) {
-        user.passwordHash = await bcrypt.hash(defaultAdminPass, 10);
+    if (!isMatch && user.role === 'ADMIN' && config.adminPassword) {
+      if (password === config.adminPassword) {
+        user.passwordHash = await bcrypt.hash(config.adminPassword, 10);
         dbStore.save();
         isMatch = true;
       }
@@ -395,15 +387,8 @@ export const sendLoginOtp = async (req: Request, res: Response): Promise<void> =
     let user = dbStore.users.find(u => u.email.toLowerCase() === normalizedEmail);
 
     if (!user) {
-      const configuredAdminEmail = (config.adminEmail || 'admin@pateldeeep.me').toLowerCase().trim();
-      const isAdminCandidate = [
-        configuredAdminEmail,
-        'admin@pateldeeep.me',
-        'admin@pateldeep.me',
-        'admin@deployhub.com'
-      ].includes(normalizedEmail);
-
-      if (isAdminCandidate) {
+      const configuredAdminEmail = (config.adminEmail || process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+      if (configuredAdminEmail && normalizedEmail === configuredAdminEmail) {
         dbStore.seedDefaults();
         dbStore.save();
         user = dbStore.users.find(u => u.email.toLowerCase() === normalizedEmail);

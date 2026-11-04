@@ -241,8 +241,8 @@ class DataStore {
     adBannerLink: 'https://deployhub.com',
     customAdScript: '',
     bannedIps: [],
-    securityMailbox: 'security@pateldeeep.me',
-    abuseMailbox: 'abuse@pateldeeep.me',
+    securityMailbox: process.env.SECURITY_MAILBOX || '',
+    abuseMailbox: process.env.ABUSE_MAILBOX || '',
     enablePhpExecution: false,
     platformDomains: [
       { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false, isDefault: true },
@@ -296,8 +296,8 @@ class DataStore {
         if (primaryNode) {
           primaryNode.instanceId = 'local-edge-primary';
           primaryNode.name = 'DeployHub Edge Server';
-          primaryNode.publicIp = config.serverIp || '127.0.0.1';
-          primaryNode.privateIp = '127.0.0.1';
+          primaryNode.publicIp = config.serverIp || '';
+          primaryNode.privateIp = config.serverIp || '';
           primaryNode.region = 'local';
         }
         this.trafficLogs = (data.trafficLogs || []).filter((l: any) => remainingProjectIds.has(l.projectId));
@@ -313,8 +313,8 @@ class DataStore {
           adBannerLink: 'https://deployhub.com',
           customAdScript: '',
           bannedIps: [],
-          securityMailbox: 'security@pateldeeep.me',
-          abuseMailbox: 'abuse@pateldeeep.me',
+          securityMailbox: process.env.SECURITY_MAILBOX || '',
+          abuseMailbox: process.env.ABUSE_MAILBOX || '',
           enablePhpExecution: false,
           ...(data.settings || {})
         };
@@ -400,20 +400,14 @@ class DataStore {
   }
 
   public seedDefaults() {
-    // Seed or synchronize Admin user from environment configuration
-    const configuredAdminEmail = (config.adminEmail || 'admin@pateldeeep.me').toLowerCase().trim();
-    const adminPassHash = bcrypt.hashSync(config.adminPassword || 'AdminDeployHub2026!', 10);
+    // Seed or synchronize Admin user strictly from environment variables
+    const configuredAdminEmail = (config.adminEmail || process.env.ADMIN_EMAIL || '').toLowerCase().trim();
+    const configuredAdminPassword = config.adminPassword || process.env.ADMIN_PASSWORD || '';
 
-    const recognizedAdminEmails = Array.from(new Set([
-      configuredAdminEmail,
-      'admin@pateldeeep.me',
-      'admin@pateldeep.me',
-      'admin@deployhub.com',
-    ]));
+    if (configuredAdminEmail && configuredAdminPassword) {
+      const adminPassHash = bcrypt.hashSync(configuredAdminPassword, 10);
+      const existingUser = this.users.find(u => u.email.toLowerCase() === configuredAdminEmail);
 
-    for (let i = 0; i < recognizedAdminEmails.length; i++) {
-      const email = recognizedAdminEmails[i];
-      const existingUser = this.users.find(u => u.email.toLowerCase() === email);
       if (existingUser) {
         existingUser.role = 'ADMIN';
         existingUser.plan = 'PRO';
@@ -421,11 +415,10 @@ class DataStore {
         existingUser.passwordHash = adminPassHash;
         existingUser.updatedAt = new Date().toISOString();
       } else {
-        const adminId = i === 0 ? 'usr_admin_001' : `usr_admin_00${i + 1}`;
         this.users.unshift({
-          _id: adminId,
-          name: 'DeployHub Admin',
-          email,
+          _id: 'usr_admin_primary',
+          name: 'Platform Administrator',
+          email: configuredAdminEmail,
           passwordHash: adminPassHash,
           role: 'ADMIN',
           plan: 'PRO',
@@ -476,8 +469,8 @@ class DataStore {
         _id: 'node_primary_001',
         instanceId: 'local-edge-primary',
         name: 'DeployHub Edge Server',
-        publicIp: config.serverIp || '127.0.0.1',
-        privateIp: '127.0.0.1',
+        publicIp: config.serverIp || '',
+        privateIp: config.serverIp || '',
         instanceType: 'bare-metal',
         region: 'local',
         provider: 'LOCAL',

@@ -164,8 +164,8 @@ cp .env.example .env
 ```
 Key variables:
 * `PORT=5000` — Backend API port
-* `ADMIN_EMAIL=admin@pateldeeep.me` — Default administrator email
-* `ADMIN_PASSWORD=AdminDeployHub2026!` — Administrator password
+* `ADMIN_EMAIL=your-admin@example.com` — Administrator email address (configured in .env)
+* `ADMIN_PASSWORD=YourSecurePassword123!` — Administrator password (configured in .env)
 * `JWT_SECRET` — 32+ character random secret string
 * `MONGO_URI` — MongoDB Atlas URI (optional; falls back to built-in local store)
 
