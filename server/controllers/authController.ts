@@ -72,7 +72,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const otp = emailAuthService.generateNumericOtp();
-    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 mins
+    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes expiration
 
     const newUser: IUser = {
       _id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -155,7 +155,7 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
       user.verificationCode = undefined;
       user.verificationCodeExpires = undefined;
       dbStore.save();
-      res.status(400).json({ success: false, error: 'Verification code has expired. Please request a new code.' });
+      res.status(400).json({ success: false, error: 'Verification code has expired (valid for 5 minutes). Please request a new code.' });
       return;
     }
 
@@ -228,7 +228,7 @@ export const resendVerification = async (req: Request, res: Response): Promise<v
 
     const otp = emailAuthService.generateNumericOtp();
     user.verificationCode = otp;
-    user.verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    user.verificationCodeExpires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes expiration
     user.updatedAt = new Date().toISOString();
     dbStore.save();
 
@@ -313,7 +313,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (!user.emailVerified) {
       const otp = emailAuthService.generateNumericOtp();
       user.verificationCode = otp;
-      user.verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+      user.verificationCodeExpires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes expiration
       user.verificationAttempts = 0;
       dbStore.save();
 
@@ -323,7 +323,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         success: false,
         requiresVerification: true,
         email: user.email,
-        error: 'Your email address is not verified yet. We have sent a new 6-digit verification code to your email.',
+        error: 'Your email address is not verified yet. We have sent a new 6-digit verification code to your email (valid for 5 minutes).',
       });
       return;
     }
@@ -332,7 +332,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     if (user.role === 'ADMIN') {
       const adminOtp = emailAuthService.generateNumericOtp();
       user.admin2faCode = adminOtp;
-      user.admin2faExpires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      user.admin2faExpires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes expiration
       user.admin2faAttempts = 0;
       dbStore.save();
 
@@ -428,7 +428,7 @@ export const sendLoginOtp = async (req: Request, res: Response): Promise<void> =
 
     const otp = emailAuthService.generateNumericOtp();
     user.loginOtpCode = otp;
-    user.loginOtpExpires = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 mins (Section 7)
+    user.loginOtpExpires = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 minutes expiration
     user.loginOtpAttempts = 0;
     dbStore.save();
 
@@ -436,7 +436,7 @@ export const sendLoginOtp = async (req: Request, res: Response): Promise<void> =
 
     res.json({
       success: true,
-      message: `A 6-digit secure login code has been sent to ${user.email}.`,
+      message: `A 6-digit secure login code has been sent to ${user.email} (valid for 5 minutes).`,
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'OTP dispatch failed' });
@@ -467,7 +467,7 @@ export const verifyLoginOtp = async (req: Request, res: Response): Promise<void>
       user.loginOtpCode = undefined;
       user.loginOtpExpires = undefined;
       dbStore.save();
-      res.status(400).json({ success: false, error: 'Login code has expired. Please request a new one.' });
+      res.status(400).json({ success: false, error: 'Login code has expired (valid for 5 minutes). Please request a new one.' });
       return;
     }
 
@@ -542,7 +542,7 @@ export const verifyAdmin2fa = async (req: Request, res: Response): Promise<void>
       user.admin2faCode = undefined;
       user.admin2faExpires = undefined;
       dbStore.save();
-      res.status(400).json({ success: false, error: '2FA security code has expired. Please sign in again.' });
+      res.status(400).json({ success: false, error: '2FA security code has expired (valid for 5 minutes). Please sign in again.' });
       return;
     }
 

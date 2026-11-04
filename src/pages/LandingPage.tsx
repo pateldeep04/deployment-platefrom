@@ -54,7 +54,7 @@ export const LandingPage: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   // Interactive quick deployer preview tab
-  const [activeRuntimeTab, setActiveRuntimeTab] = useState<'STATIC' | 'PHP' | 'VITE'>('STATIC');
+  const [activeRuntimeTab, setActiveRuntimeTab] = useState<'STATIC' | 'PHP'>('STATIC');
 
   // Dynamic Plan Pricing from API
   const [plans, setPlans] = useState<any[]>([]);
@@ -177,7 +177,7 @@ export const LandingPage: React.FC = () => {
     'Unlimited Monthly Bandwidth',
     'PHP 8.4 Isolated Execution',
     'Static HTML/CSS/JS Fast Edge CDN',
-    'React & Vite SPA Output Support',
+    'Vanilla JavaScript & JSON Data Support',
     `Free *.${PLATFORM_DOMAIN} Subdomain`,
     'Custom Domain (CNAME) Support',
     'Automated Let\'s Encrypt SSL (HTTPS)',
@@ -197,7 +197,7 @@ export const LandingPage: React.FC = () => {
     {
       step: '02',
       title: 'Upload Project or ZIP',
-      desc: 'Drag & drop your static files, React/Vite dist folder, or PHP scripts directly into our secure web uploader.',
+      desc: 'Drag & drop your HTML, CSS, JavaScript, JSON files, or PHP scripts directly into our secure web uploader.',
       icon: UploadCloud,
     },
     {
@@ -361,7 +361,7 @@ export const LandingPage: React.FC = () => {
 
           {/* Subtitle Description */}
           <p className="max-w-3xl mx-auto text-sm sm:text-base text-slate-600 leading-relaxed">
-            Host your Static HTML/CSS/JS, React, Vite, and PHP websites with free subdomains on <span className="text-slate-900 font-mono font-semibold">*.{PLATFORM_DOMAIN}</span>. No credit card, no expiration date, and 100% ad-free on your websites.
+            Host your Static HTML, CSS, JavaScript, JSON, and PHP websites with free subdomains on <span className="text-slate-900 font-mono font-semibold">*.{PLATFORM_DOMAIN}</span>. No credit card, no expiration date, and 100% ad-free on your websites.
           </p>
 
           {/* Interactive Subdomain Claimer Console */}
@@ -503,7 +503,7 @@ export const LandingPage: React.FC = () => {
 
             {/* Runtime Environment Selector */}
             <div className="flex items-center space-x-1 bg-slate-200/80 p-1 rounded-lg border border-slate-300/60">
-              {(['STATIC', 'PHP', 'VITE'] as const).map((runtime) => (
+              {(['STATIC', 'PHP'] as const).map((runtime) => (
                 <button
                   key={runtime}
                   onClick={() => setActiveRuntimeTab(runtime)}
@@ -513,7 +513,7 @@ export const LandingPage: React.FC = () => {
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {runtime === 'STATIC' ? 'Static HTML / JS' : runtime === 'PHP' ? 'PHP 8.4 Sandbox' : 'React / Vite SPA'}
+                  {runtime === 'STATIC' ? 'Static HTML, JS & JSON' : 'PHP 8.4 Sandbox'}
                 </button>
               ))}
             </div>
@@ -535,16 +535,12 @@ export const LandingPage: React.FC = () => {
                 <h3 className="text-base font-bold text-slate-900">
                   {activeRuntimeTab === 'PHP' 
                     ? 'Deploy PHP 8.4 Application' 
-                    : activeRuntimeTab === 'VITE' 
-                    ? 'Deploy React / Vite Production Bundle' 
-                    : 'Deploy Static HTML, CSS & JavaScript'}
+                    : 'Deploy Static HTML, CSS, JavaScript & JSON'}
                 </h3>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
                   {activeRuntimeTab === 'PHP'
                     ? 'Upload source files, index.php, or complete PHP projects with isolated process boundaries.'
-                    : activeRuntimeTab === 'VITE'
-                    ? 'Upload your client dist folder or zipped production assets with automated index fallback rewrite.'
-                    : 'Upload raw static web files or ZIP packages for immediate distribution across our edge proxy.'}
+                    : 'Upload raw static web files, vanilla JS, JSON datasets, or ZIP packages for immediate distribution across our edge proxy.'}
                 </p>
               </div>
 

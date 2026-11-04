@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Allow: /docs
+Allow: /billing
 Allow: /login
 Allow: /register
 
@@ -10,5 +11,5 @@ Disallow: /admin
 Disallow: /cpanel/
 Disallow: /projects/
 
-# Canonical Sitemap URL
+# Canonical Sitemap URL for Google Search Console
 Sitemap: https://pateldeeep.me/sitemap.xml

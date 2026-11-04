@@ -59,16 +59,16 @@ export const DocsPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Section 3: React & Vite Single Page Apps */}
+        {/* Section 3: HTML, CSS, JavaScript & JSON Static Web */}
         <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-4 shadow-sm">
           <div className="flex items-center space-x-3">
             <div className="p-2.5 rounded-xl bg-cyan-50 text-cyan-600 border border-cyan-100">
               <Code2 className="w-5 h-5" />
             </div>
-            <h2 className="text-lg font-bold text-slate-900">3. React & Vite Applications</h2>
+            <h2 className="text-lg font-bold text-slate-900">3. HTML, CSS, JavaScript & JSON Web Hosting</h2>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            For Vite or Create React App bundles, you can directly upload the generated <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono text-xs">dist</code> folder or a ZIP with your build configuration. The edge proxy automatically handles SPA fallback routing so browser refresh works smoothly on client-side routes.
+            Deploy pure HTML, modern CSS, vanilla JavaScript, and JSON data files directly. Upload your source files or a ZIP archive for immediate global edge proxy delivery with automated caching, compression, and zero build tool overhead.
           </p>
         </section>
 

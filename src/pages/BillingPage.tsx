@@ -213,7 +213,7 @@ export const BillingPage: React.FC = () => {
                     </li>
                     <li className="flex items-center space-x-2.5">
                       <Check className="w-4 h-4 text-success" />
-                      <span>{p.phpHosting ? 'Isolated PHP 8.4 Runtime' : 'Static / React / Vite'}</span>
+                      <span>{p.phpHosting ? 'Isolated PHP 8.4 Runtime' : 'Static HTML, CSS, JS & JSON'}</span>
                     </li>
                     <li className="flex items-center space-x-2.5">
                       <Check className="w-4 h-4 text-success" />

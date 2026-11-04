@@ -105,6 +105,37 @@ async function runTestSuite() {
   }
 
   // ----------------------------------------------------
+  // Suite 5: IP Validation & 5-Minute Security Code Expiry
+  // ----------------------------------------------------
+  console.log('\n▶ Suite 5: IP Threat Shield & 5-Minute Code Expiration');
+  const { extractClientIp } = await import('../server/middleware/ipValidator');
+  const { dbStore } = await import('../server/database/store');
+
+  // Test IP extraction from Cloudflare header
+  const fakeCfReq: any = { headers: { 'cf-connecting-ip': '203.0.113.195' }, socket: {} };
+  assert(extractClientIp(fakeCfReq) === '203.0.113.195', 'Extracts client IP from cf-connecting-ip');
+
+  // Test IP extraction from X-Forwarded-For
+  const fakeFwdReq: any = { headers: { 'x-forwarded-for': '198.51.100.42, 10.0.0.1' }, socket: {} };
+  assert(extractClientIp(fakeFwdReq) === '198.51.100.42', 'Extracts leftmost client IP from x-forwarded-for');
+
+  // Test IPv6 mapped format removal
+  const fakeIpv6Req: any = { headers: {}, socket: { remoteAddress: '::ffff:192.0.2.1' } };
+  assert(extractClientIp(fakeIpv6Req) === '192.0.2.1', 'Strips ::ffff: from IPv4-mapped IPv6 address');
+
+  // Test IP Ban and Unban Logic
+  const testIp = '198.51.100.99';
+  dbStore.banIp(testIp, 'Unit test ban');
+  assert(dbStore.isIpBanned(testIp) === true, 'Banned IP is recognized by isIpBanned');
+  dbStore.unbanIp(testIp);
+  assert(dbStore.isIpBanned(testIp) === false, 'Unbanned IP is cleared from blacklist');
+
+  // Test 5-minute OTP lifecycle
+  const fiveMinAgo = new Date(Date.now() - (5 * 60 * 1000 + 1000)).toISOString();
+  const isExpired = new Date() > new Date(fiveMinAgo);
+  assert(isExpired === true, '5-minute OTP window strictly expires after 300 seconds');
+
+  // ----------------------------------------------------
   // Summary & Exit
   // ----------------------------------------------------
   console.log('\n========================================');

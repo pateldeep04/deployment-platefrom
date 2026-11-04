@@ -10,8 +10,16 @@ import apiRouter from './routes';
 import { handleSiteRequest } from './router/edgeProxy';
 import { dbStore } from './database/store';
 import { domainExpiryService } from './services/domainExpiryService';
+import { ipValidator } from './middleware/ipValidator';
+import { edgeProxyLimiter } from './middleware/rateLimiter';
 
 const app = express();
+
+// Trust reverse proxy headers (e.g. AWS ALB, Cloudflare, Nginx)
+app.set('trust proxy', 1);
+
+// Global Threat Shield: Validate client IP, block scanners, probe bots & banned IPs
+app.use(ipValidator);
 
 // Initialize disk storage paths
 ensureStorageDirectories();
@@ -111,7 +119,7 @@ app.use(
 
         // 2. Check recognized platform domains & subdomains (*.deployeai.duckdns.org, *.pateldeeep.me, etc.)
         const isPlatformDomain = AVAILABLE_PLATFORM_DOMAINS.some(d => hostname === d.domain || hostname.endsWith('.' + d.domain));
-        if (isPlatformDomain || hostname === 'pateldeeep.me' || hostname.endsWith('.pateldeeep.me') || hostname.endsWith('.duckdns.org')) {
+        if (isPlatformDomain || hostname === 'pateldeeep.me' || hostname.endsWith('.pateldeeep.me')) {
           return callback(null, true);
         }
 
@@ -162,7 +170,7 @@ app.use((req, res, next) => {
 });
 
 // 1. Edge Proxy: Deployed sites serving (/sites/:slug fallback)
-app.use('/sites/:slug', handleSiteRequest);
+app.use('/sites/:slug', edgeProxyLimiter, handleSiteRequest);
 
 // 2. Health check endpoint
 app.get('/health', (req, res) => {
@@ -172,6 +180,37 @@ app.get('/health', (req, res) => {
     version: '1.0.0',
     timestamp: new Date().toISOString(),
   });
+});
+
+// 2b. SEO Endpoints for Google Search Console & Web Crawlers
+app.get('/sitemap.xml', (req, res) => {
+  const candidates = [
+    path.join(getDistPath(), 'sitemap.xml'),
+    path.resolve(process.cwd(), 'public', 'sitemap.xml'),
+    path.resolve(__dirname, '..', 'public', 'sitemap.xml'),
+    path.resolve(__dirname, '..', '..', 'public', 'sitemap.xml')
+  ];
+  const sitemapFile = candidates.find(p => fs.existsSync(p));
+  if (sitemapFile) {
+    res.type('application/xml').sendFile(sitemapFile);
+  } else {
+    res.status(404).send('Sitemap not found');
+  }
+});
+
+app.get('/robots.txt', (req, res) => {
+  const candidates = [
+    path.join(getDistPath(), 'robots.txt'),
+    path.resolve(process.cwd(), 'public', 'robots.txt'),
+    path.resolve(__dirname, '..', 'public', 'robots.txt'),
+    path.resolve(__dirname, '..', '..', 'public', 'robots.txt')
+  ];
+  const robotsFile = candidates.find(p => fs.existsSync(p));
+  if (robotsFile) {
+    res.type('text/plain').sendFile(robotsFile);
+  } else {
+    res.status(404).send('Robots.txt not found');
+  }
 });
 
 // 3. API v1 Routing

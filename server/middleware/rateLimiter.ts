@@ -76,6 +76,62 @@ export const adInteractionLimiter = rateLimit({
 });
 
 /**
+ * Strict OTP Dispatch Rate Limiter
+ * Protects against email spamming, SMS/SMTP exhaustion, and inbox bombing
+ */
+export const strictOtpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 5, // Maximum 5 OTP dispatches per IP per 10 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many security code requests from this IP. Please wait a few minutes before requesting another code.',
+  },
+});
+
+/**
+ * Strict OTP Verification Rate Limiter
+ * Protects against brute-forcing the 6-digit numeric OTP code
+ */
+export const strictOtpVerifyLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 5, // Max 5 verification attempts per 5 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Too many verification attempts. Please wait 5 minutes before trying again.',
+  },
+});
+
+/**
+ * Sensitive Account Action Rate Limiter (Domain Reactivations, Deletions)
+ */
+export const sensitiveActionLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: 'Rate limit exceeded for sensitive operations. Please try again in 10 minutes.',
+  },
+});
+
+/**
+ * Edge Proxy Anti-DDoS Limiter
+ * Prevents single IP from flooding tenant-hosted websites
+ */
+export const edgeProxyLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 300, // 300 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: '429 Too Many Requests: Rate limit exceeded on this edge endpoint.',
+});
+
+/**
  * General Public API Rate Limiter
  */
 export const generalApiLimiter = rateLimit({

@@ -373,6 +373,32 @@ class DataStore {
     return (this.settings.bannedIps || []).some(banned => banned.trim() === cleanIp);
   }
 
+  public banIp(ip: string, reason?: string): void {
+    if (!ip) return;
+    const cleanIp = ip.replace(/^::ffff:/, '').trim();
+    if (!this.settings.bannedIps) this.settings.bannedIps = [];
+    if (!this.settings.bannedIps.includes(cleanIp)) {
+      this.settings.bannedIps.push(cleanIp);
+      this.auditLogs.push({
+        _id: `log_${Date.now()}_ban`,
+        action: 'IP_BANNED',
+        ip: cleanIp,
+        details: { reason: reason || 'Automated security defense ban' },
+        createdAt: new Date().toISOString(),
+      });
+      this.save();
+    }
+  }
+
+  public unbanIp(ip: string): void {
+    if (!ip) return;
+    const cleanIp = ip.replace(/^::ffff:/, '').trim();
+    if (this.settings.bannedIps) {
+      this.settings.bannedIps = this.settings.bannedIps.filter(b => b.trim() !== cleanIp);
+      this.save();
+    }
+  }
+
   public seedDefaults() {
     // Seed or synchronize Admin user from environment configuration
     const configuredAdminEmail = (config.adminEmail || 'admin@pateldeeep.me').toLowerCase().trim();

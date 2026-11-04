@@ -22,6 +22,7 @@ import {
   Lock,
   FileCode,
   Layers,
+  Code2,
   Sparkles,
   Server,
   Terminal,
@@ -188,7 +189,7 @@ export const DashboardPage: React.FC = () => {
                 <span>Launch New Subdomain on {PLATFORM_DOMAIN}</span>
               </h3>
               <p className="text-xs text-deployText-secondary mt-0.5">
-                Type your desired website name and deploy HTML, CSS, JS, React or PHP in seconds.
+                Type your desired website name and deploy HTML, CSS, JavaScript, JSON, or PHP in seconds.
               </p>
             </div>
 
@@ -272,14 +273,14 @@ export const DashboardPage: React.FC = () => {
           </Link>
 
           <button
-            onClick={() => handleLaunchModal(undefined, 'VITE')}
+            onClick={() => handleLaunchModal(undefined, 'STATIC')}
             className="p-3.5 rounded-xl bg-card border border-deployBorder hover:border-cyan-500/50 text-left transition-all group cursor-pointer shadow-xs hover:shadow-sm"
           >
             <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-600 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
-              <Layers className="w-4 h-4" />
+              <Code2 className="w-4 h-4" />
             </div>
-            <div className="text-xs font-bold text-slate-900">React & Vite</div>
-            <div className="text-[11px] text-deployText-secondary mt-0.5">SPA Engine</div>
+            <div className="text-xs font-bold text-slate-900">HTML & JS Engine</div>
+            <div className="text-[11px] text-deployText-secondary mt-0.5">CSS & JSON Ready</div>
           </button>
         </div>
 

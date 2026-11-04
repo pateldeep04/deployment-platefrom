@@ -7,6 +7,9 @@ import {
   cpanelActionLimiter,
   subdomainCheckLimiter,
   adInteractionLimiter,
+  strictOtpLimiter,
+  strictOtpVerifyLimiter,
+  sensitiveActionLimiter,
 } from '../middleware/rateLimiter';
 
 import * as authCtrl from '../controllers/authController';
@@ -24,12 +27,12 @@ const router = Router();
 
 // ================= AUTHENTICATION & EMAIL VERIFICATION =================
 router.post('/auth/register', authLimiter, authCtrl.register);
-router.post('/auth/verify-email', authLimiter, authCtrl.verifyEmail);
-router.post('/auth/resend-verification', authLimiter, authCtrl.resendVerification);
+router.post('/auth/verify-email', strictOtpVerifyLimiter, authCtrl.verifyEmail);
+router.post('/auth/resend-verification', strictOtpLimiter, authCtrl.resendVerification);
 router.post('/auth/login', authLimiter, authCtrl.login);
-router.post('/auth/send-login-otp', authLimiter, authCtrl.sendLoginOtp);
-router.post('/auth/verify-login-otp', authLimiter, authCtrl.verifyLoginOtp);
-router.post('/auth/verify-admin-2fa', authLimiter, authCtrl.verifyAdmin2fa);
+router.post('/auth/send-login-otp', strictOtpLimiter, authCtrl.sendLoginOtp);
+router.post('/auth/verify-login-otp', strictOtpVerifyLimiter, authCtrl.verifyLoginOtp);
+router.post('/auth/verify-admin-2fa', strictOtpVerifyLimiter, authCtrl.verifyAdmin2fa);
 router.post('/auth/refresh', authLimiter, authCtrl.refreshToken);
 router.get('/auth/me', authenticateJwt, authCtrl.getCurrentUser);
 

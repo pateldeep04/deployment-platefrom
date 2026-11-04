@@ -77,6 +77,16 @@ export const config = {
       : '"DeployHub Cloud" <no-reply@deployhub.com>'),
 };
 
+// Production Security Health Check
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.includes('change-in-production')) {
+    console.warn('⚠️ [SECURITY AUDIT] JWT_SECRET is using a default key! For maximum security, define a dedicated random secret in production.');
+  }
+  if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'AdminDeployHub2026!') {
+    console.warn('⚠️ [SECURITY AUDIT] ADMIN_PASSWORD is set to the default value. Update ADMIN_PASSWORD in your production environment variables.');
+  }
+}
+
 export interface ProjectUrlTarget {
   slug: string;
   customDomain?: string | null;

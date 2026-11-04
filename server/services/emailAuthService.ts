@@ -68,49 +68,49 @@ class EmailAuthService {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${subject}</title>
       </head>
-      <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+      <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
         <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 16px;">
           <tr>
             <td align="center">
-              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); overflow: hidden;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 520px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08); overflow: hidden;">
                 
-                <!-- Brand Header -->
+                <!-- Synchronized Brand Header -->
                 <tr>
-                  <td style="padding: 32px 32px 24px 32px; text-align: center; border-bottom: 1px solid #f1f5f9;">
-                    <div style="display: inline-block; width: 44px; height: 44px; line-height: 44px; background: linear-gradient(135deg, #2563eb, #0284c7); border-radius: 12px; margin-bottom: 12px; text-align: center; color: #ffffff; font-size: 22px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+                  <td style="padding: 36px 32px 24px 32px; text-align: center; border-bottom: 1px solid #f1f5f9; background: #ffffff;">
+                    <div style="display: inline-block; width: 48px; height: 48px; line-height: 48px; background: linear-gradient(135deg, #2563eb, #0284c7); border-radius: 12px; margin-bottom: 12px; text-align: center; color: #ffffff; font-size: 24px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);">
                       🚀
                     </div>
                     <div style="font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">
-                      Deploy<span style="color: #2563eb;">Hub</span>
+                      Deploy<span style="color: #2563eb;">Hub</span> <span style="font-size: 16px; font-weight: 600; color: #64748b;">Cloud</span>
                     </div>
-                    <div style="font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;">
-                      Deploy. Host. Scale.
+                    <div style="font-size: 12px; font-weight: 500; color: #64748b; margin-top: 4px;">
+                      Instant Web Hosting & Cloud Edge Platform
                     </div>
                   </td>
                 </tr>
 
                 <!-- Content Body -->
                 <tr>
-                  <td style="padding: 32px 32px 24px 32px;">
+                  <td style="padding: 32px 32px 28px 32px; background-color: #ffffff;">
                     <h2 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 700; color: #0f172a; text-align: center;">
                       Your One-Time Security Code
                     </h2>
                     
                     <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.6; color: #475569; text-align: center;">
-                      Use the 6-digit verification code below to ${actionText}:
+                      Use the 6-digit one-time code below to ${actionText}:
                     </p>
 
-                    <!-- Code Box -->
-                    <div style="background-color: #f0f7ff; border: 1.5px dashed #93c5fd; border-radius: 12px; padding: 20px; text-align: center; margin: 0 0 24px 0;">
-                      <div style="font-family: 'JetBrains Mono', Consolas, Monaco, monospace; font-size: 38px; font-weight: 800; color: #1e40af; letter-spacing: 10px; margin-left: 10px;">
+                    <!-- Synchronized Code Badge Box -->
+                    <div style="background-color: #eff6ff; border: 2px dashed #93c5fd; border-radius: 14px; padding: 22px 16px; text-align: center; margin: 0 0 24px 0;">
+                      <div style="font-family: 'JetBrains Mono', Consolas, Monaco, monospace; font-size: 36px; font-weight: 800; color: #1d4ed8; letter-spacing: 8px; margin-left: 8px;">
                         ${code}
                       </div>
-                      <div style="font-size: 12px; font-weight: 600; color: #3b82f6; margin-top: 8px;">
-                        ⏱️ Valid for 15 minutes
+                      <div style="font-size: 12px; font-weight: 600; color: #2563eb; margin-top: 10px;">
+                        ⌛ This code is valid for 5 minutes only. Do not share this code with anyone.
                       </div>
                     </div>
 
-                    <!-- Security Alert -->
+                    <!-- Security Alert Callout -->
                     <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin: 0 0 20px 0;">
                       <table cellpadding="0" cellspacing="0" width="100%">
                         <tr>
@@ -123,15 +123,15 @@ class EmailAuthService {
                     </div>
 
                     <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #94a3b8; text-align: center;">
-                      If you didn't request this code, you can safely disregard this email.
+                      If you did not request this security code, please ignore this email or contact support.
                     </p>
                   </td>
                 </tr>
 
-                <!-- Footer -->
+                <!-- Synchronized Clean Footer -->
                 <tr>
-                  <td style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
-                    <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b; font-weight: 500;">
+                  <td style="padding: 22px 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                    <p style="margin: 0 0 4px 0; font-size: 12px; color: #64748b; font-weight: 600;">
                       DeployHub Cloud — Free Cloud Hosting & Instant Web Deployment
                     </p>
                     <p style="margin: 0; font-size: 11px; color: #94a3b8;">
@@ -156,7 +156,7 @@ class EmailAuthService {
           from: config.smtpFrom,
           to: email,
           subject,
-          text: `Your DeployHub verification code is: ${code}. It expires in 15 minutes.`,
+          text: `Your DeployHub verification code is: ${code}. It expires in 5 minutes.`,
           html,
         });
         console.log(`[EmailAuthService] Successfully delivered verification email to ${email}`);
