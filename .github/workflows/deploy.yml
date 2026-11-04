@@ -82,6 +82,10 @@ jobs:
             cd "$APP_DIR"
             echo "📁 Deployment Directory: $(pwd)"
 
+            # Fix Git ownership check (fixes: fatal: detected dubious ownership in repository)
+            git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
+            git config --global --add safe.directory "*" 2>/dev/null || true
+
             # 2. Record rollback reference (current stable commit)
             PREV_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "")
             echo "📌 Previous Stable Commit: $PREV_COMMIT"
