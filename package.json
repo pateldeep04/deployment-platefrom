@@ -12,6 +12,7 @@
     "build:server": "tsc -p server/tsconfig.json",
     "start": "node server/dist/index.js",
     "start:dev": "ts-node server/index.ts",
+    "test": "ts-node --project server/tsconfig.json scripts/runTests.ts",
     "serve": "vite preview",
     "db:sync": "tsx scripts/migrateToMongo.ts"
   },

@@ -1,14 +1,14 @@
-name: Deploy to Live Server
+name: DeployHub CI/CD Production Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
-  build-and-test:
-    name: Build & Verify
+  test-and-build:
+    name: 🧪 Automated Test & Build (CI)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -23,26 +23,30 @@ jobs:
       - name: Install Dependencies
         run: npm ci || npm install
 
+      - name: Run Automated Test Cases
+        run: npm test
+
       - name: Build Frontend & Backend
         run: npm run build
 
-  deploy:
-    name: Deploy to Live Server
-    needs: build-and-test
+  deploy-to-aws:
+    name: 🚀 Production Deploy to AWS EC2 (CD)
+    needs: test-and-build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - name: Check Deployment Credentials
+      - name: Verify AWS Deployment Secrets
         id: check-secrets
         run: |
           if [ -z "${{ secrets.EC2_HOST }}" ] || [ -z "${{ secrets.EC2_SSH_KEY }}" ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "ℹ️ Note: EC2_HOST or EC2_SSH_KEY is not configured in GitHub Secrets. Skipping remote SSH deploy step."
+            echo "⚠️ [CONFIG NOTICE] EC2_HOST or EC2_SSH_KEY is not configured in GitHub Repository Secrets."
+            echo "ℹ️ Please configure EC2_HOST, EC2_USER, EC2_SSH_KEY, and PROJECT_PATH in repository Settings -> Secrets and variables -> Actions to enable automatic AWS deployment."
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Deploy to Server via SSH
+      - name: Deploy to AWS EC2 via SSH with Auto-Rollback
         if: steps.check-secrets.outputs.skip != 'true'
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -52,40 +56,97 @@ jobs:
           port: ${{ secrets.EC2_PORT || 22 }}
           script_stop: true
           script: |
-            echo "🚀 Starting automated deployment on live server..."
-            
-            # 1. Navigate to deployment directory (default: ~/deployhub or custom path)
+            echo "=========================================="
+            echo "🚀 Starting Automated Production Deployment on AWS EC2..."
+            echo "=========================================="
+
+            # 1. Resolve Application Directory
             APP_DIR="${{ secrets.PROJECT_PATH }}"
             if [ -z "$APP_DIR" ]; then
-              APP_DIR="$HOME/deployhub"
+              if [ -d "$HOME/deployment-platefrom" ]; then
+                APP_DIR="$HOME/deployment-platefrom"
+              elif [ -d "$HOME/deployhub" ]; then
+                APP_DIR="$HOME/deployhub"
+              elif [ -d "/var/www/deployhub" ]; then
+                APP_DIR="/var/www/deployhub"
+              else
+                APP_DIR="$HOME/deployment-platefrom"
+              fi
             fi
-            
+
             if [ ! -d "$APP_DIR" ]; then
-              echo "Directory $APP_DIR does not exist. Creating it..."
-              mkdir -p "$APP_DIR"
+              echo "❌ Error: Project directory '$APP_DIR' does not exist on this server."
+              exit 1
             fi
-            
+
             cd "$APP_DIR"
-            
-            # 2. Pull latest code from GitHub
-            echo "📥 Pulling latest code from GitHub..."
-            git fetch origin
-            CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
-            git pull origin "$CURRENT_BRANCH" || git pull origin main
-            
-            # 3. Install packages & build
-            echo "📦 Installing dependencies & building..."
-            npm ci || npm install
-            npm run build
-            
-            # 4. Restart or reload PM2 process
-            echo "♻️ Restarting application via PM2..."
+            echo "📁 Deployment Directory: $(pwd)"
+
+            # 2. Record rollback reference (current stable commit)
+            PREV_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "")
+            echo "📌 Previous Stable Commit: $PREV_COMMIT"
+
+            # Rollback routine if build or health check fails
+            rollback() {
+              echo ""
+              echo "⚠️ ========================================================"
+              echo "💥 DEPLOYMENT FAILURE DETECTED: INITIATING AUTOMATIC ROLLBACK"
+              echo "⚠️ ========================================================"
+              if [ -n "$PREV_COMMIT" ]; then
+                echo "🔄 Resetting git repository to last working commit: $PREV_COMMIT"
+                git reset --hard "$PREV_COMMIT"
+                npm ci || npm install
+                npm run build
+                if command -v pm2 > /dev/null; then
+                  pm2 reload ecosystem.config.cjs || pm2 restart ecosystem.config.cjs
+                fi
+                echo "✅ Rollback complete. Production restored to previous working version."
+              else
+                echo "⚠️ No previous commit reference found."
+              fi
+              exit 1
+            }
+
+            # 3. Pull latest code from GitHub
+            echo "📥 Fetching and synchronizing latest code from GitHub main..."
+            git fetch origin main || rollback
+            git reset --hard origin/main || rollback
+
+            # 4. Install dependencies
+            echo "📦 Updating npm packages..."
+            (npm ci || npm install) || rollback
+
+            # 5. Build Vite frontend and Server TypeScript
+            echo "🔨 Compiling frontend & backend assets..."
+            npm run build || rollback
+
+            # 6. Graceful PM2 reload (zero downtime)
+            echo "♻️ Reloading PM2 process..."
             if command -v pm2 > /dev/null; then
               pm2 reload ecosystem.config.cjs || pm2 restart ecosystem.config.cjs || pm2 start ecosystem.config.cjs
               pm2 save
             else
               npx pm2 reload ecosystem.config.cjs || npx pm2 restart ecosystem.config.cjs || npx pm2 start ecosystem.config.cjs
             fi
-            
-            echo "✅ Live deployment completed successfully!"
 
+            # 7. Automated Health Check Verification
+            echo "🩺 Verifying production health check..."
+            sleep 5
+            HEALTH_OK=false
+            for i in 1 2 3 4 5; do
+              if curl -fs http://localhost:5000/health > /dev/null 2>&1 || curl -fs http://localhost:5000/api/v1/health > /dev/null 2>&1 || curl -fs http://127.0.0.1:5000/ > /dev/null 2>&1; then
+                HEALTH_OK=true
+                break
+              fi
+              echo "⏳ Waiting for port 5000 response (attempt $i of 5)..."
+              sleep 3
+            done
+
+            if [ "$HEALTH_OK" = true ]; then
+              echo "=========================================="
+              echo "🎉 SUCCESS: Production service is healthy and online!"
+              echo "=========================================="
+            else
+              echo "❌ ERROR: Health check failed after 5 attempts. Triggering rollback..."
+              rollback
+            fi
