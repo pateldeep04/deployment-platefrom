@@ -85,7 +85,7 @@ const EDITABLE_EXTENSIONS = new Set([
 ]);
 
 export const ARCHIVE_EXTENSIONS = new Set([
-  'zip', 'rar', 'tar', 'gz', 'tgz', '7z'
+  'zip'
 ]);
 
 
@@ -833,7 +833,7 @@ export const extractArchive = async (req: AuthenticatedRequest, res: Response): 
 
     const ext = path.extname(fullArchivePath).toLowerCase().replace(/^\./, '');
     if (!ARCHIVE_EXTENSIONS.has(ext)) {
-      res.status(400).json({ success: false, error: `File '${archivePath}' is not a supported archive format (.zip, .rar)` });
+      res.status(400).json({ success: false, error: `File '${archivePath}' is not a supported archive format (standard .zip required)` });
       return;
     }
 
@@ -933,7 +933,7 @@ export const uploadAndExtractArchive = async (req: AuthenticatedRequest, res: Re
     const ext = path.extname(req.file.originalname).toLowerCase().replace(/^\./, '');
     if (!ARCHIVE_EXTENSIONS.has(ext)) {
       try { fs.unlinkSync(req.file.path); } catch {}
-      res.status(400).json({ success: false, error: `Invalid file format '.${ext}'. Please upload a .zip or .rar archive.` });
+      res.status(400).json({ success: false, error: `Invalid file format '.${ext}'. Please upload a standard .zip archive.` });
       return;
     }
 

@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import { config } from '../config';
 
+import { ALLOWED_STATIC_EXTENSIONS } from './securityValidator';
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(config.storageDir, 'uploads');
@@ -25,22 +27,26 @@ export const uploadMiddleware = multer({
     files: 100,
   },
   fileFilter: (req, file, cb) => {
-    const allowedExtensions = [
-      '.zip', '.rar', '.tar', '.gz', '.tgz', '.7z',
-      '.html', '.htm', '.css', '.js', '.mjs', '.php',
-      '.json', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.webp',
-      '.ico', '.woff', '.woff2', '.ttf', '.txt', '.md'
-    ];
     const ext = path.extname(file.originalname).toLowerCase();
     
-    // Explicitly reject high-risk executable extensions
-    const dangerousExtensions = ['.exe', '.bat', '.cmd', '.sh', '.msi', '.vbs', '.scr', '.pif'];
+    // Explicitly reject high-risk executable and script extensions
+    const dangerousExtensions = [
+      '.exe', '.bat', '.cmd', '.sh', '.bash', '.ps1', '.py', '.rb', '.pl',
+      '.msi', '.vbs', '.scr', '.pif', '.dll', '.so', '.dylib', '.bin', '.com',
+      '.c', '.cpp', '.h', '.jar', '.war', '.apk', '.iso', '.dmg', '.deb', '.rpm'
+    ];
     if (dangerousExtensions.includes(ext)) {
       return cb(new Error(`Malicious or dangerous executable file extension rejected: ${ext}`));
     }
 
-    if (!allowedExtensions.includes(ext) && ext !== '') {
-      return cb(new Error(`File extension '${ext}' is not supported. Please upload a ZIP archive or web assets.`));
+    // Explicitly reject unsupported archive formats
+    const unsupportedArchives = ['.rar', '.tar', '.gz', '.tgz', '.7z', '.bz2', '.xz'];
+    if (unsupportedArchives.includes(ext)) {
+      return cb(new Error(`Unsupported archive format '${ext}'. DeployHub operates exclusively on standard .zip archives.`));
+    }
+
+    if (ext !== '.zip' && !ALLOWED_STATIC_EXTENSIONS.has(ext)) {
+      return cb(new Error(`File extension '${ext}' is not permitted under the platform security policy. Please upload a .zip archive or allowed web assets.`));
     }
 
     cb(null, true);

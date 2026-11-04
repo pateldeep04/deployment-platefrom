@@ -47,14 +47,25 @@ export const uploadAndDeploy = async (req: AuthenticatedRequest, res: Response):
     }
 
     const ext = path.extname(req.file.originalname).toLowerCase();
-    const isArchive = ['.zip', '.rar', '.tar', '.gz', '.tgz', '.7z'].includes(ext);
+    const isZip = ext === '.zip';
+    const isOtherArchive = ['.rar', '.tar', '.gz', '.tgz', '.7z', '.bz2', '.xz'].includes(ext);
+
+    if (isOtherArchive) {
+      try { fs.unlinkSync(req.file.path); } catch {}
+      res.status(400).json({
+        success: false,
+        error: `Security Violation: Archive format '${ext}' is not supported. DeployHub operates exclusively on standard .zip archives.`
+      });
+      return;
+    }
+
     const projectDeployments = dbStore.deployments.filter(d => d.projectId === project._id);
     const version = projectDeployments.length + 1;
     const deploymentId = `dep_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
 
-    // Handle single file upload (.html, .php, .css, .js)
-    if (!isArchive) {
-      // 0. Antivirus, Corruption & Webshell Inspection
+    // Handle single file upload (.html, .php, .css, .js, etc.)
+    if (!isZip) {
+      // 0. Antivirus, Corruption, Extension & Magic Byte Inspection
       const fileScan = await SecurityValidator.validateSingleFile(req.file.path, user);
       if (!fileScan.valid) {
         try { fs.unlinkSync(req.file.path); } catch {}
