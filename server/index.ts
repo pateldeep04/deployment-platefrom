@@ -151,6 +151,16 @@ app.use('/api', generalLimiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Security Guard: Deny direct external access to backups, storage internals or snapshots
+app.use((req, res, next) => {
+  const lowerUrl = req.originalUrl.toLowerCase();
+  if (lowerUrl.includes('backup') || lowerUrl.includes('.backups') || lowerUrl.includes('snapshot')) {
+    res.status(403).json({ success: false, error: 'Access Denied: Protected administrative directory' });
+    return;
+  }
+  next();
+});
+
 // 1. Edge Proxy: Deployed sites serving (/sites/:slug fallback)
 app.use('/sites/:slug', handleSiteRequest);
 

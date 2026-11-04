@@ -10,7 +10,7 @@ async function testBackupRestore() {
 
   const storageDir = path.resolve(process.cwd(), 'storage');
   const statePath = path.join(storageDir, 'data', 'deployhub_state.json');
-  const backupDir = path.join(storageDir, 'backups');
+  const backupDir = path.join(storageDir, '.backups');
 
   if (!fs.existsSync(backupDir)) {
     fs.mkdirSync(backupDir, { recursive: true });

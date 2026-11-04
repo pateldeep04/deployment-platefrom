@@ -28,8 +28,11 @@ storage/scratch/*
 !storage/scratch/.gitkeep
 storage/data/*
 !storage/data/.gitkeep
-storage/backups/*
-!storage/backups/.gitkeep
+# Hidden backups and database state snapshots (strictly excluded from git)
+storage/.backups/
+.backups/
+*.snapshot.json
+state_snapshot_*.json
 scratch/
 
 
