@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { MalwareScanner } from '../server/services/malwareScanner';
 import { SecurityValidator, ALLOWED_STATIC_EXTENSIONS } from '../server/middleware/securityValidator';
-import { config } from '../server/config';
+import { config, AVAILABLE_PLATFORM_DOMAINS, getDeploymentUrl } from '../server/config';
+import { defaultSiteService } from '../server/services/defaultSiteService';
 
 let passed = 0;
 let total = 0;
@@ -134,6 +135,52 @@ async function runTestSuite() {
   const fiveMinAgo = new Date(Date.now() - (5 * 60 * 1000 + 1000)).toISOString();
   const isExpired = new Date() > new Date(fiveMinAgo);
   assert(isExpired === true, '5-minute OTP window strictly expires after 300 seconds');
+
+  // ----------------------------------------------------
+  // Suite 6: Occupied Domain Default Site & HTTPS SSL Verification
+  // ----------------------------------------------------
+  console.log('\n▶ Suite 6: Occupied Domain Default Website & HTTPS SSL Verification');
+
+  // 1. All platform domains have SSL enabled (isSsl: true)
+  const allPlatformDomainsSsl = AVAILABLE_PLATFORM_DOMAINS.every(d => d.isSsl === true);
+  assert(allPlatformDomainsSsl === true, 'All platform domains have SSL certificate enabled (isSsl: true)');
+
+  // 2. getDeploymentUrl returns https:// for subdomains
+  const testSubUrl = getDeploymentUrl({ slug: 'my-app', assignedSubdomain: 'my-app' });
+  assert(testSubUrl.startsWith('https://'), `Subdomain URL returns HTTPS (${testSubUrl})`);
+
+  // 3. getDeploymentUrl returns https:// for custom domains
+  const testCustomUrl = getDeploymentUrl({ slug: 'my-app', customDomain: 'example.com' });
+  assert(testCustomUrl.startsWith('https://'), `Custom domain URL returns HTTPS (${testCustomUrl})`);
+
+  // 4. Test default site scaffolding for an occupied domain
+  const testProject: any = {
+    _id: 'prj_test_occupied_999',
+    userId: 'usr_test_999',
+    name: 'Unit Test Site',
+    slug: 'unit-test-occupied-site',
+    assignedSubdomain: 'unit-test-occupied-site',
+    platformDomain: 'deployeai.duckdns.org',
+    status: 'ACTIVE',
+    sslEnabled: true,
+  };
+
+  defaultSiteService.scaffoldDefaultSite(testProject);
+  const testSiteDir = path.join(config.storageDir, 'sites', testProject.slug);
+  const hasIndexHtml = fs.existsSync(path.join(testSiteDir, 'index.html'));
+  const hasIndexPhp = fs.existsSync(path.join(testSiteDir, 'index.php'));
+  const hasStyleCss = fs.existsSync(path.join(testSiteDir, 'style.css'));
+  const hasScriptJs = fs.existsSync(path.join(testSiteDir, 'script.js'));
+
+  assert(hasIndexHtml === true, 'Default occupied domain site generates index.html');
+  assert(hasIndexPhp === true, 'Default occupied domain site generates index.php');
+  assert(hasStyleCss === true, 'Default occupied domain site generates style.css');
+  assert(hasScriptJs === true, 'Default occupied domain site generates script.js');
+
+  // Clean up test scaffold directory
+  try {
+    fs.rmSync(testSiteDir, { recursive: true, force: true });
+  } catch {}
 
   // ----------------------------------------------------
   // Summary & Exit

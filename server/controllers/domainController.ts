@@ -8,6 +8,7 @@ import { config, AVAILABLE_PLATFORM_DOMAINS } from '../config';
 import { subdomainService } from '../services/subdomainService';
 import { namecheapService } from '../services/namecheapService';
 import { domainLockService } from '../services/domainLockService';
+import { defaultSiteService } from '../services/defaultSiteService';
 
 export const addCustomDomain = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { projectId } = req.params;
@@ -78,7 +79,7 @@ export const addCustomDomain = async (req: AuthenticatedRequest, res: Response):
             : {
                 type: 'A',
                 host: '@',
-                value: config.serverIp || '127.0.0.1',
+                value: config.serverIp || '',
                 purpose: 'Apex Traffic Routing',
               },
         ],
@@ -225,6 +226,13 @@ export const assignSubdomain = async (req: AuthenticatedRequest, res: Response):
 
     const result = await subdomainService.assignSubdomain(projectId, subdomain, user._id, baseDomain);
 
+    const project = dbStore.projects.find(p => p._id === projectId);
+    if (project) {
+      project.sslEnabled = true;
+      defaultSiteService.scaffoldDefaultSite(project);
+      dbStore.save();
+    }
+
     res.json({
       success: true,
       message: result.message,
@@ -235,7 +243,7 @@ export const assignSubdomain = async (req: AuthenticatedRequest, res: Response):
         publicIp: result.publicIp,
         serverNodeName: result.serverNodeName,
         dnsStatus: result.dnsResult,
-        deploymentUrl: `http://${result.fqdn}/`,
+        deploymentUrl: `https://${result.fqdn}/`,
       },
     });
   } catch (err: any) {
@@ -302,10 +310,9 @@ export const askTlsApproval = async (req: Request, res: Response): Promise<void>
     return;
   }
 
-  // 2. Check active verified custom domains
+  // 2. Check active verified custom domains (approved for any valid occupied domain)
   const customProject = dbStore.projects.find(p => 
     p.customDomain?.toLowerCase() === queryDomain &&
-    p.status === 'ACTIVE' &&
     !p.isDomainExpired &&
     p.domainStatus !== 'DEACTIVATED'
   );
@@ -313,6 +320,8 @@ export const askTlsApproval = async (req: Request, res: Response): Promise<void>
   if (customProject) {
     const owner = dbStore.users.find(u => u._id === customProject.userId);
     if (owner && !owner.isBanned) {
+      customProject.sslEnabled = true;
+      dbStore.save();
       res.status(200).send('OK');
       return;
     }
@@ -324,7 +333,6 @@ export const askTlsApproval = async (req: Request, res: Response): Promise<void>
       const subdomain = queryDomain.slice(0, -(root.length + 1)).toLowerCase();
       const subProject = dbStore.projects.find(p =>
         (p.assignedSubdomain?.toLowerCase() === subdomain || p.slug.toLowerCase() === subdomain) &&
-        p.status === 'ACTIVE' &&
         !p.isDomainExpired &&
         p.domainStatus !== 'DEACTIVATED'
       );
@@ -332,6 +340,8 @@ export const askTlsApproval = async (req: Request, res: Response): Promise<void>
       if (subProject) {
         const owner = dbStore.users.find(u => u._id === subProject.userId);
         if (owner && !owner.isBanned) {
+          subProject.sslEnabled = true;
+          dbStore.save();
           res.status(200).send('OK');
           return;
         }

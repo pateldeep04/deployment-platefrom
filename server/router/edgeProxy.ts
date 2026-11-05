@@ -5,6 +5,7 @@ import { spawn } from 'child_process';
 import { config, AVAILABLE_PLATFORM_DOMAINS } from '../config';
 import { dbStore } from '../database/store';
 import { redisCacheService } from '../services/redisCacheService';
+import { defaultSiteService } from '../services/defaultSiteService';
 
 export const handleSiteRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   let slug: string = (req.params.slug as string) || '';
@@ -192,9 +193,12 @@ export const handleSiteRequest = async (req: Request, res: Response, next: NextF
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   const siteDir = path.join(config.storageDir, 'sites', project.slug);
-  if (!fs.existsSync(siteDir)) {
-    res.status(404).send(`<h3>Project '${project.name}' has no active build artifact. Please trigger a deployment.</h3>`);
-    return;
+  const rootIndexHtml = path.join(siteDir, 'index.html');
+  const rootIndexPhp = path.join(siteDir, 'index.php');
+
+  // If domain is occupied but user has not hosted custom code yet, scaffold & serve default DeployHub website
+  if (!fs.existsSync(siteDir) || (!fs.existsSync(rootIndexHtml) && !fs.existsSync(rootIndexPhp))) {
+    defaultSiteService.scaffoldDefaultSite(project);
   }
 
   // 1. Enforce trailing slash on base site route to ensure relative paths (e.g. style.css, script.js) resolve correctly

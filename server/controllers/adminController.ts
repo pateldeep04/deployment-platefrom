@@ -822,10 +822,10 @@ export const getAdminDomains = (req: AuthenticatedRequest, res: Response): void 
       ownerEmail: owner?.email || 'Unknown',
       assignedSubdomain: p.assignedSubdomain || p.slug,
       platformDomain: baseDomain,
-      fullSubdomainUrl: `http://${fullSubdomain}`,
+      fullSubdomainUrl: `https://${fullSubdomain}`,
       customDomain: p.customDomain || null,
       customDomainVerified: p.customDomainVerified || false,
-      sslEnabled: p.sslEnabled || false,
+      sslEnabled: p.sslEnabled !== false,
       createdAt: p.createdAt,
     };
   });
@@ -875,7 +875,7 @@ export const addPlatformDomain = (req: AuthenticatedRequest, res: Response): voi
       domain: cleanDomain,
       label: label && typeof label === 'string' ? label.trim() : `${cleanDomain} (${provider || 'Custom'})`,
       provider: (provider as any) || 'Custom',
-      isSsl: Boolean(isSsl),
+      isSsl: isSsl !== undefined ? Boolean(isSsl) : true,
       isDefault: Boolean(isDefault),
       createdAt: new Date().toISOString(),
     };

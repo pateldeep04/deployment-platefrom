@@ -200,7 +200,7 @@ class SubdomainService {
       }
 
       // 2. Map DNS host record directly to the active DeployHub platform server host
-      const hostIp = config.serverIp || '127.0.0.1';
+      const hostIp = config.serverIp || '';
       const dnsResult = await namecheapService.createOrUpdateSubdomainHost(subdomain, hostIp, 'A');
 
       // 3. Update Project metadata
@@ -213,7 +213,7 @@ class SubdomainService {
         _id: `audit_${Date.now()}`,
         userId,
         action: 'SUBDOMAIN_AUTOMATIC_ASSIGNMENT',
-        ip: '127.0.0.1',
+        ip: config.serverIp || '',
         details: {
           projectId: project._id,
           subdomain,

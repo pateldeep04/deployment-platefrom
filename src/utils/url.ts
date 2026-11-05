@@ -14,39 +14,36 @@ export const getLiveProjectUrl = (project?: ProjectUrlLike | null): string => {
 
   if (project.customDomain && project.customDomain.trim()) {
     const domain = project.customDomain.trim();
-    return domain.startsWith('http://') || domain.startsWith('https://')
-      ? domain
-      : `https://${domain}/`;
+    if (domain.startsWith('https://')) return domain;
+    if (domain.startsWith('http://')) return domain.replace('http://', 'https://');
+    return `https://${domain}/`;
   }
 
   const sub = (project.assignedSubdomain || project.slug || '').trim();
 
-  // If project has an explicit platformDomain assigned
+  // If project has an explicit platformDomain assigned - ALWAYS represent HTTPS (SSL)
   if (project.platformDomain && project.platformDomain.trim()) {
     const base = project.platformDomain.trim();
-    const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-    const proto = isHttps ? 'https:' : 'http:';
-    return `${proto}//${sub}.${base}/`;
+    return `https://${sub}.${base}/`;
   }
 
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname.toLowerCase();
-    const protocol = window.location.protocol;
 
     if (hostname.includes('deployeai.duckdns.org')) {
-      return `${protocol}//${sub}.deployeai.duckdns.org/`;
+      return `https://${sub}.deployeai.duckdns.org/`;
     }
     if (hostname.includes('deploye-ai.duckdns.org')) {
-      return `${protocol}//${sub}.deploye-ai.duckdns.org/`;
+      return `https://${sub}.deploye-ai.duckdns.org/`;
     }
     if (hostname.includes('ml-ai.duckdns.org')) {
-      return `${protocol}//${sub}.ml-ai.duckdns.org/`;
+      return `https://${sub}.ml-ai.duckdns.org/`;
     }
     if (hostname.includes('mooo.com')) {
-      return `${protocol}//${sub}.ai-ml.mooo.com/`;
+      return `https://${sub}.ai-ml.mooo.com/`;
     }
     if (hostname.includes('chickenkiller.com')) {
-      return `${protocol}//${sub}.ai-ml.chickenkiller.com/`;
+      return `https://${sub}.ai-ml.chickenkiller.com/`;
     }
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return `${window.location.origin}/sites/${sub}/`;
@@ -55,7 +52,7 @@ export const getLiveProjectUrl = (project?: ProjectUrlLike | null): string => {
 
   const defaultPlatformDomain =
     (import.meta.env.VITE_PLATFORM_DOMAIN as string) || 'deployeai.duckdns.org';
-  return `http://${sub}.${defaultPlatformDomain}/`;
+  return `https://${sub}.${defaultPlatformDomain}/`;
 };
 
 /**

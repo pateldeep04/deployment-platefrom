@@ -31,7 +31,7 @@ class NamecheapService {
     this.inMemoryHosts.set('@', {
       hostName: '@',
       recordType: 'A',
-      address: config.serverIp || '127.0.0.1',
+      address: config.serverIp || '',
       ttl: 300,
     });
     this.inMemoryHosts.set('www', {
@@ -196,7 +196,7 @@ class NamecheapService {
     expectedIp?: string
   ): Promise<{ propagated: boolean; resolvedIps: string[]; expectedIp: string; fqdn: string }> {
     const fqdn = this.getFqdn(subdomain);
-    const target = expectedIp || config.serverIp || '127.0.0.1';
+    const target = expectedIp || config.serverIp || '';
 
     try {
       const resolved = await dns.promises.resolve4(fqdn);

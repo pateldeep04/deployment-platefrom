@@ -36,12 +36,12 @@ export interface PlatformDomain {
 }
 
 const DEFAULT_PLATFORM_DOMAINS: PlatformDomain[] = [
-  { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false, isDefault: true },
-  { domain: 'deploye-ai.duckdns.org', label: 'deploye-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
-  { domain: 'ml-ai.duckdns.org', label: 'ml-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
-  { domain: 'ai-ml.mooo.com', label: 'ai-ml.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
-  { domain: 'ml-ai.mooo.com', label: 'ml-ai.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
-  { domain: 'ai-ml.chickenkiller.com', label: 'ai-ml.chickenkiller.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+  { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS • SSL)', provider: 'DuckDNS', isSsl: true, isDefault: true },
+  { domain: 'deploye-ai.duckdns.org', label: 'deploye-ai.duckdns.org (DuckDNS • SSL)', provider: 'DuckDNS', isSsl: true },
+  { domain: 'ml-ai.duckdns.org', label: 'ml-ai.duckdns.org (DuckDNS • SSL)', provider: 'DuckDNS', isSsl: true },
+  { domain: 'ai-ml.mooo.com', label: 'ai-ml.mooo.com (FreeDNS • SSL)', provider: 'FreeDNS', isSsl: true },
+  { domain: 'ml-ai.mooo.com', label: 'ml-ai.mooo.com (FreeDNS • SSL)', provider: 'FreeDNS', isSsl: true },
+  { domain: 'ai-ml.chickenkiller.com', label: 'ai-ml.chickenkiller.com (FreeDNS • SSL)', provider: 'FreeDNS', isSsl: true },
 ];
 
 export const NewProjectModal: React.FC<NewProjectModalProps> = ({ 

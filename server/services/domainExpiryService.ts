@@ -66,7 +66,7 @@ class DomainExpiryService {
               _id: `log_${Date.now()}`,
               userId: owner._id,
               action: 'DOMAIN_DEACTIVATED_EMAIL_SENT',
-              ip: '127.0.0.1',
+              ip: 'SYSTEM',
               details: { projectId: project._id, domainName, email: owner.email },
               createdAt: new Date().toISOString(),
             });
@@ -94,7 +94,7 @@ class DomainExpiryService {
               _id: `log_${Date.now()}`,
               userId: owner._id,
               action: 'DOMAIN_EXPIRY_WARNING_EMAIL_SENT',
-              ip: '127.0.0.1',
+              ip: 'SYSTEM',
               details: { projectId: project._id, domainName, email: owner.email, daysRemaining },
               createdAt: new Date().toISOString(),
             });
@@ -148,7 +148,7 @@ class DomainExpiryService {
       _id: `log_${Date.now()}`,
       userId,
       action: 'DOMAIN_FREE_REACTIVATION',
-      ip: '127.0.0.1',
+      ip: 'SYSTEM',
       details: {
         projectId: project._id,
         name: project.name,

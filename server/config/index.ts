@@ -22,12 +22,12 @@ export interface PlatformDomainOption {
 }
 
 export const AVAILABLE_PLATFORM_DOMAINS: PlatformDomainOption[] = [
-  { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false, isDefault: true },
-  { domain: 'deploye-ai.duckdns.org', label: 'deploye-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
-  { domain: 'ml-ai.duckdns.org', label: 'ml-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: false },
-  { domain: 'ai-ml.mooo.com', label: 'ai-ml.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
-  { domain: 'ml-ai.mooo.com', label: 'ml-ai.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
-  { domain: 'ai-ml.chickenkiller.com', label: 'ai-ml.chickenkiller.com (FreeDNS)', provider: 'FreeDNS', isSsl: false },
+  { domain: 'deployeai.duckdns.org', label: 'deployeai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: true, isDefault: true },
+  { domain: 'deploye-ai.duckdns.org', label: 'deploye-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: true },
+  { domain: 'ml-ai.duckdns.org', label: 'ml-ai.duckdns.org (DuckDNS)', provider: 'DuckDNS', isSsl: true },
+  { domain: 'ai-ml.mooo.com', label: 'ai-ml.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: true },
+  { domain: 'ml-ai.mooo.com', label: 'ml-ai.mooo.com (FreeDNS)', provider: 'FreeDNS', isSsl: true },
+  { domain: 'ai-ml.chickenkiller.com', label: 'ai-ml.chickenkiller.com (FreeDNS)', provider: 'FreeDNS', isSsl: true },
 ];
 
 const rawPlatformDomain = process.env.PLATFORM_DOMAIN || '';
@@ -92,14 +92,15 @@ export interface ProjectUrlTarget {
 export const getDeploymentUrl = (project: ProjectUrlTarget): string => {
   if (project.customDomain && project.customDomain.trim()) {
     const domain = project.customDomain.trim();
-    return domain.startsWith('http://') || domain.startsWith('https://')
-      ? domain
-      : `http://${domain}/`;
+    if (domain.startsWith('https://')) return domain;
+    if (domain.startsWith('http://')) return domain.replace('http://', 'https://');
+    return `https://${domain}/`;
   }
   if (project.assignedSubdomain && project.assignedSubdomain.trim()) {
-    return `http://${project.assignedSubdomain.trim()}.${config.platformDomain}/`;
+    const base = config.platformDomain || 'deployeai.duckdns.org';
+    return `https://${project.assignedSubdomain.trim()}.${base}/`;
   }
-  return `${config.apiUrl}/sites/${project.slug}/`;
+  return `${config.apiUrl || ''}/sites/${project.slug}/`;
 };
 
 

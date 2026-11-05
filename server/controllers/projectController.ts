@@ -9,6 +9,7 @@ import { AuthenticatedRequest } from '../middleware/auth';
 import { subdomainService } from '../services/subdomainService';
 import { domainExpiryService } from '../services/domainExpiryService';
 import { domainLockService } from '../services/domainLockService';
+import { defaultSiteService } from '../services/defaultSiteService';
 
 export const listProjects = (req: AuthenticatedRequest, res: Response): void => {
   const userId = req.user!._id;
@@ -117,7 +118,8 @@ export const createProject = async (req: AuthenticatedRequest, res: Response): P
       assignedSubdomain,
       platformDomain,
       type,
-      status: 'INACTIVE',
+      status: 'ACTIVE',
+      sslEnabled: true,
       storageUsed: 0,
       buildCommand: buildCommand || (type === 'VITE' ? 'npm run build' : undefined),
       outputDirectory: outputDirectory || (type === 'VITE' ? 'dist' : undefined),
@@ -127,6 +129,9 @@ export const createProject = async (req: AuthenticatedRequest, res: Response): P
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    // Automatically scaffold default reserved website for occupied domain (HTML, CSS, JS & PHP)
+    defaultSiteService.scaffoldDefaultSite(newProject);
 
     dbStore.projects.push(newProject);
     dbStore.auditLogs.push({
